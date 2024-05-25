@@ -1,4 +1,4 @@
-import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, SceneTimeRange, SceneVariableSet, VariableValueSelectors, sceneGraph } from "@grafana/scenes";
+import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { GraphTransform } from "@grafana/schema";
@@ -275,7 +275,7 @@ function getScene(pod: string) {
     })
 }
 
-export function getPodPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
+export function PodPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
 
     const props = usePluginProps();
 

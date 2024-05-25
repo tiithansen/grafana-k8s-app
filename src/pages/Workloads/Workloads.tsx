@@ -13,14 +13,17 @@ import { getPodsScene } from './tabs/Pods/Pods';
 import { getDeploymentsScene } from './tabs/Deployments/Deployments';
 import { getStatefulSetsScene } from './tabs/StatefulSets/StatefulSets';
 import { getDaemonSetsScene } from './tabs/DaemonSets/DaemonSets';
-import { getPodPage } from './pages/PodPage';
+import { PodPage } from './pages/PodPage';
 import { getCronJobsScene } from './tabs/CronJobs/CronJobs';
 import { getJobsScene } from './tabs/Jobs/Jobs';
 import { getOverviewScene } from './tabs/Overview/Overview';
 import { usePluginProps } from 'utils/utils.plugin';
-import { getDeploymentPage } from './pages/DeploymentPage';
-import { getStatefulSetPage } from './pages/StatefulSetPage';
+import { DeploymentPage } from './pages/DeploymentPage';
+import { StatefulSetPage } from './pages/StatefulSetPage';
 import { createTimeRange, createTopLevelVariables } from './variableHelpers';
+import { DaemonSetPage } from './pages/DaemonSetPage';
+import { CronJobPage } from './pages/CronJobPage';
+import { JobPage } from './pages/JobPage';
 
 function getScene({ datasource }: { datasource: string }) {
 
@@ -84,21 +87,27 @@ function getScene({ datasource }: { datasource: string }) {
             drilldowns: [
                 {
                     routePath: prefixRoute(`${ROUTES.Workloads}/pods/:name`),
-                    getPage(routeMatch, parent) {
-                        return getPodPage(routeMatch, parent);
-                    }
+                    getPage: PodPage
                 },
                 {
                     routePath: prefixRoute(`${ROUTES.Workloads}/deployments/:name`),
-                    getPage(routeMatch, parent) {
-                        return getDeploymentPage(routeMatch, parent);
-                    }
+                    getPage: DeploymentPage
                 },
                 {
                     routePath: prefixRoute(`${ROUTES.Workloads}/statefulsets/:name`),
-                    getPage(routeMatch, parent) {
-                        return getStatefulSetPage(routeMatch, parent);
-                    }
+                    getPage: StatefulSetPage
+                },
+                {
+                    routePath: prefixRoute(`${ROUTES.Workloads}/daemonsets/:name`),
+                    getPage: DaemonSetPage
+                },
+                {
+                    routePath: prefixRoute(`${ROUTES.Workloads}/cronjobs/:name`),
+                    getPage: CronJobPage
+                },
+                {
+                    routePath: prefixRoute(`${ROUTES.Workloads}/jobs/:name`),
+                    getPage: JobPage
                 },
             ]
         }),

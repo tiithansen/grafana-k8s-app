@@ -1,10 +1,10 @@
 import { EmbeddedScene, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexLayout, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
-import { createTimeRange, createTopLevelVariables } from "../variableHelpers";
 import { usePluginProps } from "utils/utils.plugin";
+import { createTopLevelVariables, createTimeRange } from "../variableHelpers";
 
-function getScene(statefulSet: string) {
+function getScene(cronJob: string) {
     return new EmbeddedScene({
         controls: [
             new VariableValueSelectors({}),
@@ -22,7 +22,7 @@ function getScene(statefulSet: string) {
     })
 }
 
-export function StatefulSetPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
+export function CronJobPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
 
     const props = usePluginProps();
 
@@ -33,11 +33,11 @@ export function StatefulSetPage(routeMatch: SceneRouteMatch<any>, parent: SceneA
     const timeRange = createTimeRange()
 
     return new SceneAppPage({
-        title: `StatefulSet - ${routeMatch.params.name}`,
+        title: `CronJob - ${routeMatch.params.name}`,
         titleIcon: 'dashboard',
         $variables: variables,
         $timeRange: timeRange,
-        url: prefixRoute(`${ROUTES.Workloads}/statefulsets/${routeMatch.params.name}`),
+        url: prefixRoute(`${ROUTES.Workloads}/cronjobs/${routeMatch.params.name}`),
         getScene: () => getScene(routeMatch.params.name),
         getParentPage: () => parent,
     })

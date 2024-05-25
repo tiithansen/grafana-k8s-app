@@ -1,4 +1,4 @@
-import { EmbeddedScene, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexLayout, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors, sceneGraph } from "@grafana/scenes";
+import { EmbeddedScene, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexLayout, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { usePluginProps } from "utils/utils.plugin";
@@ -22,7 +22,7 @@ function getScene(deployment: string) {
     })
 }
 
-export function getDeploymentPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
+export function DeploymentPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
 
     const props = usePluginProps();
 
