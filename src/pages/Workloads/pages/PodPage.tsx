@@ -34,14 +34,14 @@ function getMemoryPanel(pod: string) {
                 },
                 {
                     refId: 'memory_requests',
-                    expr: `sum(kube_pod_container_resource_requests{resource="memory", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
+                    expr: `max(kube_pod_container_resource_requests{resource="memory", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Requests {{container}}'
                 },
                 {
                     refId: 'memory_limit',
-                    expr: `sum(kube_pod_container_resource_limits{resource="memory", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
+                    expr: `max(kube_pod_container_resource_limits{resource="memory", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Limits {{container}}'
@@ -78,14 +78,14 @@ function getCPUPanel(pod: string) {
                 },
                 {
                     refId: 'cpu_requests',
-                    expr: `sum(kube_pod_container_resource_requests{resource="cpu", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
+                    expr: `max(kube_pod_container_resource_requests{resource="cpu", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Requests {{container}}'
                 },
                 {
                     refId: 'cpu_limit',
-                    expr: `sum(kube_pod_container_resource_limits{resource="cpu", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
+                    expr: `max(kube_pod_container_resource_limits{resource="cpu", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Limits {{container}}'
