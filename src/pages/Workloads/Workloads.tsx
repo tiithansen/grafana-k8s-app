@@ -1,14 +1,10 @@
 import { 
     SceneApp,
     SceneAppPage,
-    SceneTimeRange,
     VariableValueSelectors,
-    SceneVariableSet,
     SceneControlsSpacer,
     SceneTimePicker,
     SceneRefreshPicker,
-    DataSourceVariable,
-    QueryVariable,
 } from '@grafana/scenes';
 import { ROUTES } from '../../constants';
 import React, { useMemo } from 'react';
