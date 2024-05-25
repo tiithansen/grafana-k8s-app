@@ -1,8 +1,5 @@
-import { 
-    EmbeddedScene, 
-    sceneGraph, 
-    SceneFlexLayout, 
-    SceneFlexItem, 
+import {
+    sceneGraph,
     SceneQueryRunner,
     SceneObject,
     SceneObjectState,
@@ -164,8 +161,6 @@ class TableViz extends SceneObjectBase<TableVizState> {
             const frame = data.series[0];
             const view = new DataFrameView<TableRow>(frame);
             const rows = view.toArray();
-
-            console.log('rows', rows)
 
             const serieMatcherPredicate = (row: TableRow) => (value: any) => value.container === row.container;
 
