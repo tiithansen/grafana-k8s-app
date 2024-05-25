@@ -17,6 +17,13 @@ import React, { useEffect, useMemo } from 'react';
 import { DataFrameView } from '@grafana/data';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
 import { buildExpandedRowScene } from './ExpandedRow';
+import { LinkCell } from 'pages/Workloads/components/LinkCell';
+import { CellProps } from '@grafana/ui';
+import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
+import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
+import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
+import { createRowQueries } from './Queries';
 
 const namespaceVariable = new QueryVariable({
     name: 'namespace',
@@ -80,47 +87,46 @@ interface TableRow {
     cluster: string;
     statefulset: string;
     namespace: string;
+    replicas: {
+        total: number;
+        ready: number;
+    };
 }
 
 interface TableVizState extends SceneObjectState {
     expandedRows?: SceneObject[];
-    // asyncRowData?: Map<string, number[]>;
-    // asyncDataPods?: string;
+    asyncRowData?: Map<string, number[]>;
+    visibleRowIds?: string;
 }
 
 class TableViz extends SceneObjectBase<TableVizState> {
 
-    /*constructor(state: TableVizState) {
+    constructor(state: TableVizState) {
         super({ ...state, asyncRowData: new Map<string, number[]>() });
-    }*/
+    }
 
-    //private setAsyncRowData(data: any) {
-        // this.setState({ ...this.state, asyncRowData: data });
-    //}
+    private setAsyncRowData(data: any) {
+        this.setState({ ...this.state, asyncRowData: data });
+    }
 
-    //private setAsyncDataPods(data: string) {
-        // this.setState({ ...this.state, asyncDataPods: data });
-    //}
+    private setVisibleRowIds(ids: string) {
+        this.setState({ ...this.state, visibleRowIds: ids });
+    }
 
     static Component = (props: SceneComponentProps<TableViz>) => {
         const { data } = sceneGraph.getData(props.model).useState();
-        // const sceneVariables = sceneGraph.getVariables(props.model)
-        // const timeRange = sceneGraph.getTimeRange(props.model)
-        // const { asyncRowData } = props.model.useState();
-        // const { asyncDataPods } = props.model.useState();
+        const sceneVariables = sceneGraph.getVariables(props.model)
+        const timeRange = sceneGraph.getTimeRange(props.model)
+        const { asyncRowData } = props.model.useState();
+        const { visibleRowIds } = props.model.useState();
        
         const columns = useMemo(
             () => [
-                { id: 'statefulset', header: 'STATEFULSET' },
+                { id: 'statefulset', header: 'STATEFULSET', cell: (props: CellProps<TableRow>) => LinkCell('statefulsets', props.row.values.statefulset) },
                 { id: 'namespace', header: 'NAMESPACE' },
-                /*{ id: 'node', header: 'NODE', cell: (props: CellProps<TableRow>) => NodeCell(props.row.values.node) },
-                { id: 'namespace', header: 'NAMESPACE' },
-                { id: 'containers', header: 'CONTAINERS', cell: (props: CellProps<TableRow>) => ContainersCellBuilder(props.cell.row.id, asyncRowData) },
-                { id: 'restarts', header: 'RESTARTS', cell: (props: CellProps<TableRow>) => RestartsCellBuilder(props.cell.row.id, asyncRowData) },
-                { id: 'memory', header: 'MEMORY (U/R/L)', cell: (props: CellProps<TableRow>) => MemoryCellBuilder(props.cell.row.id, asyncRowData) },
-                { id: 'cpu', header: 'CPU (U/R/L)', cell: (props: CellProps<TableRow>) => CPUCellBuilder(props.cell.row.id, asyncRowData) },*/
+                { id: 'replicas', header: 'REPLICAS', cell: (props: CellProps<TableRow>) => ReplicasCell(props.row.values.replicas) },
             ],
-            [ /*asyncRowData*/]
+            []
         );
 
         const tableData = useMemo(() => {
@@ -130,51 +136,48 @@ class TableViz extends SceneObjectBase<TableVizState> {
 
             const frame = data.series[0];
             const view = new DataFrameView<TableRow>(frame);
-            return view.toArray();
-        }, [data]);
+            const rows = view.toArray();
 
-        /*const onRowsChanged = (rows: any) => {
-            const pods = rows.map((row: any) => row.id).join('|');
+            const serieMatcherPredicate = (row: TableRow) => (value: any) => value.statefulset === row.statefulset;
+
+            for (const row of rows) {
+
+                const total = getSeriesValue(asyncRowData, 'replicas', serieMatcherPredicate(row))
+                const ready = getSeriesValue(asyncRowData, 'replicas_ready', serieMatcherPredicate(row))
+
+                row.replicas = {
+                    total,
+                    ready
+                }
+            }
             
-            if (!pods || pods.length === 0 || asyncDataPods === pods) {
+            return rows;
+        }, [data, asyncRowData]);
+
+        const onRowsChanged = (rows: any) => {
+            const ids = rows.map((row: any) => row.id).join('|');
+            
+            if (!ids || ids.length === 0 || visibleRowIds === ids) {
                 return;
             }
 
-            const queryRunner = new SceneQueryRunner({
+            const datasource = resolveVariable(sceneVariables, 'datasource')
+
+            asyncQueryRunner({
                 datasource: {
-                    uid: 'prometheus',
+                    uid: datasource?.toString(),
                     type: 'prometheus',
                 },
-                queries: createRowQueries(pods),
+                
+                queries: [
+                    ...createRowQueries(ids, sceneVariables),
+                ],
                 $timeRange: timeRange.clone(),
-                $variables: sceneVariables.clone()
-            })
-
-            queryRunner.addActivationHandler(() => {
-
-                const sub = queryRunner.subscribeToState((state) => {
-                    
-                    const mappedValues: Map<string, number[]> = new Map<string, number[]>();
-                    if (state.data && state.data.state === LoadingState.Done) {
-                        for (const series of state.data.series) {
-                            const refId = series.refId;
-                            const frame = new DataFrameView(series);
-                            const data = frame.toArray();
-                            mappedValues.set(refId || 'unknown', data);
-                        }
-                    }
-
-                    props.model.setAsyncDataPods(pods);
-                    props.model.setAsyncRowData(mappedValues);
-                })
-
-                return () => {
-                    sub.unsubscribe();
-                };
-            })
-
-            queryRunner.activate();
-        };*/
+            }).then((data) => {
+                props.model.setVisibleRowIds(ids);
+                props.model.setAsyncRowData(data);
+            });
+        };
 
         return (
             <InteractiveTable
@@ -183,7 +186,7 @@ class TableViz extends SceneObjectBase<TableVizState> {
                 data={tableData}
                 renderExpandedRow={(row) => <ExpandedRow tableViz={props.model} row={row} />}
                 pageSize={10}
-                // onRowsChanged={onRowsChanged}
+                onRowsChanged={onRowsChanged}
             />
         );
     };
