@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneQueryRunner, sceneGraph } from "@grafana/scenes";
 import { LabelFilters, serializeLabelFilters } from '../queryHelpers';
-import { DataFrameView, GrafanaTheme2 } from '@grafana/data';
+import { DataFrameView, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
@@ -96,7 +96,9 @@ class ResourceLabels extends SceneObjectBase<ResourceLabelsState> {
 
             const result: Label[] = [];
 
-            if (data) {
+            console.log(data)
+
+            if (data && data.state === LoadingState.Done) {
                 const df = new DataFrameView(data.series[0] || [])
                 const frames = df.toArray()
                 
@@ -154,7 +156,7 @@ export function createResourceLabels(resourceKind: string, labelFilters: LabelFi
         key: `ResourceLabels-${resourceKind}`,
         $data: new SceneQueryRunner({
             datasource: {
-                uid: 'prometheus',
+                uid: '$datasource',
                 type: 'prometheus',
             },
             queries: [

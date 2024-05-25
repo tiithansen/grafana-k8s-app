@@ -15,7 +15,7 @@ export function buildExpandedRowScene(handler: string) {
                 .setUnit('bytes')
                 .setData(new SceneQueryRunner({
                     datasource: {
-                        uid: 'prometheus',
+                        uid: '$datasource',
                         type: 'prometheus',
                     },
                     queries: [
@@ -61,7 +61,7 @@ export function buildExpandedRowScene(handler: string) {
                 .setTitle('CPU')
                 .setData(new SceneQueryRunner({
                     datasource: {
-                        uid: 'prometheus',
+                        uid: '$datasource',
                         type: 'prometheus',
                     },
                     queries: [

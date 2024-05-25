@@ -23,12 +23,13 @@ import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { CellProps } from 'react-table';
 import { NodeMemoryCell } from './NodeMemoryCell';
 import { NodeCPUCell } from './NodeCPUCell';
+import { resolveVariable } from 'pages/Workloads/variableHelpers';
 
 const clusterVariable = new QueryVariable({
     name: 'cluster',
     label: 'Cluster',
     datasource: {
-        uid: 'prometheus',
+        uid: '$datasource',
         type: 'prometheus',
     },
     query: {
@@ -45,7 +46,7 @@ const searchVariable = new TextBoxVariable({
 
 const nodesQueryRunner = new SceneQueryRunner({
     datasource: {
-        uid: 'prometheus',
+        uid: '$datasource',
         type: 'prometheus',
     },
     queries: [
@@ -171,9 +172,11 @@ class TableViz extends SceneObjectBase<TableVizState> {
                 return;
             }
 
+            const datasource = resolveVariable(sceneVariables, 'datasource');
+
             asyncQueryRunner({
                 datasource: {
-                    uid: 'prometheus',
+                    uid: datasource?.toString(),
                     type: 'prometheus',
                 },
                 

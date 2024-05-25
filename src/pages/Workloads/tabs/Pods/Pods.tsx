@@ -26,80 +26,81 @@ import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { buildExpandedRowScene } from './PodExpandedRow';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { LabelFilters, asyncQueryRunner } from 'pages/Workloads/queryHelpers';
+import { resolveVariable } from 'pages/Workloads/variableHelpers';
 
-const namespaceVariable = new QueryVariable({
-    name: 'namespace',
-    label: 'Namespace',
-    datasource: {
-        uid: 'prometheus',
-        type: 'prometheus',
-    },
-    query: {
-      refId: 'namespace',
-      query: 'label_values(kube_namespace_labels{cluster="$cluster"}, namespace)',
-    },
-    defaultToAll: true,
-    allValue: '.*',
-    includeAll: true,
-    isMulti: true,
-});
-
-const nodeVariable = new QueryVariable({
-    name: 'node',
-    label: 'Node',
-    datasource: {
-        uid: 'prometheus',
-        type: 'prometheus',
-    },
-    query: {
-      refId: 'namespace',
-      query: 'label_values(kube_pod_info{cluster="$cluster", namespace=~"$namespace"}, node)',
-    },
-    defaultToAll: true,
-    allValue: '.*',
-    includeAll: true,
-    isMulti: true,
-});
-
-const ownerKindVariable = new QueryVariable({
-    name: 'ownerKind',
-    label: 'Owner kind',
-    datasource: {
-        uid: 'prometheus',
-        type: 'prometheus',
-    },
-    query: {
-      refId: 'kind',
-      query: 'label_values(kube_pod_info{cluster="$cluster", namespace=~"$namespace"}, created_by_kind)',
-    },
-    defaultToAll: true,
-    allValue: '.*',
-    includeAll: true,
-    isMulti: true,
-});
-
-const ownerNameVariable = new QueryVariable({
-    name: 'ownerName',
-    label: 'Owner name',
-    datasource: {
-        uid: 'prometheus',
-        type: 'prometheus',
-    },
-    query: {
-      refId: 'name',
-      query: 'label_values(kube_pod_info{cluster="$cluster", namespace=~"$namespace", created_by_kind=~"$ownerKind"}, created_by_name)',
-    },
-    defaultToAll: true,
-    allValue: '.*',
-    includeAll: true,
-    isMulti: true,
-});
-
-const searchVariable = new TextBoxVariable({
-    name: 'search',
-    label: 'Search',
-    value: '',
-});
+function createVariables() {
+    return [
+        new QueryVariable({
+            name: 'namespace',
+            label: 'Namespace',
+            datasource: {
+                uid: '$datasource',
+                type: 'prometheus',
+            },
+            query: {
+                refId: 'namespace',
+                query: 'label_values(kube_namespace_labels{cluster="$cluster"}, namespace)',
+            },
+            defaultToAll: true,
+            allValue: '.*',
+            includeAll: true,
+            isMulti: true,
+        }),
+        new QueryVariable({
+            name: 'node',
+            label: 'Node',
+            datasource: {
+                uid: '$datasource',
+                type: 'prometheus',
+            },
+            query: {
+                refId: 'namespace',
+                query: 'label_values(kube_pod_info{cluster="$cluster", namespace=~"$namespace"}, node)',
+            },
+            defaultToAll: true,
+            allValue: '.*',
+            includeAll: true,
+            isMulti: true,
+        }),
+        new QueryVariable({
+            name: 'ownerKind',
+            label: 'Owner kind',
+            datasource: {
+                uid: '$datasource',
+                type: 'prometheus',
+            },
+            query: {
+                refId: 'kind',
+                query: 'label_values(kube_pod_info{cluster="$cluster", namespace=~"$namespace"}, created_by_kind)',
+            },
+            defaultToAll: true,
+            allValue: '.*',
+            includeAll: true,
+            isMulti: true,
+        }),
+        new QueryVariable({
+            name: 'ownerName',
+            label: 'Owner name',
+            datasource: {
+                uid: '$datasource',
+                type: 'prometheus',
+            },
+            query: {
+                refId: 'name',
+                query: 'label_values(kube_pod_info{cluster="$cluster", namespace=~"$namespace", created_by_kind=~"$ownerKind"}, created_by_name)',
+            },
+            defaultToAll: true,
+            allValue: '.*',
+            includeAll: true,
+            isMulti: true,
+        }),
+        new TextBoxVariable({
+            name: 'search',
+            label: 'Search',
+            value: '',
+        })
+    ]
+}
 
 function createRootQuery(staticLabelFilters: LabelFilters, variableSet: SceneVariableSet) {
 
@@ -114,7 +115,7 @@ function createRootQuery(staticLabelFilters: LabelFilters, variableSet: SceneVar
 
     return new SceneQueryRunner({
         datasource: {
-            uid: 'prometheus',
+            uid: '$datasource',
             type: 'prometheus',
         },
         queries: [
@@ -278,12 +279,13 @@ class TableViz extends SceneObjectBase<TableVizState> {
                 return;
             }
 
+            const datasourceVariable = resolveVariable(sceneVariables, 'datasource')
+            
             asyncQueryRunner({
                 datasource: {
-                    uid: 'prometheus',
+                    uid: datasourceVariable?.toString(),
                     type: 'prometheus',
                 },
-                
                 queries: [
                     ...createRowQueries(ids, sceneVariables),
                 ],
@@ -307,7 +309,9 @@ class TableViz extends SceneObjectBase<TableVizState> {
     };
 }
 
-export const getPodsScene = (staticLabelFilters: LabelFilters, showVariableControls: boolean, createVariables: boolean) => {
+const vars = createVariables()
+
+export const getPodsScene = (staticLabelFilters: LabelFilters, showVariableControls: boolean, shouldCreateVariables: boolean) => {
 
     const controls = []
     if (showVariableControls) {
@@ -315,12 +319,8 @@ export const getPodsScene = (staticLabelFilters: LabelFilters, showVariableContr
     }
 
     const variables = []
-    if (createVariables) {
-        variables.push(namespaceVariable)
-        variables.push(nodeVariable)
-        variables.push(ownerKindVariable)
-        variables.push(ownerNameVariable)
-        variables.push(searchVariable)
+    if (shouldCreateVariables) {
+        variables.push(...vars)
     }
 
     const variableSet = new SceneVariableSet({

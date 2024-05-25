@@ -23,12 +23,13 @@ import { RestartsCellBuilder } from '../../components/RestartsCell';
 import { createRowQueries } from './Queries';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { LabelFilters, asyncQueryRunner } from 'pages/Workloads/queryHelpers';
+import { resolveVariable } from 'pages/Workloads/variableHelpers';
 
 const namespaceVariable = new QueryVariable({
     name: 'namespace',
     label: 'Namespace',
     datasource: {
-        uid: 'prometheus',
+        uid: '$datasource',
         type: 'prometheus',
     },
     query: {
@@ -55,7 +56,7 @@ function createRootQuery(staticLabelFilters: LabelFilters, variableSet: SceneVar
 
     return new SceneQueryRunner({
         datasource: {
-            uid: 'prometheus',
+            uid: '$datasource',
             type: 'prometheus',
         },
         queries: [
@@ -205,9 +206,11 @@ class TableViz extends SceneObjectBase<TableVizState> {
                 return;
             }
 
+            const datasource = resolveVariable(sceneVariables, 'datasource')
+
             asyncQueryRunner({
                 datasource: {
-                    uid: 'prometheus',
+                    uid: datasource?.toString(),
                     type: 'prometheus',
                 },
                 queries: [

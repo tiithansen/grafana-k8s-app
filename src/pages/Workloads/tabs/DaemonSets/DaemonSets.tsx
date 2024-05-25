@@ -22,7 +22,7 @@ const namespaceVariable = new QueryVariable({
     name: 'namespace',
     label: 'Namespace',
     datasource: {
-        uid: 'prometheus',
+        uid: '$datasource',
         type: 'prometheus',
     },
     query: {
@@ -43,7 +43,7 @@ const searchVariable = new TextBoxVariable({
 
 const daemonSetsQueryRunner = new SceneQueryRunner({
     datasource: {
-        uid: 'prometheus',
+        uid: '$datasource',
         type: 'prometheus',
     },
     queries: [

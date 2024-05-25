@@ -23,12 +23,13 @@ import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { buildExpandedRowScene } from './DeploymentExpandedRow';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
+import { resolveVariable } from 'pages/Workloads/variableHelpers';
 
 const namespaceVariable = new QueryVariable({
     name: 'namespace',
     label: 'Namespace',
     datasource: {
-        uid: 'prometheus',
+        uid: '$datasource',
         type: 'prometheus',
     },
     query: {
@@ -49,7 +50,7 @@ const searchVariable = new TextBoxVariable({
 
 const deploymentsQueryRunner = new SceneQueryRunner({
     datasource: {
-        uid: 'prometheus',
+        uid: '$datasource',
         type: 'prometheus',
     },
     queries: [
@@ -175,9 +176,11 @@ class TableViz extends SceneObjectBase<TableVizState> {
                 return;
             }
 
+            const datasource = resolveVariable(sceneVariables, 'datasource')
+
             asyncQueryRunner({
                 datasource: {
-                    uid: 'prometheus',
+                    uid: datasource?.toString(),
                     type: 'prometheus',
                 },
                 

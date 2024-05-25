@@ -11,7 +11,7 @@ export const getOverviewScene = () => {
                         .setTitle('Nodes')
                         .setData(new SceneQueryRunner({
                             datasource: {
-                                uid: 'prometheus',
+                                uid: '$datasource',
                                 type: 'prometheus',
                             },
                             queries: [
@@ -31,7 +31,7 @@ export const getOverviewScene = () => {
                         .setTitle('Pods')
                         .setData(new SceneQueryRunner({
                             datasource: {
-                                uid: 'prometheus',
+                                uid: '$datasource',
                                 type: 'prometheus',
                             },
                             queries: [

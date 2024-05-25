@@ -11,7 +11,6 @@ This plugin relies on presence of default kube-state-metrics and node-exporter m
 
 ### Current limitations
 
-* Datasource is not configurable yet and it is hardcoded with a name `prometheus`.
 * It expects the presence of `cluster` label on all the metrics.
 
 ### Screenshots
@@ -46,4 +45,5 @@ If you have any feature requests, improvements or suggestions, please create an 
 2. Run `npm install` to install the dependencies.
 3. Run `npm run dev` to start development server.
 4. Run `docker-compose up` to start Grafana with the plugin.
-5. Open Grafana at `http://localhost:3000/a/k8s-app/workloads`.
+5. Navigate to `http://localhost:3000/plugins/k8s-app` and configure the plugins datasource.
+6. Open Grafana at `http://localhost:3000/a/k8s-app/workloads`.

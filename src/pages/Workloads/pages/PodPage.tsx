@@ -1,4 +1,4 @@
-import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneGridItem, SceneGridLayout, SceneGridRow, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, SceneTimeRange, SceneVariableSet, VariableValueSelectors } from "@grafana/scenes";
+import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, SceneTimeRange, SceneVariableSet, VariableValueSelectors, sceneGraph } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { GraphTransform } from "@grafana/schema";
@@ -12,7 +12,7 @@ function getMemoryPanel(pod: string) {
         .setUnit('bytes')
         .setData(new SceneQueryRunner({
             datasource: {
-                uid: 'prometheus',
+                uid: '$datasource',
                 type: 'prometheus',
             },
             queries: [
@@ -63,7 +63,7 @@ function getCPUPanel(pod: string) {
         .setTitle('CPU')
         .setData(new SceneQueryRunner({
             datasource: {
-                uid: 'prometheus',
+                uid: '$datasource',
                 type: 'prometheus',
             },
             queries: [
@@ -108,7 +108,7 @@ function getNetworkPanel(pod: string) {
         .setUnit('bytes')
         .setData(new SceneQueryRunner({
             datasource: {
-                uid: 'prometheus',
+                uid: '$datasource',
                 type: 'prometheus',
             },
             queries: [
@@ -167,7 +167,7 @@ function getCPUThrottling(pod: string) {
         .setUnit('percent')
         .setData(new SceneQueryRunner({
             datasource: {
-                uid: 'prometheus',
+                uid: '$datasource',
                 type: 'prometheus',
             },
             queries: [
@@ -211,6 +211,7 @@ function getCPUThrottling(pod: string) {
 function getScene(pod: string) {
     return new EmbeddedScene({
         controls: [
+            new VariableValueSelectors({}),
             new SceneControlsSpacer(),
             new SceneTimePicker({ isOnCanvas: true }),
             new SceneRefreshPicker({
@@ -272,13 +273,14 @@ function getScene(pod: string) {
     })
 }
 
-export function getPodPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike, variables: SceneVariableSet, timeRange: SceneTimeRange) {
+export function getPodPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
     return new SceneAppPage({
         title: `Pod - ${routeMatch.params.name}`,
         titleIcon: 'dashboard',
-        $variables: variables,
-        $timeRange: timeRange,
+        $variables: sceneGraph.getVariables(parent).clone(),
+        $timeRange: sceneGraph.getTimeRange(parent).clone(),
         url: prefixRoute(`${ROUTES.Workloads}/pods/${routeMatch.params.name}`),
         getScene: () => getScene(routeMatch.params.name),
+        getParentPage: () => parent,
     })
 }

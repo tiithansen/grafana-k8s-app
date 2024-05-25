@@ -7,6 +7,8 @@ import {
     SceneControlsSpacer,
     SceneTimePicker,
     SceneRefreshPicker,
+    DataSourceVariable,
+    QueryVariable,
 } from '@grafana/scenes';
 import { ROUTES } from '../../constants';
 import React, { useMemo } from 'react';
@@ -19,20 +21,37 @@ import { getPodPage } from './pages/PodPage';
 import { getCronJobsScene } from './tabs/CronJobs/CronJobs';
 import { getJobsScene } from './tabs/Jobs/Jobs';
 import { getOverviewScene } from './tabs/Overview/Overview';
-import { clusterVariable } from './variables';
+import { usePluginProps } from 'utils/utils.plugin';
 
-const variables = new SceneVariableSet({
-    variables: [
-        clusterVariable,
-    ]
-})
+function getScene({ datasource }: { datasource: string }) {
 
-const timeRange = new SceneTimeRange({
-    from: 'now-1h',
-    to: 'now',
-});
+    const variables = new SceneVariableSet({
+        variables: [
+            new DataSourceVariable({
+                name: 'datasource',
+                label: 'Datasource',
+                pluginId: 'prometheus',
+                regex: datasource,
+            }),
+            new QueryVariable({
+                name: 'cluster',
+                label: 'Cluster',
+                datasource: {
+                    uid: '$datasource',
+                    type: 'prometheus',
+                },
+                query: {
+                  refId: 'cluster',
+                  query: 'label_values(kube_namespace_labels, cluster)',
+                },
+            }),
+        ],
+    })
 
-function getScene() {
+    const timeRange = new SceneTimeRange({
+        from: 'now-1h',
+        to: 'now',
+    });
 
     return new SceneApp({
         pages: [
@@ -92,7 +111,7 @@ function getScene() {
                 {
                     routePath: prefixRoute(`${ROUTES.Workloads}/pods/:name`),
                     getPage(routeMatch, parent) {
-                        return getPodPage(routeMatch, parent, variables.clone(), timeRange.clone());
+                        return getPodPage(routeMatch, parent);
                     }
                 },
                 
@@ -103,7 +122,10 @@ function getScene() {
 }
 
 export const Workloads = () => {
-    const scene = useMemo(() => getScene(), []);
+    const props = usePluginProps();
+    const scene = useMemo(() => getScene({
+        datasource: props?.meta.jsonData?.datasource || 'prometheus',
+    }), [props?.meta.jsonData?.datasource]);
 
     return <scene.Component model={scene} />;
 };
