@@ -22,36 +22,14 @@ import { getCronJobsScene } from './tabs/CronJobs/CronJobs';
 import { getJobsScene } from './tabs/Jobs/Jobs';
 import { getOverviewScene } from './tabs/Overview/Overview';
 import { usePluginProps } from 'utils/utils.plugin';
+import { getDeploymentPage } from './pages/DeploymentPage';
+import { getStatefulSetPage } from './pages/StatefulSetPage';
+import { createTimeRange, createTopLevelVariables } from './variableHelpers';
 
 function getScene({ datasource }: { datasource: string }) {
 
-    const variables = new SceneVariableSet({
-        variables: [
-            new DataSourceVariable({
-                name: 'datasource',
-                label: 'Datasource',
-                pluginId: 'prometheus',
-                regex: datasource,
-            }),
-            new QueryVariable({
-                name: 'cluster',
-                label: 'Cluster',
-                datasource: {
-                    uid: '$datasource',
-                    type: 'prometheus',
-                },
-                query: {
-                  refId: 'cluster',
-                  query: 'label_values(kube_namespace_labels, cluster)',
-                },
-            }),
-        ],
-    })
-
-    const timeRange = new SceneTimeRange({
-        from: 'now-1h',
-        to: 'now',
-    });
+    const variables = createTopLevelVariables({ datasource })
+    const timeRange = createTimeRange()
 
     return new SceneApp({
         pages: [
@@ -114,7 +92,18 @@ function getScene({ datasource }: { datasource: string }) {
                         return getPodPage(routeMatch, parent);
                     }
                 },
-                
+                {
+                    routePath: prefixRoute(`${ROUTES.Workloads}/deployments/:name`),
+                    getPage(routeMatch, parent) {
+                        return getDeploymentPage(routeMatch, parent);
+                    }
+                },
+                {
+                    routePath: prefixRoute(`${ROUTES.Workloads}/statefulsets/:name`),
+                    getPage(routeMatch, parent) {
+                        return getStatefulSetPage(routeMatch, parent);
+                    }
+                },
             ]
         }),
         ]

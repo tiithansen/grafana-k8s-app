@@ -4,6 +4,8 @@ import { prefixRoute } from "utils/utils.routing";
 import { GraphTransform } from "@grafana/schema";
 import { createResourceLabels } from "../components/ResourceLabels";
 import { getContainersScene } from "../components/ContainersTable/ContainersTable";
+import { usePluginProps } from "utils/utils.plugin";
+import { createTopLevelVariables, createTimeRange } from "../variableHelpers";
 
 function getMemoryPanel(pod: string) {
     return PanelBuilders
@@ -274,11 +276,20 @@ function getScene(pod: string) {
 }
 
 export function getPodPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
+
+    const props = usePluginProps();
+
+    const variables = createTopLevelVariables({
+        datasource: props?.meta.jsonData?.datasource || 'prometheus'
+    })
+
+    const timeRange = createTimeRange()
+
     return new SceneAppPage({
         title: `Pod - ${routeMatch.params.name}`,
         titleIcon: 'dashboard',
-        $variables: sceneGraph.getVariables(parent).clone(),
-        $timeRange: sceneGraph.getTimeRange(parent).clone(),
+        $variables: variables,
+        $timeRange: timeRange,
         url: prefixRoute(`${ROUTES.Workloads}/pods/${routeMatch.params.name}`),
         getScene: () => getScene(routeMatch.params.name),
         getParentPage: () => parent,

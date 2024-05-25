@@ -24,43 +24,43 @@ const timeRange = new SceneTimeRange({
 function getScene({ datasource }: { datasource: string }) {
     return new SceneApp({
         pages: [
-          new SceneAppPage({
-            title: 'Clusters',
-            url: prefixRoute(`${ROUTES.Clusters}`),
-            $timeRange: timeRange,
-            $variables: new SceneVariableSet({
-                variables: [
-                    new DataSourceVariable({
-                        name: 'datasource',
-                        label: 'Datasource',
-                        pluginId: 'prometheus',
-                        regex: datasource,
+            new SceneAppPage({
+                title: 'Clusters',
+                url: prefixRoute(`${ROUTES.Clusters}`),
+                $timeRange: timeRange,
+                $variables: new SceneVariableSet({
+                    variables: [
+                        new DataSourceVariable({
+                            name: 'datasource',
+                            label: 'Datasource',
+                            pluginId: 'prometheus',
+                            regex: datasource,
+                        }),
+                    ],
+                }),
+                controls: [
+                    new VariableValueSelectors({}),
+                    new SceneControlsSpacer(),
+                    new SceneTimePicker({ isOnCanvas: true }),
+                    new SceneRefreshPicker({
+                        intervals: ['5s', '1m', '1h'],
+                        isOnCanvas: true,
                     }),
                 ],
+                tabs: [
+                    new SceneAppPage({
+                        title: 'Overview',
+                        url: prefixRoute(`${ROUTES.Clusters}/overview`),
+                        getScene: getOverviewScene,
+                    }),
+                    new SceneAppPage({
+                        title: 'Nodes',
+                        url: prefixRoute(`${ROUTES.Clusters}/nodes`),
+                        getScene: () => getNodesScene(),
+                    }),
+                ],
+                getScene: getOverviewScene,
             }),
-            controls: [
-                new VariableValueSelectors({}),
-                new SceneControlsSpacer(),
-                new SceneTimePicker({ isOnCanvas: true }),
-                new SceneRefreshPicker({
-                    intervals: ['5s', '1m', '1h'],
-                    isOnCanvas: true,
-                }),
-            ],
-            tabs: [
-                new SceneAppPage({
-                    title: 'Overview',
-                    url: prefixRoute(`${ROUTES.Clusters}/overview`),
-                    getScene: getOverviewScene,
-                }),
-                new SceneAppPage({
-                    title: 'Nodes',
-                    url: prefixRoute(`${ROUTES.Clusters}/nodes`),
-                    getScene: () => getNodesScene(),
-                }),
-            ],
-            getScene: getOverviewScene,
-        }),
         ]
     })
 }
