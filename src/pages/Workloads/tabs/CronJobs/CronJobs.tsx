@@ -16,6 +16,13 @@ import {
 import React, { useEffect, useMemo } from 'react';
 import { DataFrameView } from '@grafana/data';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
+import { LinkCell } from 'pages/Workloads/components/LinkCell';
+import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
+import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
+import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { CellProps } from 'react-table';
+import { createRowQueries } from './Queries';
+import { DurationCell } from 'pages/Workloads/components/DurationCell';
 
 const namespaceVariable = new QueryVariable({
     name: 'namespace',
@@ -48,7 +55,7 @@ const cronJobsQueryRunner = new SceneQueryRunner({
     queries: [
         {
             refId: 'cronjobs',
-            expr: `group(kube_cronjob_labels{cluster="$cluster", namespace=~"$namespace"}) by (cronjob, namespace)`,
+            expr: `group(kube_cronjob_info{cluster="$cluster", namespace=~"$namespace"}) by (cronjob, schedule, namespace)`,
             instant: true,
             format: 'table'
         },
@@ -79,48 +86,47 @@ interface TableRow {
     cluster: string;
     cronjob: string;
     namespace: string;
-    Value: string;
+    schedule: string;
+    suspended: boolean;
+    lastSchedule: number;
 }
 
 interface TableVizState extends SceneObjectState {
     expandedRows?: SceneObject[];
-    // asyncRowData?: Map<string, number[]>;
-    // asyncDataPods?: string;
+    asyncRowData?: Map<string, number[]>;
+    visibleRowIds?: string;
 }
 
 class TableViz extends SceneObjectBase<TableVizState> {
 
-    /*constructor(state: TableVizState) {
+    constructor(state: TableVizState) {
         super({ ...state, asyncRowData: new Map<string, number[]>() });
-    }*/
-
-    private setAsyncRowData(data: any) {
-        // this.setState({ ...this.state, asyncRowData: data });
     }
 
-    private setAsyncDataPods(data: string) {
-        // this.setState({ ...this.state, asyncDataPods: data });
+    private setAsyncRowData(data: any) {
+        this.setState({ ...this.state, asyncRowData: data });
+    }
+
+    private setVisibleRowIds(ids: string) {
+        this.setState({ ...this.state, visibleRowIds: ids });
     }
 
     static Component = (props: SceneComponentProps<TableViz>) => {
         const { data } = sceneGraph.getData(props.model).useState();
         const sceneVariables = sceneGraph.getVariables(props.model)
         const timeRange = sceneGraph.getTimeRange(props.model)
-        // const { asyncRowData } = props.model.useState();
-        // const { asyncDataPods } = props.model.useState();
+        const { asyncRowData } = props.model.useState();
+        const { visibleRowIds } = props.model.useState();
        
         const columns = useMemo(
             () => [
-                { id: 'cronjob', header: 'CRONJOB' },
+                { id: 'cronjob', header: 'CRONJOB', cell: (props: CellProps<TableRow>) => LinkCell('cronjobs', props.row.values.cronjob) },
                 { id: 'namespace', header: 'NAMESPACE' },
-                /*{ id: 'node', header: 'NODE', cell: (props: CellProps<TableRow>) => NodeCell(props.row.values.node) },
-                { id: 'namespace', header: 'NAMESPACE' },
-                { id: 'containers', header: 'CONTAINERS', cell: (props: CellProps<TableRow>) => ContainersCellBuilder(props.cell.row.id, asyncRowData) },
-                { id: 'restarts', header: 'RESTARTS', cell: (props: CellProps<TableRow>) => RestartsCellBuilder(props.cell.row.id, asyncRowData) },
-                { id: 'memory', header: 'MEMORY (U/R/L)', cell: (props: CellProps<TableRow>) => MemoryCellBuilder(props.cell.row.id, asyncRowData) },
-                { id: 'cpu', header: 'CPU (U/R/L)', cell: (props: CellProps<TableRow>) => CPUCellBuilder(props.cell.row.id, asyncRowData) },*/
+                { id: 'schedule', header: 'SCHEDULE' },
+                { id: 'suspended', header: 'SUSPENDED' },
+                { id: 'lastSchedule', header: 'LAST SCHEDULE', cell: (props: CellProps<TableRow>) => DurationCell(props.row.values.lastSchedule)},
             ],
-            [ /*asyncRowData*/]
+            []
         );
 
         const tableData = useMemo(() => {
@@ -130,51 +136,47 @@ class TableViz extends SceneObjectBase<TableVizState> {
 
             const frame = data.series[0];
             const view = new DataFrameView<TableRow>(frame);
-            return view.toArray();
-        }, [data]);
+            const rows = view.toArray();
 
-        /*const onRowsChanged = (rows: any) => {
-            const pods = rows.map((row: any) => row.id).join('|');
+            const serieMatcherPredicate = (row: TableRow) => (value: any) => value.cronjob === row.cronjob;
+
+            for (const row of rows) {
+                row.suspended = getSeriesValue(asyncRowData, 'suspended', serieMatcherPredicate(row));
+                const lastSchedule = getSeriesValue(asyncRowData, 'last_schedule', serieMatcherPredicate(row));
+                if (lastSchedule > 0) {
+                    row.lastSchedule = lastSchedule - new Date().getTime() / 1000;
+                } else {
+                    row.lastSchedule = 0;
+                }
+            }
             
-            if (!pods || pods.length === 0 || asyncDataPods === pods) {
+            return rows;
+        }, [data, asyncRowData]);
+
+        const onRowsChanged = (rows: any) => {
+            const ids = rows.map((row: any) => row.id).join('|');
+            
+            if (!ids || ids.length === 0 || visibleRowIds === ids) {
                 return;
             }
 
-            const queryRunner = new SceneQueryRunner({
+            const datasource = resolveVariable(sceneVariables, 'datasource')
+
+            asyncQueryRunner({
                 datasource: {
-                    uid: 'prometheus',
+                    uid: datasource?.toString(),
                     type: 'prometheus',
                 },
-                queries: createRowQueries(pods),
+                
+                queries: [
+                    ...createRowQueries(ids, sceneVariables),
+                ],
                 $timeRange: timeRange.clone(),
-                $variables: sceneVariables.clone()
-            })
-
-            queryRunner.addActivationHandler(() => {
-
-                const sub = queryRunner.subscribeToState((state) => {
-                    
-                    const mappedValues: Map<string, number[]> = new Map<string, number[]>();
-                    if (state.data && state.data.state === LoadingState.Done) {
-                        for (const series of state.data.series) {
-                            const refId = series.refId;
-                            const frame = new DataFrameView(series);
-                            const data = frame.toArray();
-                            mappedValues.set(refId || 'unknown', data);
-                        }
-                    }
-
-                    props.model.setAsyncDataPods(pods);
-                    props.model.setAsyncRowData(mappedValues);
-                })
-
-                return () => {
-                    sub.unsubscribe();
-                };
-            })
-
-            queryRunner.activate();
-        };*/
+            }).then((data) => {
+                props.model.setVisibleRowIds(ids);
+                props.model.setAsyncRowData(data);
+            });
+        }
 
         return (
             <InteractiveTable
@@ -183,7 +185,7 @@ class TableViz extends SceneObjectBase<TableVizState> {
                 data={tableData}
                 renderExpandedRow={(row) => <ExpandedRow tableViz={props.model} row={row} />}
                 pageSize={10}
-                // onRowsChanged={onRowsChanged}
+                onRowsChanged={onRowsChanged}
             />
         );
     };
