@@ -115,7 +115,7 @@ jobs:
           echo "archive=${GRAFANA_PLUGIN_ARTIFACT}" >> $GITHUB_OUTPUT
 
       - name: Log in to the Container registry
-        uses: docker/login-action@3
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}

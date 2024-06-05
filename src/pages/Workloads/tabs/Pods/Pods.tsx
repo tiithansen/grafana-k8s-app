@@ -256,7 +256,7 @@ function createRootQuery(
                     * on (pod, namespace) group_right(node)
                     sum(
                         max(
-                            rate(
+                            avg_over_time(
                                 container_cpu_usage_seconds_total{
                                     cluster="$cluster",
                                     container!=""
@@ -375,6 +375,23 @@ function determineMemoryUsageColor(row: TableRow): TextColor {
     }
 
     if (row.memory.usage < row.memory.requests / 2) {
+        color = 'info'
+    }
+
+    return color
+}
+
+function determineCPUUsageColor(row: TableRow): TextColor {
+    let color: TextColor = 'primary';
+    if (row.cpu.usage > row.cpu.limits) {
+        color = 'error'
+    } else if (row.cpu.usage > row.cpu.requests) {
+        color = 'warning'
+    } else {
+        color = 'success'
+    }
+
+    if (row.cpu.usage < row.cpu.requests / 2) {
         color = 'info'
     }
 
@@ -512,6 +529,7 @@ class TableViz extends SceneObjectBase<TableVizState> {
                             cell: (props: CellContext<TableRow, any>) => FormattedCell({
                                 value: props.cell.row.original.cpu.usage,
                                 decimals: 5,
+                                color: determineCPUUsageColor(props.cell.row.original)
                             })
                         },
                         {
