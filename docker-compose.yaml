@@ -6,7 +6,7 @@ services:
     platform: 'linux/amd64'
     build:
       context: ./.config
-      dockerfile: ./.config/Dockerfile.localdev
+      dockerfile: ./Dockerfile.localdev
       args:
         grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
         grafana_version: ${GRAFANA_VERSION:-11.0.0}
