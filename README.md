@@ -30,6 +30,7 @@ Following list is not in any particular order.
 * Create page to view Deployment, StatefulSet, DaemonSet, CronJob and Job details.
 * Create page for Cluster overview.
 * Implement sorting by columns.
+  * Initial sorting for Pods is implemented. 
 * Display alerts on the resources.
 * Integrate OpenCost metrics to visualize cost of the resources.
 * Feature to show stopped resources.
