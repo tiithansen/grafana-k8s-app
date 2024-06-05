@@ -151,7 +151,23 @@ const sortConfig: SortingConfig<TableRow> = {
         local: false,
         type: 'value'
     },
+    memory_requests: {
+        local: false,
+        type: 'value'
+    },
+    memory_limits: {
+        local: false,
+        type: 'value'
+    },
     cpu_usage: {
+        local: false,
+        type: 'value'
+    },
+    cpu_requests: {
+        local: false,
+        type: 'value'
+    },
+    cpu_limits: {
         local: false,
         type: 'value'
     }
@@ -209,6 +225,32 @@ function createRootQuery(
                     ) by (pod, namespace, cluster)`
                 break
             }
+            case 'memory_requests': {
+                sortQuery = `
+                    * on (pod, namespace) group_right(node)
+                    max(
+                        kube_pod_container_resource_requests{
+                            resource="memory",
+                            container!="",
+                            cluster="$cluster"
+                        }
+                    ) by (pod, namespace, cluster)
+                `
+                break;
+            }
+            case 'memory_limits': {
+                sortQuery = `
+                    * on (pod, namespace) group_right(node)
+                    max(
+                        kube_pod_container_resource_limits{
+                            resource="memory",
+                            container!="",
+                            cluster="$cluster"
+                        }
+                    ) by (pod, namespace, cluster)
+                `
+                break;
+            }
             case 'cpu_usage': {
                 sortQuery = `
                     * on (pod, namespace) group_right(node)
@@ -222,6 +264,32 @@ function createRootQuery(
                             )
                         ) by (pod, namespace, container)
                     ) by (pod, namespace)`
+                break;
+            }
+            case 'cpu_requests': {
+                sortQuery = `
+                    * on (pod, namespace) group_right(node)
+                    max(
+                        kube_pod_container_resource_requests{
+                            resource="cpu",
+                            container!="",
+                            cluster="$cluster"
+                        }
+                    ) by (pod, namespace, cluster)
+                `
+                break;
+            }
+            case 'cpu_limits': {
+                sortQuery = `
+                    * on (pod, namespace) group_right(node)
+                    max(
+                        kube_pod_container_resource_limits{
+                            resource="cpu",
+                            container!="",
+                            cluster="$cluster"
+                        }
+                    ) by (pod, namespace, cluster)
+                `
                 break;
             }
         }
