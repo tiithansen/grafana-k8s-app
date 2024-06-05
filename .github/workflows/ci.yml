@@ -10,7 +10,9 @@ on:
       - master
       - main
 
-permissions: read-all
+permissions:
+  contents: read
+  packages: write
 
 env:
   REGISTRY: ghcr.io
