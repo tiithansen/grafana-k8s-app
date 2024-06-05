@@ -37,6 +37,31 @@ Following list is not in any particular order.
 
 If you have any feature requests, improvements or suggestions, please create an issue.
 
+## Installation
+
+### Grafana deployed with Helm
+
+Add packaged docker image as init container to Grafana deployment.
+
+```yaml
+# Init container
+extraInitContainers:
+  - name: grafana-scenes-k8s-app
+    image: ghcr.io/tiithansen/grafana-k8s-app:latest # or any other version
+    command: ["cp", "-r", "/package", "/var/lib/grafana/plugins/grafana-k8s-app"]
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - name: external-grafana-plugins
+        mountPath: /var/lib/grafana/plugins/grafana-k8s-app
+# Mount for the server
+extraVolumeMounts:
+  - name: external-grafana-plugins
+    mountPath: /var/lib/grafana/plugins/grafana-k8s-app
+# Volume for the server
+extraVolumes:
+  - name: external-grafana-plugins
+    emptyDir: {}
+```
 ## Contributing
 
 ### Local Development
