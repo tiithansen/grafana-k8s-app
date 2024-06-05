@@ -20,10 +20,10 @@ import { createRowQueries } from './Queries';
 import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { buildExpandedRowScene } from './NodeExpandedRowScene';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
-import { CellProps } from 'react-table';
-import { NodeMemoryCell } from './NodeMemoryCell';
-import { NodeCPUCell } from './NodeCPUCell';
 import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { LinkCell } from 'pages/Workloads/components/LinkCell';
+import { CellContext } from '@tanstack/react-table';
+import { FormattedCell, TextColor } from 'pages/Workloads/components/FormattedCell';
 
 const clusterVariable = new QueryVariable({
     name: 'cluster',
@@ -92,15 +92,34 @@ interface TableRow {
     memory: {
         free: number;
         total: number;
+        requests: number;
+        usage: number;
     },
-    cores: number;
-    cpuUsage: number;
+    cpu: {
+        usage: number;
+        requests: number;
+        cores: number;
+    },
+    pod_count: number;
 }
 
 interface TableVizState extends SceneObjectState {
     expandedRows?: SceneObject[];
     asyncRowData?: Map<string, number[]>;
     visibleRowIds?: string;
+}
+
+function determineMemoryUsageColor(row: TableRow) {
+    let usageColor: TextColor = 'primary'
+    if (row.memory.usage < 50) {
+        usageColor = 'info'
+    } else if (row.memory.usage < 80) {
+        usageColor = 'warning'
+    } else if (row.memory.usage >= 80) {
+        usageColor = 'error'
+    }
+
+    return usageColor
 }
 
 class TableViz extends SceneObjectBase<TableVizState> {
@@ -126,11 +145,86 @@ class TableViz extends SceneObjectBase<TableVizState> {
        
         const columns = useMemo(
             () => [
-                { id: 'internal_ip', header: 'NODE' },
+                { id: 'internal_ip', header: 'NODE', cell: (props: CellContext<TableRow, any>) => LinkCell('nodes', props.cell.row.original.internal_ip) },
                 { id: 'cluster', header: 'CLUSTER' },
-                { id: 'memory', header: 'MEMORY', cell: (props: CellProps<TableRow>) => NodeMemoryCell(props.cell.row.values.memory) },
-                { id: 'cores', header: 'CORES', cell: (props: CellProps<TableRow>) => <span>{props.cell.row.values.cores}</span> },
-                { id: 'cpuUsage', header: 'CPU USAGE', cell: (props: CellProps<TableRow>) => NodeCPUCell(props.cell.row.values.cpuUsage) },
+                { id: 'pod_count', header: 'POD COUNT' },
+                {
+                    id: 'memory',
+                    header: 'MEMORY',
+                    enableSorting: false,
+                    columns: [
+                        {
+                            id: 'free',
+                            header: 'FREE',
+                            accessorFn: (row: TableRow) => row.memory.free,
+                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                value: props.cell.row.original.memory.free,
+                                format: 'bytes'
+                            }),
+                        },
+                        {
+                            id: 'total',
+                            header: 'TOTAL',
+                            accessorFn: (row: TableRow) => row.memory.total,
+                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                value: props.cell.row.original.memory.total,
+                                format: 'bytes'
+                            })
+                        },
+                        {
+                            id: 'requests',
+                            header: 'REQUESTS',
+                            accessorFn: (row: TableRow) => row.memory.requests,
+                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                value: props.cell.row.original.memory.requests,
+                                format: 'bytes'
+                            })
+                        },
+                        {
+                            id: 'usage',
+                            header: 'USAGE',
+                            accessorFn: (row: TableRow) => row.memory.usage,
+                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                value: props.cell.row.original.memory.usage,
+                                format: 'percent',
+                                color: determineMemoryUsageColor(props.cell.row.original)
+                            })
+                        },
+                    ]
+                },
+                {
+                    id: 'cpu',
+                    header: 'CPU',
+                    enableSorting: false,
+                    columns: [
+                        {
+                            id: 'requests',
+                            header: 'REQUESTS',
+                            accessorFn: (row: TableRow) => row.cpu.requests,
+                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                value: props.cell.row.original.cpu.requests,
+                                decimals: 2,
+                            })
+                        },
+                        {
+                            id: 'cores',
+                            header: 'CORES',
+                            accessorFn: (row: TableRow) => row.cpu.cores,
+                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                value: props.cell.row.original.cpu.cores,
+                            })
+                        },
+                        {
+                            id: 'usage',
+                            header: 'USAGE',
+                            accessorFn: (row: TableRow) => row.cpu.usage,
+                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                value: props.cell.row.original.cpu.usage,
+                                format: 'percent'
+                            })
+                        },
+                    ]
+                },
             ],
             []
         );
@@ -148,18 +242,30 @@ class TableViz extends SceneObjectBase<TableVizState> {
                 return value.instance.startsWith(row.internal_ip);
             }
 
+            const serieMatcherByNodeNamePredicate = (row: TableRow) => (value: any) => {
+                return value.node.startsWith(row.node);
+            }
+
             for (const row of rows) {
 
                 const free = getSeriesValue(asyncRowData, 'memory_free', serieMatcherPredicate(row))
                 const total = getSeriesValue(asyncRowData, 'memory_total', serieMatcherPredicate(row))
+                const requests = getSeriesValue(asyncRowData, 'memory_requests', serieMatcherByNodeNamePredicate(row))
 
                 row.memory = {
+                    usage: total && free ? (total - free) / total * 100 : 0,
                     total,
-                    free
+                    free,
+                    requests
                 }
 
-                row.cores = getSeriesValue(asyncRowData, 'cores', serieMatcherPredicate(row))
-                row.cpuUsage = getSeriesValue(asyncRowData, 'cpu_usage', serieMatcherPredicate(row))
+                row.cpu = {
+                    usage: getSeriesValue(asyncRowData, 'cpu_usage', serieMatcherPredicate(row)),
+                    requests: getSeriesValue(asyncRowData, 'cpu_requests', serieMatcherByNodeNamePredicate(row)),
+                    cores: getSeriesValue(asyncRowData, 'cores', serieMatcherPredicate(row))
+                }
+
+                row.pod_count = getSeriesValue(asyncRowData, 'pod_count', serieMatcherByNodeNamePredicate(row))
             }
             
             return rows;
@@ -167,6 +273,7 @@ class TableViz extends SceneObjectBase<TableVizState> {
 
         const onRowsChanged = (rows: any) => {
             const ids = rows.map((row: any) => row.id + ":.*").join('|');
+            const nodeNames = rows.map((row: any) => row.original.node).join('|');
             
             if (!ids || ids.length === 0 || visibleRowIds === ids) {
                 return;
@@ -179,9 +286,8 @@ class TableViz extends SceneObjectBase<TableVizState> {
                     uid: datasource?.toString(),
                     type: 'prometheus',
                 },
-                
                 queries: [
-                    ...createRowQueries(ids, sceneVariables),
+                    ...createRowQueries(ids, nodeNames, sceneVariables),
                 ],
                 $timeRange: timeRange.clone(),
             }).then((data) => {

@@ -1,7 +1,7 @@
 import { SceneVariables } from "@grafana/scenes";
 import { resolveVariable } from "pages/Workloads/variableHelpers";
 
-export function createRowQueries(nodes: string, sceneVariables: SceneVariables) {
+export function createRowQueries(nodes: string, nodeNames: string, sceneVariables: SceneVariables) {
 
     const cluster = resolveVariable(sceneVariables, 'cluster');
 
@@ -29,8 +29,22 @@ export function createRowQueries(nodes: string, sceneVariables: SceneVariables) 
                 ) by (instance, cluster)`,
             instant: true,
             format: 'table'
-       },
-       {
+        },
+        {
+            refId: 'memory_requests',
+            expr: `
+                sum(
+                    kube_pod_container_resource_requests{
+                        resource="memory",
+                        node=~"${nodeNames}",
+                        container!="",
+                        cluster="${cluster}"
+                    }
+                ) by (node)`,
+            instant: true,
+            format: 'table'
+        },
+        {
             refId: 'cores',
             expr: `
                 count(
@@ -45,6 +59,20 @@ export function createRowQueries(nodes: string, sceneVariables: SceneVariables) 
             format: 'table'
        },
        {
+            refId: 'cpu_requests',
+            expr: `
+                sum(
+                    kube_pod_container_resource_requests{
+                        resource="cpu",
+                        node=~"${nodeNames}",
+                        container!="",
+                        cluster="${cluster}"
+                    }
+                ) by (node)`,
+            instant: true,
+            format: 'table'
+        },
+        {
             refId: 'cpu_usage',
             expr: `
                 (
@@ -71,6 +99,18 @@ export function createRowQueries(nodes: string, sceneVariables: SceneVariables) 
                 ) * 100`,
             instant: true,
             format: 'table'
-       }
+        },
+        {
+            refId: 'pod_count',
+            expr: `
+                count(
+                    kube_pod_info{
+                        cluster="${cluster}",
+                        node=~"${nodeNames}"
+                    }
+                ) by (node)`,
+            instant: true,
+            format: 'table'
+        }
     ];
 }

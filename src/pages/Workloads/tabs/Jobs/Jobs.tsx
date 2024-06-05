@@ -20,8 +20,8 @@ import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { getSeries } from 'pages/Workloads/seriesHelpers';
 import { resolveVariable } from 'pages/Workloads/variableHelpers';
 import { createRowQueries } from './Queries';
-import { CellProps } from '@grafana/ui';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
+import { CellContext } from '@tanstack/react-table';
 
 const namespaceVariable = new QueryVariable({
     name: 'namespace',
@@ -121,10 +121,10 @@ class TableViz extends SceneObjectBase<TableVizState> {
        
         const columns = useMemo(
             () => [
-                { id: 'job_name', header: 'JOB', cell: (props: CellProps<TableRow>) => LinkCell('jobs', props.row.values.job_name) },
+                { id: 'job_name', header: 'JOB', cell: (props: CellContext<TableRow, any>) => LinkCell('jobs', props.row.original.job_name) },
                 { id: 'namespace', header: 'NAMESPACE' },
-                { id: 'owner', header: 'OWNER', cell: (props: CellProps<TableRow>) => (<span>{props.row.values.owner.kind} - {props.row.values.owner.name}</span>) },
-                { id: 'complete', header: 'COMPLETE', cell: (props: CellProps<TableRow>) => (<span>{props.row.values.complete ? 'Yes' : 'No'}</span>) },
+                { id: 'owner', header: 'OWNER', cell: (props: CellContext<TableRow, any>) => (<span>{props.row.original.owner.kind} - {props.row.original.owner.name}</span>) },
+                { id: 'complete', header: 'COMPLETE', cell: (props: CellContext<TableRow, any>) => (<span>{props.row.original.complete ? 'Yes' : 'No'}</span>) },
             ],
             []
         );

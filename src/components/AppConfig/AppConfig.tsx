@@ -8,19 +8,11 @@ import { lastValueFrom } from 'rxjs';
 
 export type JsonData = {
   datasource?: string;
-  isclusterLabelEnabled?: boolean;
-  clusterLabel?: string;
 };
 
 type State = {
   // The regex pattern to match datasource
   datasource: string;
-  
-  // Enable cluster label
-  isClusterLabelEnabled: boolean;
-
-  // Cluster label name
-  clusterLabel: string;
 };
 
 interface Props extends PluginConfigPageProps<AppPluginMeta<JsonData>> {}
@@ -30,28 +22,12 @@ export const AppConfig = ({ plugin }: Props) => {
   const { enabled, pinned, jsonData } = plugin.meta;
   const [state, setState] = useState<State>({
     datasource: jsonData?.datasource || 'prometheus',
-    isClusterLabelEnabled: true,
-    clusterLabel: jsonData?.clusterLabel || 'cluster',
   });
 
   const onChangeDatasource = (event: ChangeEvent<HTMLInputElement>) => {
     setState({
       ...state,
       datasource: event.target.value.trim(),
-    });
-  };
-
-  const onChangeClusterLabel = (event: ChangeEvent<HTMLInputElement>) => {
-    setState({
-      ...state,
-      clusterLabel: event.target.value.trim(),
-    })
-  }
-
-  const onChangeClusterLabelEnabled = (event: ChangeEvent<HTMLInputElement>) => {
-    setState({
-      ...state,
-      isClusterLabelEnabled: Boolean(event.target.value.trim()),
     });
   };
 

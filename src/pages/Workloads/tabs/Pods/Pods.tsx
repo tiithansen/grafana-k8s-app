@@ -12,14 +12,13 @@ import {
     QueryVariable,
     SceneVariableSet,
     VariableValueSelectors,
+    SceneVariables,
 } from '@grafana/scenes';
 import React, { useEffect, useMemo } from 'react';
-import { CellProps } from '@grafana/ui';
 import { DataFrameView } from '@grafana/data';
-import { MemoryCellBuilder } from '../../components/MemoryCell';
+import { FormattedCell, TextColor } from '../../components/FormattedCell';
 import { ContainersCellBuilder } from '../../components/ContainersCell';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
-import { CPUCellBuilder } from '../../components/CPUCell';
 import { RestartsCellBuilder } from '../../components/RestartsCell';
 import { createRowQueries } from './Queries';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
@@ -27,6 +26,7 @@ import { buildExpandedRowScene } from './PodExpandedRow';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { LabelFilters, asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { CellContext, ColumnDef, ColumnSort } from '@tanstack/react-table';
 
 function createVariables() {
     return [
@@ -102,16 +102,130 @@ function createVariables() {
     ]
 }
 
-function createRootQuery(staticLabelFilters: LabelFilters, variableSet: SceneVariableSet) {
+type SortingDirection = 'asc' | 'desc'
+
+interface SortingState {
+    rowId: string;
+    direction: SortingDirection;
+}
+
+interface SortingConfig<Row> {
+    [key: string]: {
+        local: boolean;
+        type: 'label' | 'value',
+        compare?: (a: Row, b: Row, direction: SortingDirection) => number
+    }
+}
+
+const sortConfig: SortingConfig<TableRow> = {
+    pod: {
+       local: true,
+       type: 'label',
+        compare: (a, b, direction) => {
+            return direction === 'asc' ? a.pod.localeCompare(b.pod) : b.pod.localeCompare(a.pod)
+        }
+    },
+    node: {
+        local: true,
+        type: 'label',
+        compare: (a, b, direction) => {
+            return direction === 'asc' ? a.node.localeCompare(b.node) : b.node.localeCompare(a.node)
+        }
+    },
+    namespace: {
+        local: true,
+        type: 'label',
+        compare: (a, b, direction) => {
+            return direction === 'asc' ? a.namespace.localeCompare(b.namespace) : b.namespace.localeCompare(a.namespace)
+        }
+    },
+    containers: {
+        local: false,
+        type: 'value'
+    },
+    restarts: {
+        local: false,
+        type: 'value'
+    },
+    memory_usage: {
+        local: false,
+        type: 'value'
+    },
+    cpu_usage: {
+        local: false,
+        type: 'value'
+    }
+}
+
+function createRootQuery(
+    staticLabelFilters: LabelFilters,
+    variableSet: SceneVariableSet | SceneVariables,
+    sorting: SortingState) {
 
     const hasNodeVariable = variableSet.getByName('node') !== undefined
     const hasNamespaceVariable = variableSet.getByName('namespace') !== undefined
     const hasOwnerKindVariable = variableSet.getByName('ownerKind') !== undefined
     const hasOwnerNameVariable = variableSet.getByName('ownerName') !== undefined
+    const hasSearchVariable = variableSet.getByName('search') !== undefined
 
     const staticFilters = staticLabelFilters
         .map((filter) => `${filter.label}${filter.op}"${filter.value}",`)
         .join('\n')
+
+    let sortFn = ''
+    let sortQuery = ''
+    const remoteSort = !sortConfig[sorting.rowId].local
+
+    if (remoteSort) {
+        sortFn = sorting.direction === 'asc' ? 'sort' : 'sort_desc'
+        switch (sorting.rowId) {
+            case 'restarts': {
+                sortQuery = `
+                    * on (pod, namespace) group_right(node)
+                    max(
+                        kube_pod_container_status_restarts_total
+                    ) by (pod, namespace, cluster)`
+                break;
+            }
+            case 'containers': {
+                sortQuery = `
+                    * on (pod, namespace) group_right(node)
+                    sum(
+                        kube_pod_container_info{
+                            container!="",
+                            cluster="$cluster"
+                        }
+                    ) by (pod, namespace, cluster)`
+                break;
+            }
+            case 'memory_usage': {
+                sortQuery = `
+                    * on (pod, namespace) group_right(node)
+                    max(
+                        container_memory_working_set_bytes{
+                            container!="",
+                            cluster="$cluster"
+                        }
+                    ) by (pod, namespace, cluster)`
+                break
+            }
+            case 'cpu_usage': {
+                sortQuery = `
+                    * on (pod, namespace) group_right(node)
+                    sum(
+                        max(
+                            rate(
+                                container_cpu_usage_seconds_total{
+                                    cluster="$cluster",
+                                    container!=""
+                                }[$__rate_interval]
+                            )
+                        ) by (pod, namespace, container)
+                    ) by (pod, namespace)`
+                break;
+            }
+        }
+    }
 
     return new SceneQueryRunner({
         datasource: {
@@ -122,16 +236,16 @@ function createRootQuery(staticLabelFilters: LabelFilters, variableSet: SceneVar
             {
                 refId: 'pods',
                 expr: `
-                    sort_desc(
+                    ${sortFn}(
                         kube_pod_info{
                             cluster="$cluster",
                             ${ hasNamespaceVariable ? 'namespace=~"$namespace",' : '' }
                             ${ hasNodeVariable ? `node=~"$node",`: ``}
                             ${ hasOwnerKindVariable ? `created_by_kind=~"$ownerKind",` : ''}
                             ${ hasOwnerNameVariable ? `created_by_name=~"$ownerName",` : ''}
+                            ${ hasSearchVariable ? `pod=~".*$search.*",` : ''}
                             ${ staticFilters }
-                            pod=~".*$search.*"
-                        } * on (pod, namespace) group_right(node) max(kube_pod_container_status_restarts_total) by (pod, namespace, cluster)
+                        } ${sortQuery}
                     )`,
                 instant: true,
                 format: 'table'
@@ -182,16 +296,39 @@ interface TableRow {
     };
 }
 
+function determineMemoryUsageColor(row: TableRow): TextColor {
+    let color: TextColor = 'primary';
+    if (row.memory.usage > row.memory.limits) {
+        color = 'error'
+    } else if (row.memory.usage > row.memory.requests) {
+        color = 'warning'
+    } else {
+        color = 'success'
+    }
+
+    if (row.memory.usage < row.memory.requests / 2) {
+        color = 'info'
+    }
+
+    return color
+}
+
 interface TableVizState extends SceneObjectState {
     expandedRows?: SceneObject[];
     asyncRowData?: Map<string, number[]>;
     visibleRowIds?: string;
+    sorting?: SortingState;
 }
 
 class TableViz extends SceneObjectBase<TableVizState> {
 
+    private onSortFn: (newSorting: any) => void;
+    private onRowsChangedFn = this.onRowsChanged.bind(this);
+
     constructor(state: TableVizState) {
         super({ ...state, asyncRowData: new Map<string, number[]>() });
+
+        this.onSortFn = this.onSort.bind(this);
     }
 
     private setAsyncRowData(data: any) {
@@ -202,22 +339,133 @@ class TableViz extends SceneObjectBase<TableVizState> {
         this.setState({ ...this.state, visibleRowIds: ids });
     }
 
+    private onSort(newSorting: ColumnSort[]) {
+        if (newSorting && newSorting.length > 0) {
+
+            const newSortingState: SortingState = {
+                rowId: newSorting[0].id,
+                direction: newSorting[0].desc ? 'desc' : 'asc'
+            }
+
+            const newState: TableVizState = {
+                ...this.state,
+                sorting: newSortingState
+            }
+
+            if (!sortConfig[newSortingState.rowId].local) {
+                newState.$data = createRootQuery([], sceneGraph.getVariables(this), newSortingState)
+            }
+
+            this.setState(newState)
+        }
+    }
+
+    private onRowsChanged(rows: any) {
+        const ids = rows.map((row: any) => row.id).join('|');
+        
+        if (!ids || ids.length === 0 || this.state.visibleRowIds === ids) {
+            return;
+        }
+
+        const sceneVariables = sceneGraph.getVariables(this)
+        const timeRange = sceneGraph.getTimeRange(this)
+        const datasourceVariable = resolveVariable(sceneVariables, 'datasource')
+        
+        asyncQueryRunner({
+            datasource: {
+                uid: datasourceVariable?.toString(),
+                type: 'prometheus',
+            },
+            queries: [
+                ...createRowQueries(ids, sceneVariables),
+            ],
+            $timeRange: timeRange.clone(),
+        }).then((data) => {
+            this.setVisibleRowIds(ids);
+            this.setAsyncRowData(data);
+        });
+    };
+
     static Component = (props: SceneComponentProps<TableViz>) => {
         const { data } = sceneGraph.getData(props.model).useState();
-        const sceneVariables = sceneGraph.getVariables(props.model)
-        const timeRange = sceneGraph.getTimeRange(props.model)
-        const { asyncRowData } = props.model.useState();
-        const { visibleRowIds } = props.model.useState();
+        const { asyncRowData, sorting } = props.model.useState();
        
-        const columns = useMemo(
+        const columns: Array<ColumnDef<TableRow>> = useMemo(
             () => [
-                { id: 'pod', header: 'POD', canSort: true, cell: (props: CellProps<TableRow>) => LinkCell('pods', props.row.values.pod) },
-                { id: 'node', header: 'NODE', cell: (props: CellProps<TableRow>) => LinkCell('nodes', props.row.values.node) },
+                { id: 'pod', header: 'POD', cell: (props: CellContext<TableRow, any>) => LinkCell('pods', props.row.original.pod) },
+                { id: 'node', header: 'NODE', cell: (props: CellContext<TableRow, any>) => LinkCell('nodes', props.row.original.node) },
                 { id: 'namespace', header: 'NAMESPACE' },
-                { id: 'containers', header: 'CONTAINERS', cell: (props: CellProps<TableRow>) => ContainersCellBuilder(props.cell.row.values.containers) },
-                { id: 'restarts', header: 'RESTARTS', cell: (props: CellProps<TableRow>) => RestartsCellBuilder(props.cell.row.values.restarts) },
-                { id: 'memory', header: 'MEMORY (U/R/L)', cell: (props: CellProps<TableRow>) => MemoryCellBuilder(props.cell.row.values.memory) },
-                { id: 'cpu', header: 'CPU (U/R/L)', cell: (props: CellProps<TableRow>) => CPUCellBuilder(props.cell.row.values.cpu) },
+                { id: 'containers', header: 'CONTAINERS', cell: (props: CellContext<TableRow, any>) => ContainersCellBuilder(props.cell.row.original.containers) },
+                { id: 'restarts', header: 'RESTARTS', cell: (props: CellContext<TableRow, any>) => RestartsCellBuilder(props.cell.row.original.restarts) },
+                { 
+                  id: 'memory', 
+                  header: 'MEMORY',
+                  enableSorting: false,
+                  columns: [
+                    {
+                        id: 'memory_usage',
+                        header: 'USAGE',
+                        accessorFn: (row: TableRow) => row.memory.usage,
+                        cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                            value: props.cell.row.original.memory.usage,
+                            format: 'bytes',
+                            color: determineMemoryUsageColor(props.cell.row.original)
+                        }),
+                    },
+                    {
+                        id: 'memory_requests',
+                        header: 'REQUESTS',
+                        accessorFn: (row: TableRow) => row.memory.requests,
+                        cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                            value: props.cell.row.original.memory.requests,
+                            format: 'bytes'
+                        })
+                    },
+                    {
+                        id: 'memory_limits',
+                        header: 'LIMITS',
+                        accessorFn: (row: TableRow) => row.memory.limits,
+                        cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                            value: props.cell.row.original.memory.limits,
+                            format: 'bytes'
+                        })
+                    },
+                  ]
+                },
+                {
+                    id: 'cpu',
+                    header: 'CPU',
+                    enableSorting: false,
+                    columns: [
+                        {
+                            id: 'cpu_usage',
+                            header: 'USAGE',
+                            accessorFn: (row: TableRow) => row.cpu.usage,
+                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                value: props.cell.row.original.cpu.usage,
+                                decimals: 5,
+                            })
+                        },
+                        {
+                            id: 'cpu_requests',
+                            header: 'REQUESTS',
+                            accessorFn: (row: TableRow) => row.cpu.requests,
+                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                value: props.cell.row.original.cpu.requests,
+                                decimals: 2,
+                            })
+                        },
+                        {
+                            id: 'cpu_limits',
+                            header: 'LIMITS',
+                            accessorFn: (row: TableRow) => row.cpu.limits,
+                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                value: props.cell.row.original.cpu.limits,
+                                decimals: 2,
+                            })
+                        },
+                    ],
+                },
             ],
             []
         );
@@ -268,33 +516,26 @@ class TableViz extends SceneObjectBase<TableVizState> {
                     limits: cpuLimit
                 }
             }
-            
-            return rows;
-        }, [data, asyncRowData]);
 
-        const onRowsChanged = (rows: any) => {
-            const ids = rows.map((row: any) => row.id).join('|');
-            
-            if (!ids || ids.length === 0 || visibleRowIds === ids) {
-                return;
+            if (sorting && sorting.rowId && sorting.direction) {
+                const sorter = sortConfig[sorting.rowId]
+                if (sorter && sorter.compare) {
+                    return rows.sort((a, b) => {
+                        return sorter.compare!(a, b, sorting.direction)
+                    })
+                }
             }
 
-            const datasourceVariable = resolveVariable(sceneVariables, 'datasource')
-            
-            asyncQueryRunner({
-                datasource: {
-                    uid: datasourceVariable?.toString(),
-                    type: 'prometheus',
-                },
-                queries: [
-                    ...createRowQueries(ids, sceneVariables),
-                ],
-                $timeRange: timeRange.clone(),
-            }).then((data) => {
-                props.model.setVisibleRowIds(ids);
-                props.model.setAsyncRowData(data);
-            });
-        };
+            return rows;
+        }, [data, asyncRowData, sorting]);
+
+        const currentSorting = useMemo(() => {
+            if (sorting) {
+                return [{ id: sorting.rowId, desc: sorting.direction === 'desc' }];
+            }
+
+            return [];
+        }, [sorting]);
 
         return (
             <InteractiveTable
@@ -303,7 +544,9 @@ class TableViz extends SceneObjectBase<TableVizState> {
                 data={tableData}
                 renderExpandedRow={(row) => <ExpandedRow tableViz={props.model} row={row} />}
                 pageSize={10}
-                onRowsChanged={onRowsChanged}
+                onRowsChanged={props.model.onRowsChangedFn}
+                onSort={props.model.onSortFn}
+                currentSorting={currentSorting}
             />
         );
     };
@@ -336,7 +579,7 @@ export const getPodsScene = (staticLabelFilters: LabelFilters, showVariableContr
                     width: '100%',
                     height: '100%',
                     body: new TableViz({
-                        $data: createRootQuery(staticLabelFilters, variableSet),
+                        $data: createRootQuery(staticLabelFilters, variableSet, { rowId: 'pod', direction: 'asc' }),
                     }),
                 }),
             ],

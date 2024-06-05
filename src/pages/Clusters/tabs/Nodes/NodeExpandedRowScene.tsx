@@ -1,8 +1,9 @@
 import { SceneFlexLayout } from "@grafana/scenes";
+import { LabelFilters } from "pages/Workloads/queryHelpers";
 import { getPodsScene } from "pages/Workloads/tabs/Pods/Pods";
 
 export function buildExpandedRowScene(node: string) {
-  const staticLabelFilters = [
+  const staticLabelFilters: LabelFilters = [
     {
         label: 'node',
         op: '=',

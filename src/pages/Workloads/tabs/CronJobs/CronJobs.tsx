@@ -20,9 +20,9 @@ import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { resolveVariable } from 'pages/Workloads/variableHelpers';
-import { CellProps } from 'react-table';
 import { createRowQueries } from './Queries';
 import { DurationCell } from 'pages/Workloads/components/DurationCell';
+import { CellContext } from '@tanstack/react-table';
 
 const namespaceVariable = new QueryVariable({
     name: 'namespace',
@@ -120,11 +120,11 @@ class TableViz extends SceneObjectBase<TableVizState> {
        
         const columns = useMemo(
             () => [
-                { id: 'cronjob', header: 'CRONJOB', cell: (props: CellProps<TableRow>) => LinkCell('cronjobs', props.row.values.cronjob) },
+                { id: 'cronjob', header: 'CRONJOB', cell: (props: CellContext<TableRow, any>) => LinkCell('cronjobs', props.row.original.cronjob) },
                 { id: 'namespace', header: 'NAMESPACE' },
                 { id: 'schedule', header: 'SCHEDULE' },
                 { id: 'suspended', header: 'SUSPENDED' },
-                { id: 'lastSchedule', header: 'LAST SCHEDULE', cell: (props: CellProps<TableRow>) => DurationCell(props.row.values.lastSchedule)},
+                { id: 'lastSchedule', header: 'LAST SCHEDULE', cell: (props: CellContext<TableRow, any>) => DurationCell(props.row.original.lastSchedule)},
             ],
             []
         );

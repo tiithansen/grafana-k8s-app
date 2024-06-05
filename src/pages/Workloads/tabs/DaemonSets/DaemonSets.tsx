@@ -19,11 +19,11 @@ import { InteractiveTable } from '../../../../components/InteractiveTable/Intera
 import { buildExpandedRowScene } from './ExpandedRow';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
-import { CellProps } from 'react-table';
 import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { resolveVariable } from 'pages/Workloads/variableHelpers';
 import { createRowQueries } from './Queries';
+import { CellContext } from '@tanstack/react-table';
 
 const namespaceVariable = new QueryVariable({
     name: 'namespace',
@@ -122,9 +122,9 @@ class TableViz extends SceneObjectBase<TableVizState> {
        
         const columns = useMemo(
             () => [
-                { id: 'daemonset', header: 'DAEMONSET', cell: (props: CellProps<TableRow>) => LinkCell('daemonsets', props.row.values.daemonset) },
+                { id: 'daemonset', header: 'DAEMONSET', cell: (props: CellContext<TableRow, any>) => LinkCell('daemonsets', props.row.original.daemonset) },
                 { id: 'namespace', header: 'NAMESPACE' },
-                { id: 'replicas', header: 'REPLICAS', cell: (props: CellProps<TableRow>) => ReplicasCell(props.row.values.replicas) },
+                { id: 'replicas', header: 'REPLICAS', cell: (props: CellContext<TableRow, any>) => ReplicasCell(props.row.original.replicas) },
             ],
             []
         );

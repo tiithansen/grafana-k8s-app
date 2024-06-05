@@ -11,16 +11,15 @@ import {
     VariableValueSelectors,
 } from '@grafana/scenes';
 import React, { useEffect, useMemo } from 'react';
-import { CellProps } from '@grafana/ui';
 import { DataFrameView } from '@grafana/data';
-import { MemoryCellBuilder } from '../../components/MemoryCell';
+import { FormattedCell } from '../FormattedCell';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
-import { CPUCellBuilder } from '../../components/CPUCell';
 import { RestartsCellBuilder } from '../../components/RestartsCell';
 import { createRowQueries } from './Queries';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { LabelFilters, asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { CellContext } from '@tanstack/react-table';
 
 const namespaceVariable = new QueryVariable({
     name: 'namespace',
@@ -145,9 +144,76 @@ class TableViz extends SceneObjectBase<TableVizState> {
             () => [
                 { id: 'container', header: 'CONTAINER' },
                 { id: 'image', header: 'IMAGE' },
-                { id: 'restarts', header: 'RESTARTS', cell: (props: CellProps<TableRow>) => RestartsCellBuilder(props.cell.row.values.restarts) },
-                { id: 'memory', header: 'MEMORY (U/R/L)', cell: (props: CellProps<TableRow>) => MemoryCellBuilder(props.cell.row.values.memory) },
-                { id: 'cpu', header: 'CPU (U/R/L)', cell: (props: CellProps<TableRow>) => CPUCellBuilder(props.cell.row.values.cpu) },
+                { id: 'restarts', header: 'RESTARTS', cell: (props: CellContext<TableRow, any>) => RestartsCellBuilder(props.cell.row.original.restarts) },
+                { 
+                    id: 'memory', 
+                    header: 'MEMORY',
+                    enableSorting: false,
+                    columns: [
+                      {
+                          id: 'memory_usage',
+                          header: 'USAGE',
+                          accessorFn: (row: TableRow) => row.memory.usage,
+                          cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                              value: props.cell.row.original.memory.usage,
+                              format: 'bytes',
+                              // color: determineMemoryUsageColor(props.cell.row.original)
+                          }),
+                      },
+                      {
+                          id: 'memory_requests',
+                          header: 'REQUESTS',
+                          accessorFn: (row: TableRow) => row.memory.requests,
+                          cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                              value: props.cell.row.original.memory.requests,
+                              format: 'bytes'
+                          })
+                      },
+                      {
+                          id: 'memory_limits',
+                          header: 'LIMITS',
+                          accessorFn: (row: TableRow) => row.memory.limits,
+                          cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                              value: props.cell.row.original.memory.limits,
+                              format: 'bytes'
+                          })
+                      },
+                    ]
+                  },
+                  {
+                      id: 'cpu',
+                      header: 'CPU',
+                      enableSorting: false,
+                      columns: [
+                          {
+                              id: 'cpu_usage',
+                              header: 'USAGE',
+                              accessorFn: (row: TableRow) => row.cpu.usage,
+                              cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                  value: props.cell.row.original.cpu.usage,
+                                  decimals: 5,
+                              })
+                          },
+                          {
+                              id: 'cpu_requests',
+                              header: 'REQUESTS',
+                              accessorFn: (row: TableRow) => row.cpu.requests,
+                              cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                  value: props.cell.row.original.cpu.requests,
+                                  decimals: 2,
+                              })
+                          },
+                          {
+                              id: 'cpu_limits',
+                              header: 'LIMITS',
+                              accessorFn: (row: TableRow) => row.cpu.limits,
+                              cell: (props: CellContext<TableRow, any>) => FormattedCell({
+                                  value: props.cell.row.original.cpu.limits,
+                                  decimals: 2,
+                              })
+                          },
+                      ],
+                  },
             ],
             []
         );

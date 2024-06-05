@@ -1,8 +1,81 @@
-import { EmbeddedScene, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexLayout, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
+import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { usePluginProps } from "utils/utils.plugin";
 import { createTopLevelVariables, createTimeRange } from "../variableHelpers";
+import { createResourceLabels } from "../components/ResourceLabels";
+import { getPodsScene } from "../tabs/Pods/Pods";
+import { LabelFilters } from "../queryHelpers";
+
+function getPods(deployment: string) {
+    const staticLabelFilters: LabelFilters = [
+        {
+            label: 'created_by_name',
+            op: '=~',
+            value: `${deployment}.*`
+        },
+        {
+            label: 'created_by_kind',
+            op: '=',
+            value: 'ReplicaSet' 
+        }
+    ]
+
+    return getPodsScene(staticLabelFilters, false, false)
+}
+
+function getReplicasPanel(deployment: string) {
+    return PanelBuilders.timeseries()
+        .setTitle('Replicas')
+        .setData(new SceneQueryRunner({
+            datasource: {
+                uid: '$datasource',
+                type: 'prometheus',
+            },
+            queries: [
+                {
+                    refId: 'unavailable_replicas',
+                    expr: `
+                        max(
+                            kube_deployment_status_replicas_unavailable{
+                                deployment=~"${deployment}",
+                                cluster="$cluster"
+                            }
+                        ) by (deployment)`,
+                    legendFormat: 'Unavailable'
+                },
+                {
+                    refId: 'available_replicas',
+                    expr: `
+                        max(
+                            kube_deployment_status_replicas_available{
+                                deployment=~"${deployment}",
+                                cluster="$cluster"
+                            }
+                        ) by (deployment)`,
+                    legendFormat: 'Available'
+                },
+                {
+                    refId: 'replicas',
+                    expr: `
+                        max(
+                            kube_deployment_status_replicas{
+                                deployment=~"${deployment}",
+                                cluster="$cluster"
+                            }
+                        ) by (deployment)`,
+                    legendFormat: 'Replicas'
+                },
+            ]
+        }))
+        .setOverrides((builder) => {
+            builder.matchFieldsByQuery('replicas')
+                .overrideCustomFieldConfig('fillOpacity', 10)
+            builder.matchFieldsByQuery('available_replicas')
+                .overrideCustomFieldConfig('fillOpacity', 10)
+        })
+        .build()
+}
 
 function getScene(deployment: string) {
     return new EmbeddedScene({
@@ -17,7 +90,38 @@ function getScene(deployment: string) {
         ],
         body: new SceneFlexLayout({
             direction: 'column',
-            children: []
+            children: [
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 200,
+                    children: [
+                        new SceneFlexItem({
+                            height: 'auto',
+                            width: `${(1/3) * 100}%`,
+                            body: createResourceLabels('deployment', [{
+                                label: 'deployment',
+                                op: '=',
+                                value: deployment,
+                            }]),
+                        }),
+                        new SceneFlexItem({
+                            height: 200,
+                            width: `${(2/3) * 100}%`,
+                            body: getReplicasPanel(deployment),
+                        })
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new SceneFlexItem({
+                            height: 'auto',
+                            width: '100%',
+                            body: getPods(deployment),
+                        }),
+                    ]
+                }),
+            ]
         }),
     })
 }

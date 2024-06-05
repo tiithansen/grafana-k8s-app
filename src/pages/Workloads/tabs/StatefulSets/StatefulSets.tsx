@@ -18,12 +18,12 @@ import { DataFrameView } from '@grafana/data';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
 import { buildExpandedRowScene } from './ExpandedRow';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
-import { CellProps } from '@grafana/ui';
 import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { resolveVariable } from 'pages/Workloads/variableHelpers';
 import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { createRowQueries } from './Queries';
+import { CellContext } from '@tanstack/react-table';
 
 const namespaceVariable = new QueryVariable({
     name: 'namespace',
@@ -56,7 +56,14 @@ const statefulSetsQueryRunner = new SceneQueryRunner({
     queries: [
         {
             refId: 'statefulsets',
-            expr: `group(kube_statefulset_labels{cluster="$cluster", namespace=~"$namespace"}) by (statefulset, namespace)`,
+            expr: `
+                group(
+                    kube_statefulset_labels{
+                        cluster="$cluster",
+                        namespace=~"$namespace",
+                        statefulset=~".*$search.*"
+                    }
+                ) by (statefulset, namespace)`,
             instant: true,
             format: 'table'
         },
@@ -122,9 +129,9 @@ class TableViz extends SceneObjectBase<TableVizState> {
        
         const columns = useMemo(
             () => [
-                { id: 'statefulset', header: 'STATEFULSET', cell: (props: CellProps<TableRow>) => LinkCell('statefulsets', props.row.values.statefulset) },
+                { id: 'statefulset', header: 'STATEFULSET', cell: (props: CellContext<TableRow, any>) => LinkCell('statefulsets', props.row.original.statefulset) },
                 { id: 'namespace', header: 'NAMESPACE' },
-                { id: 'replicas', header: 'REPLICAS', cell: (props: CellProps<TableRow>) => ReplicasCell(props.row.values.replicas) },
+                { id: 'replicas', header: 'REPLICAS', cell: (props: CellContext<TableRow, any>) => ReplicasCell(props.row.original.replicas) },
             ],
             []
         );

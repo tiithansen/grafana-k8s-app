@@ -66,6 +66,7 @@
     "@grafana/scenes": "^4.22.0",
     "@grafana/schema": "10.4.1",
     "@grafana/ui": "10.4.1",
+    "@tanstack/react-table": "^8.17.3",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-router-dom": "^5.2.0",

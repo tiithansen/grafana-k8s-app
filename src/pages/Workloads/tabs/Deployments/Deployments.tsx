@@ -14,7 +14,6 @@ import {
     SceneVariableSet,
 } from '@grafana/scenes';
 import React, { useEffect, useMemo } from 'react';
-import { CellProps } from '@grafana/ui';
 import { DataFrameView } from '@grafana/data';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
 import { createRowQueries } from './Queries';
@@ -24,6 +23,7 @@ import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { buildExpandedRowScene } from './DeploymentExpandedRow';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { CellContext } from '@tanstack/react-table';
 
 const namespaceVariable = new QueryVariable({
     name: 'namespace',
@@ -64,7 +64,7 @@ const deploymentsQueryRunner = new SceneQueryRunner({
                         owner_name=~".*$search.*",
                         owner_kind="Deployment"
                     }
-                ) by (owner_name, namespace, replicaset)`,
+                ) by (owner_name, namespace, deployment)`,
             instant: true,
             format: 'table'
         },
@@ -132,9 +132,9 @@ class TableViz extends SceneObjectBase<TableVizState> {
        
         const columns = useMemo(
             () => [
-                { id: 'deployment', header: 'DEPLOYMENT', cell: (props: CellProps<TableRow>) =>  LinkCell('deployments', props.cell.row.values.deployment)},
+                { id: 'deployment', header: 'DEPLOYMENT', cell: (props: CellContext<TableRow, any>) =>  LinkCell('deployments', props.cell.row.original.deployment)},
                 { id: 'namespace', header: 'NAMESPACE' },
-                { id: 'replicas', header: 'REPLICAS', cell: (props: CellProps<TableRow>) => ReplicasCell(props.cell.row.values.replicas) }
+                { id: 'replicas', header: 'REPLICAS', cell: (props: CellContext<TableRow, any>) => ReplicasCell(props.cell.row.original.replicas) }
             ],
             []
         );
@@ -149,8 +149,6 @@ class TableViz extends SceneObjectBase<TableVizState> {
             const rows = view.toArray();
 
             // Group rows toghether based on the deployment name
-
-
             const serieMatcherPredicate = (row: TableRow) => (value: any) => value.deployment === row.deployment;
 
             for (const row of rows) {
