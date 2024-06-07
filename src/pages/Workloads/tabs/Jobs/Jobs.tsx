@@ -8,7 +8,6 @@ import {
     SceneObjectState,
     SceneObjectBase,
     SceneComponentProps,
-    QueryVariable,
     TextBoxVariable,
     SceneVariableSet,
     VariableValueSelectors,
@@ -18,27 +17,13 @@ import { DataFrameView } from '@grafana/data';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
 import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { getSeries } from 'pages/Workloads/seriesHelpers';
-import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { createNamespaceVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
 import { createRowQueries } from './Queries';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { CellContext } from '@tanstack/react-table';
+import { Metrics } from 'metrics/metrics';
 
-const namespaceVariable = new QueryVariable({
-    name: 'namespace',
-    label: 'Namespace',
-    datasource: {
-        uid: '$datasource',
-        type: 'prometheus',
-    },
-    query: {
-      refId: 'namespace',
-      query: 'label_values(kube_namespace_labels{cluster="$cluster"}, namespace)',
-    },
-    defaultToAll: true,
-    allValue: '.*',
-    includeAll: true,
-    isMulti: true,
-});
+const namespaceVariable = createNamespaceVariable();
 
 const searchVariable = new TextBoxVariable({
     name: 'search',
@@ -53,8 +38,13 @@ const jobsQueryRunner = new SceneQueryRunner({
     },
     queries: [
         {
-            refId: 'cronjobs',
-            expr: `group(kube_job_labels{cluster="$cluster", namespace=~"$namespace"}) by (job_name, cronjob, namespace)`,
+            refId: 'jobs',
+            expr: `
+                ${Metrics.kubeJobInfo.name}{
+                    cluster="$cluster",
+                    ${Metrics.kubeJobInfo.labels.namespace}=~"$namespace",
+                    ${Metrics.kubeJobInfo.labels.jobName}=~".*$search.*"
+                }`,
             instant: true,
             format: 'table'
         },

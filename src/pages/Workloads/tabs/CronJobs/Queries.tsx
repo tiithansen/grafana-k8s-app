@@ -1,5 +1,6 @@
 import { SceneVariables } from "@grafana/scenes";
 import { resolveVariable } from "pages/Workloads/variableHelpers";
+import { Metrics } from "metrics/metrics";
 
 export function createRowQueries(cronJob: string, sceneVariables: SceneVariables) {
 
@@ -10,11 +11,11 @@ export function createRowQueries(cronJob: string, sceneVariables: SceneVariables
             refId: 'suspended',
             expr: `
                 max(
-                    kube_cronjob_spec_suspend{
-                        cronjob=~"${cronJob}",
+                    ${Metrics.kubeCronJobSpecSuspend.name}{
+                        ${Metrics.kubeCronJobSpecSuspend.labels.cronJob}=~"${cronJob}",
                         cluster="${cluster}"
                     }
-                ) by (cronjob)`,
+                ) by (${Metrics.kubeCronJobSpecSuspend.labels.cronJob})`,
             instant: true,
             format: 'table'
         },
@@ -22,11 +23,11 @@ export function createRowQueries(cronJob: string, sceneVariables: SceneVariables
             refId: 'last_schedule',
             expr: `
                 max(
-                    kube_cronjob_status_last_schedule_time{
-                        cronjob=~"${cronJob}",
+                    ${Metrics.kubeCronJobStatusLastScheduleTime.name}{
+                        ${Metrics.kubeCronJobStatusLastScheduleTime.labels.cronJob}=~"${cronJob}",
                         cluster="${cluster}"
                     }
-                ) by (cronjob)`,
+                ) by (${Metrics.kubeCronJobStatusLastScheduleTime.labels.cronJob})`,
             instant: true,
             format: 'table'
         }

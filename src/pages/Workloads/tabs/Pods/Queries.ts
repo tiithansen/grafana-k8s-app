@@ -1,4 +1,5 @@
 import { SceneVariables } from "@grafana/scenes";
+import { Metrics } from "metrics/metrics";
 import { resolveVariable } from "pages/Workloads/variableHelpers";
 
 export function createRowQueries(pods: string, sceneVariables: SceneVariables) {
@@ -11,13 +12,13 @@ export function createRowQueries(pods: string, sceneVariables: SceneVariables) {
             expr: `
                 sum(
                     max(
-                        container_memory_working_set_bytes{
-                            pod=~"${pods}",
-                            container!="",
+                        ${Metrics.containerMemoryWorkingSetBytes.name}{
+                            ${Metrics.containerMemoryWorkingSetBytes.labels.pod}=~"${pods}",
+                            ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
                             cluster="${cluster}"
                         }
-                    ) by (pod, container)
-                ) by (pod)`,
+                    ) by (${Metrics.containerMemoryWorkingSetBytes.labels.pod}, ${Metrics.containerMemoryWorkingSetBytes.labels.container})
+                ) by (${Metrics.containerMemoryWorkingSetBytes.labels.pod})`,
             instant: true,
             format: 'table'
         },
@@ -25,13 +26,13 @@ export function createRowQueries(pods: string, sceneVariables: SceneVariables) {
             refId: 'memory_requests',
             expr: `
                 max(
-                    kube_pod_container_resource_requests{
-                        resource="memory",
-                        pod=~"${pods}",
-                        container!="",
+                    ${Metrics.kubePodContainerResourceRequests.name}{
+                        ${Metrics.kubePodContainerResourceRequests.labels.resource}="memory",
+                        ${Metrics.kubePodContainerResourceRequests.labels.pod}=~"${pods}",
+                        ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
                         cluster="${cluster}"
                     }
-                ) by (pod)`,
+                ) by (${Metrics.kubePodContainerResourceRequests.labels.pod})`,
             instant: true,
             format: 'table'
         },
@@ -39,13 +40,13 @@ export function createRowQueries(pods: string, sceneVariables: SceneVariables) {
             refId: 'memory_limit',
             expr: `
                 max(
-                    kube_pod_container_resource_limits{
-                        resource="memory",
-                        pod=~"${pods}",
-                        container!="",
+                    ${Metrics.kubePodContainerResourceLimits.name}{
+                        ${Metrics.kubePodContainerResourceLimits.labels.resource}="memory",
+                        ${Metrics.kubePodContainerResourceLimits.labels.pod}=~"${pods}",
+                        ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
                         cluster="${cluster}"
                     }
-                ) by (pod)`,
+                ) by (${Metrics.kubePodContainerResourceLimits.labels.pod})`,
             instant: true,
             format: 'table'
         },
@@ -53,12 +54,12 @@ export function createRowQueries(pods: string, sceneVariables: SceneVariables) {
             refId: 'containers',
             expr: `
                 sum(
-                    kube_pod_container_info{
-                        pod=~"${pods}",
-                        container!="",
+                    ${Metrics.kubePodContainerInfo.name}{
+                        ${Metrics.kubePodContainerInfo.labels.pod}=~"${pods}",
+                        ${Metrics.kubePodContainerInfo.labels.container}!="",
                         cluster="${cluster}"
                     }
-                ) by (pod)`,
+                ) by (${Metrics.kubePodContainerInfo.labels.pod})`,
             instant: true,
             format: 'table'
         },
@@ -66,12 +67,12 @@ export function createRowQueries(pods: string, sceneVariables: SceneVariables) {
             refId: 'containers_ready',
             expr: `
                 sum(
-                    kube_pod_container_status_ready{
-                        pod=~"${pods}",
-                        container!="",
+                    ${Metrics.kubePodContainerStatusReady.name}{
+                        ${Metrics.kubePodContainerStatusReady.labels.pod}=~"${pods}",
+                        ${Metrics.kubePodContainerStatusReady.labels.container}!="",
                         cluster="${cluster}"
                     }
-                ) by (pod)`,
+                ) by (${Metrics.kubePodContainerStatusReady.labels.pod})`,
             instant: true,
             format: 'table'
         },
@@ -81,14 +82,14 @@ export function createRowQueries(pods: string, sceneVariables: SceneVariables) {
                 sum(
                     max(
                         rate(
-                            container_cpu_usage_seconds_total{
-                                pod=~"${pods}",
+                            ${Metrics.containerCpuUsageSecondsTotal.name}{
+                                ${Metrics.containerCpuUsageSecondsTotal.labels.pod}=~"${pods}",
                                 cluster="${cluster}",
-                                container!=""
+                                ${Metrics.containerCpuUsageSecondsTotal.labels.container}!=""
                             }[$__rate_interval]
                         )
-                    ) by (pod, container)
-                ) by (pod)`,
+                    ) by (${Metrics.containerCpuUsageSecondsTotal.labels.pod}, ${Metrics.containerCpuUsageSecondsTotal.labels.container})
+                ) by (${Metrics.containerCpuUsageSecondsTotal.labels.pod})`,
             instant: true,
             format: 'table'
         },
@@ -96,13 +97,13 @@ export function createRowQueries(pods: string, sceneVariables: SceneVariables) {
             refId: 'cpu_requests',
             expr: `
                 sum(
-                    kube_pod_container_resource_requests{
-                        resource="cpu",
-                        pod=~"${pods}",
+                    ${Metrics.kubePodContainerResourceRequests.name}{
+                        ${Metrics.kubePodContainerResourceRequests.labels.resource}="cpu",
+                        ${Metrics.kubePodContainerResourceRequests.labels.pod}=~"${pods}",
+                        ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
                         cluster="${cluster}",
-                        container!=""
                     }
-                ) by (pod)`,
+                ) by (${Metrics.kubePodContainerResourceRequests.labels.pod})`,
             instant: true,
             format: 'table'
         },
@@ -110,13 +111,13 @@ export function createRowQueries(pods: string, sceneVariables: SceneVariables) {
             refId: 'cpu_limit',
             expr: `
                 sum(
-                    kube_pod_container_resource_limits{
-                        resource="cpu",
-                        pod=~"${pods}",
+                    ${Metrics.kubePodContainerResourceLimits.name}{
+                        ${Metrics.kubePodContainerResourceLimits.labels.resource}="cpu",
+                        ${Metrics.kubePodContainerResourceLimits.labels.pod}=~"${pods}",
+                        ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
                         cluster="${cluster}",
-                        container!=""
                     }
-                ) by (pod)`,
+                ) by (${Metrics.kubePodContainerResourceLimits.labels.pod})`,
             instant: true,
             format: 'table'
         },
@@ -124,11 +125,11 @@ export function createRowQueries(pods: string, sceneVariables: SceneVariables) {
             refId: 'restarts',
             expr: `
                 sum(
-                    kube_pod_container_status_restarts_total{
+                    ${Metrics.kubePodContainerStatusRestartsTotal.name}{
                         cluster="${cluster}",
-                        pod=~"${pods}"
+                        ${Metrics.kubePodContainerStatusRestartsTotal.labels.pod}=~"${pods}"
                     }
-                ) by (pod)`,
+                ) by (${Metrics.kubePodContainerStatusRestartsTotal.labels.pod})`,
             instant: true,
             format: 'table'
         }

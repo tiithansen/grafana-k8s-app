@@ -8,7 +8,6 @@ import {
     SceneObjectState,
     SceneObjectBase,
     SceneComponentProps,
-    QueryVariable,
     SceneVariableSet,
     TextBoxVariable,
     VariableValueSelectors,
@@ -19,27 +18,13 @@ import { InteractiveTable } from '../../../../components/InteractiveTable/Intera
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
-import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { createNamespaceVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
 import { createRowQueries } from './Queries';
 import { DurationCell } from 'pages/Workloads/components/DurationCell';
 import { CellContext } from '@tanstack/react-table';
+import { Metrics } from 'metrics/metrics';
 
-const namespaceVariable = new QueryVariable({
-    name: 'namespace',
-    label: 'Namespace',
-    datasource: {
-        uid: '$datasource',
-        type: 'prometheus',
-    },
-    query: {
-      refId: 'namespace',
-      query: 'label_values(kube_namespace_labels{cluster="$cluster"}, namespace)',
-    },
-    defaultToAll: true,
-    allValue: '.*',
-    includeAll: true,
-    isMulti: true,
-});
+const namespaceVariable = createNamespaceVariable();
 
 const searchVariable = new TextBoxVariable({
     name: 'search',
@@ -55,7 +40,17 @@ const cronJobsQueryRunner = new SceneQueryRunner({
     queries: [
         {
             refId: 'cronjobs',
-            expr: `group(kube_cronjob_info{cluster="$cluster", namespace=~"$namespace"}) by (cronjob, schedule, namespace)`,
+            expr: `
+                group(
+                    ${Metrics.kubeCronJobInfo.name}{
+                        cluster="$cluster",
+                        ${Metrics.kubeCronJobInfo.labels.namespace}=~"$namespace"
+                    }
+                ) by (
+                    ${Metrics.kubeCronJobInfo.labels.cronJob},
+                    ${Metrics.kubeCronJobInfo.labels.schedule},
+                    ${Metrics.kubeCronJobInfo.labels.namespace}
+                )`,
             instant: true,
             format: 'table'
         },

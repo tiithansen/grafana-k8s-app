@@ -6,7 +6,6 @@ import {
     SceneObjectBase,
     SceneComponentProps,
     TextBoxVariable,
-    QueryVariable,
     SceneVariableSet,
     VariableValueSelectors,
 } from '@grafana/scenes';
@@ -18,25 +17,11 @@ import { RestartsCellBuilder } from '../../components/RestartsCell';
 import { createRowQueries } from './Queries';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { LabelFilters, asyncQueryRunner } from 'pages/Workloads/queryHelpers';
-import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { createNamespaceVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
 import { CellContext } from '@tanstack/react-table';
+import { Metrics } from 'metrics/metrics';
 
-const namespaceVariable = new QueryVariable({
-    name: 'namespace',
-    label: 'Namespace',
-    datasource: {
-        uid: '$datasource',
-        type: 'prometheus',
-    },
-    query: {
-      refId: 'namespace',
-      query: 'label_values(kube_namespace_labels{cluster="$cluster"}, namespace)',
-    },
-    defaultToAll: true,
-    allValue: '.*',
-    includeAll: true,
-    isMulti: true,
-});
+const namespaceVariable = createNamespaceVariable();
 
 const searchVariable = new TextBoxVariable({
     name: 'search',
@@ -60,7 +45,7 @@ function createRootQuery(staticLabelFilters: LabelFilters, variableSet: SceneVar
                 refId: 'containers',
                 expr: `
                     sort_desc(
-                        kube_pod_container_info{
+                        ${Metrics.kubePodContainerInfo.name}{
                             cluster="$cluster",
                             ${ staticFilters }
                         }

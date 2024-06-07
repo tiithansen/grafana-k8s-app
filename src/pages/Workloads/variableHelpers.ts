@@ -1,4 +1,5 @@
 import { DataSourceVariable, QueryVariable, SceneTimeRange, SceneVariableSet, SceneVariables, sceneGraph } from "@grafana/scenes";
+import { Metrics } from "metrics/metrics";
 
 export function resolveVariable(sceneVariables: SceneVariables, name: string) {
 
@@ -35,10 +36,29 @@ export function createTopLevelVariables({ datasource }: { datasource: string }) 
                 },
                 query: {
                   refId: 'cluster',
-                  query: 'label_values(kube_namespace_labels, cluster)',
+                  query: 'label_values(cluster)',
                 },
             }),
         ],
+    })
+}
+
+export function createNamespaceVariable() {
+    return new QueryVariable({
+        name: 'namespace',
+        label: 'Namespace',
+        datasource: {
+            uid: '$datasource',
+            type: 'prometheus',
+        },
+        query: {
+            refId: 'namespace',
+            query: `label_values(${Metrics.kubeNamespaceStatusPhase.name}{cluster="$cluster"},${Metrics.kubeNamespaceStatusPhase.labels.namespace})`,
+        },
+        defaultToAll: true,
+        allValue: '.*',
+        includeAll: true,
+        isMulti: true,
     })
 }
 

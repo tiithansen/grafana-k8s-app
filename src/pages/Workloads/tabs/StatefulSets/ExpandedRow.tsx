@@ -1,17 +1,18 @@
 import { SceneFlexLayout } from "@grafana/scenes";
 import { getPodsScene } from "../Pods/Pods";
 import { LabelFilters } from "pages/Workloads/queryHelpers";
+import { Metrics } from "metrics/metrics";
 
 export function buildExpandedRowScene(statefulSet: string) {
 
     const staticLabelFilters: LabelFilters = [
         {
-            label: 'created_by_name',
+            label: Metrics.kubePodInfo.labels.createdByName,
             op: '=~',
             value: `${statefulSet}`
         },
         {
-            label: 'created_by_kind',
+            label: Metrics.kubePodInfo.labels.createdByKind,
             op: '=',
             value: 'StatefulSet' 
         }

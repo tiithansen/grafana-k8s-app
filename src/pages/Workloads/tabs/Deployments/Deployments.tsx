@@ -9,7 +9,6 @@ import {
     SceneObjectBase,
     SceneComponentProps,
     TextBoxVariable,
-    QueryVariable,
     VariableValueSelectors,
     SceneVariableSet,
 } from '@grafana/scenes';
@@ -22,25 +21,11 @@ import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { buildExpandedRowScene } from './DeploymentExpandedRow';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
-import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { createNamespaceVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
 import { CellContext } from '@tanstack/react-table';
+import { Metrics } from 'metrics/metrics';
 
-const namespaceVariable = new QueryVariable({
-    name: 'namespace',
-    label: 'Namespace',
-    datasource: {
-        uid: '$datasource',
-        type: 'prometheus',
-    },
-    query: {
-      refId: 'namespace',
-      query: 'label_values(kube_namespace_labels{cluster="$cluster"}, namespace)',
-    },
-    defaultToAll: true,
-    allValue: '.*',
-    includeAll: true,
-    isMulti: true,
-});
+const namespaceVariable = createNamespaceVariable();
 
 const searchVariable = new TextBoxVariable({
     name: 'search',
@@ -58,13 +43,16 @@ const deploymentsQueryRunner = new SceneQueryRunner({
             refId: 'deployments',
             expr: `
                 group(
-                    kube_replicaset_owner{
+                    ${Metrics.kubeReplicasetOwner.name}{
                         cluster="$cluster",
-                        namespace=~".*$namespace.*",
-                        owner_name=~".*$search.*",
-                        owner_kind="Deployment"
+                        ${Metrics.kubeReplicasetOwner.labels.namespace}=~"$namespace",
+                        ${Metrics.kubeReplicasetOwner.labels.ownerName}=~".*$search.*",
+                        ${Metrics.kubeReplicasetOwner.labels.ownerKind}="Deployment"
                     }
-                ) by (owner_name, namespace, deployment)`,
+                ) by (
+                    ${Metrics.kubeReplicasetOwner.labels.ownerName},
+                    ${Metrics.kubeReplicasetOwner.labels.namespace}
+                )`,
             instant: true,
             format: 'table'
         },

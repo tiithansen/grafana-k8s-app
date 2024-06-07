@@ -21,21 +21,48 @@ export function buildExpandedRowScene(handler: string) {
                     queries: [
                         {
                             refId: 'memory_usage',
-                            expr: `sum(max(container_memory_working_set_bytes{pod="${handler}",cluster="$cluster", container!=""}) by (pod, container)) by (pod)`,
+                            expr: `
+                                sum(
+                                    max(
+                                        container_memory_working_set_bytes{
+                                            pod="${handler}",
+                                            cluster="$cluster",
+                                            container!=""
+                                        }
+                                    ) by (pod, container)
+                                ) by (pod)
+                            `,
                             instant: false,
                             timeseries: true,
                             legendFormat: 'Usage {{container}}'
                         },
                         {
                             refId: 'memory_requests',
-                            expr: `max(kube_pod_container_resource_requests{resource="memory", pod="${handler}",cluster="$cluster", container!=""}) by (pod, container)`,
+                            expr: `
+                                max(
+                                    kube_pod_container_resource_requests{
+                                        resource="memory",
+                                        pod="${handler}",
+                                        cluster="$cluster", container!=""
+                                    }
+                                ) by (pod, container)
+                            `,
                             instant: false,
                             timeseries: true,
                             legendFormat: 'Requests {{container}}'
                         },
                         {
                             refId: 'memory_limit',
-                            expr: `max(kube_pod_container_resource_limits{resource="memory", pod="${handler}",cluster="$cluster", container!=""}) by (pod, container)`,
+                            expr: `
+                                max(
+                                    kube_pod_container_resource_limits{
+                                        resource="memory",
+                                        pod="${handler}",
+                                        cluster="$cluster",
+                                        container!=""
+                                    }
+                                ) by (pod, container)
+                            `,
                             instant: false,
                             timeseries: true,
                             legendFormat: 'Limits {{container}}'
@@ -67,21 +94,49 @@ export function buildExpandedRowScene(handler: string) {
                     queries: [
                         {
                             refId: 'cpu_usage',
-                            expr: `max(rate(container_cpu_usage_seconds_total{pod="${handler}",cluster="$cluster", container!=""}[$__rate_interval])) by (pod, container)`,
+                            expr: `
+                                max(
+                                    rate(
+                                        container_cpu_usage_seconds_total{
+                                            pod="${handler}",
+                                            cluster="$cluster",
+                                            container!=""
+                                        }[$__rate_interval]
+                                    )
+                                ) by (pod, container)
+                            `,
                             instant: false,
                             timeseries: true,
                             legendFormat: 'Usage {{container}}'
                         },
                         {
                             refId: 'cpu_requests',
-                            expr: `max(kube_pod_container_resource_requests{resource="cpu", pod="${handler}",cluster="$cluster", container!=""}) by (pod, container)`,
+                            expr: `
+                                max(
+                                    kube_pod_container_resource_requests{
+                                        resource="cpu",
+                                        pod="${handler}",
+                                        cluster="$cluster",
+                                        container!=""
+                                    }
+                                ) by (pod, container)
+                            `,
                             instant: false,
                             timeseries: true,
                             legendFormat: 'Requests {{container}}'
                         },
                         {
                             refId: 'cpu_limit',
-                            expr: `max(kube_pod_container_resource_limits{resource="cpu", pod="${handler}",cluster="$cluster", container!=""}) by (pod, container)`,
+                            expr: `
+                                max(
+                                    kube_pod_container_resource_limits{
+                                        resource="cpu",
+                                        pod="${handler}",
+                                        cluster="$cluster",
+                                        container!=""
+                                    }
+                                ) by (pod, container)
+                            `,
                             instant: false,
                             timeseries: true,
                             legendFormat: 'Limits {{container}}'

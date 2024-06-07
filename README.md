@@ -13,6 +13,10 @@ This plugin relies on presence of default kube-state-metrics and node-exporter m
 
 * It expects the presence of `cluster` label on all the metrics.
 
+### Metrics used
+
+* `kube_pod_info` expected labels `namespace`, `pod`, `node`, `created_by_kind`, `created_by_name`  - Used to get the pod information
+
 ### Screenshots
 
 #### Workloads

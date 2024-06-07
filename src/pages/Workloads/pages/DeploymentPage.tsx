@@ -6,6 +6,7 @@ import { createTopLevelVariables, createTimeRange } from "../variableHelpers";
 import { createResourceLabels } from "../components/ResourceLabels";
 import { getPodsScene } from "../tabs/Pods/Pods";
 import { LabelFilters } from "../queryHelpers";
+import { Metrics } from "metrics/metrics";
 
 function getPods(deployment: string) {
     const staticLabelFilters: LabelFilters = [
@@ -37,33 +38,33 @@ function getReplicasPanel(deployment: string) {
                     refId: 'unavailable_replicas',
                     expr: `
                         max(
-                            kube_deployment_status_replicas_unavailable{
-                                deployment=~"${deployment}",
+                            ${Metrics.kubeDeploymentStatusReplicasUnavailable.name}{
+                                ${Metrics.kubeDeploymentStatusReplicasUnavailable.labels.deployment}=~"${deployment}",
                                 cluster="$cluster"
                             }
-                        ) by (deployment)`,
+                        ) by (${Metrics.kubeDeploymentStatusReplicasUnavailable.labels.deployment})`,
                     legendFormat: 'Unavailable'
                 },
                 {
                     refId: 'available_replicas',
                     expr: `
                         max(
-                            kube_deployment_status_replicas_available{
-                                deployment=~"${deployment}",
+                            ${Metrics.kubeDeploymentStatusReplicasAvailable.name}{
+                                ${Metrics.kubeDeploymentStatusReplicasAvailable.labels.deployment}=~"${deployment}",
                                 cluster="$cluster"
                             }
-                        ) by (deployment)`,
+                        ) by (${Metrics.kubeDeploymentStatusReplicasAvailable.labels.deployment})`,
                     legendFormat: 'Available'
                 },
                 {
                     refId: 'replicas',
                     expr: `
                         max(
-                            kube_deployment_status_replicas{
-                                deployment=~"${deployment}",
+                            ${Metrics.kubeDeploymentStatusReplicas.name}{
+                                ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}=~"${deployment}",
                                 cluster="$cluster"
                             }
-                        ) by (deployment)`,
+                        ) by (${Metrics.kubeDeploymentStatusReplicas.labels.deployment})`,
                     legendFormat: 'Replicas'
                 },
             ]

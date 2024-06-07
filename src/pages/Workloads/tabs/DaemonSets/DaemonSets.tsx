@@ -8,7 +8,6 @@ import {
     SceneObjectState,
     SceneObjectBase,
     SceneComponentProps,
-    QueryVariable,
     TextBoxVariable,
     SceneVariableSet,
     VariableValueSelectors,
@@ -21,26 +20,12 @@ import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
 import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
-import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { createNamespaceVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
 import { createRowQueries } from './Queries';
 import { CellContext } from '@tanstack/react-table';
+import { Metrics } from 'metrics/metrics';
 
-const namespaceVariable = new QueryVariable({
-    name: 'namespace',
-    label: 'Namespace',
-    datasource: {
-        uid: '$datasource',
-        type: 'prometheus',
-    },
-    query: {
-      refId: 'namespace',
-      query: 'label_values(kube_namespace_labels{cluster="$cluster"}, namespace)',
-    },
-    defaultToAll: true,
-    allValue: '.*',
-    includeAll: true,
-    isMulti: true,
-});
+const namespaceVariable = createNamespaceVariable();
 
 const searchVariable = new TextBoxVariable({
     name: 'search',
@@ -55,8 +40,17 @@ const daemonSetsQueryRunner = new SceneQueryRunner({
     },
     queries: [
         {
-            refId: 'statefulsets',
-            expr: `group(kube_daemonset_labels{cluster="$cluster", namespace=~"$namespace"}) by (daemonset, namespace)`,
+            refId: 'daemonsets',
+            expr: `
+                group(
+                    ${Metrics.kubeDaemonsetLabels.name}{
+                        cluster="$cluster",
+                        ${Metrics.kubeDaemonsetLabels.labels.namespace}=~"$namespace"
+                    }
+                ) by (
+                    ${Metrics.kubeDaemonsetLabels.labels.daemonset},
+                    ${Metrics.kubeDaemonsetLabels.labels.namespace}
+                )`,
             instant: true,
             format: 'table'
         },

@@ -1,5 +1,6 @@
 import { SceneVariables } from "@grafana/scenes";
 import { resolveVariable } from "pages/Workloads/variableHelpers";
+import { Metrics } from "metrics/metrics";
 
 export function createRowQueries(daemonSet: string, sceneVariables: SceneVariables) {
 
@@ -10,11 +11,11 @@ export function createRowQueries(daemonSet: string, sceneVariables: SceneVariabl
             refId: 'replicas',
             expr: `
                 max(
-                    kube_daemonset_status_desired_number_scheduled{
-                        daemonset=~"${daemonSet}",
+                    ${Metrics.kubeDaemonsetStatusDesiredNumberScheduled.name}{
+                        ${Metrics.kubeDaemonsetStatusDesiredNumberScheduled.labels.daemonset}=~"${daemonSet}",
                         cluster="${cluster}"
                     }
-                ) by (daemonset)`,
+                ) by (${Metrics.kubeDaemonsetStatusDesiredNumberScheduled.labels.daemonset})`,
             instant: true,
             format: 'table'
         },
@@ -22,11 +23,11 @@ export function createRowQueries(daemonSet: string, sceneVariables: SceneVariabl
             refId: 'replicas_ready',
             expr: `
                 max(
-                    kube_daemonset_status_number_ready{
-                        daemonset=~"${daemonSet}",
+                    ${Metrics.kubeDaemonsetStatusNumberReady.name}{
+                        ${Metrics.kubeDaemonsetStatusNumberReady.labels.daemonset}=~"${daemonSet}",
                         cluster="${cluster}"
                     }
-                ) by (daemonset)`,
+                ) by (${Metrics.kubeDaemonsetStatusNumberReady.labels.daemonset})`,
             instant: true,
             format: 'table'
         },

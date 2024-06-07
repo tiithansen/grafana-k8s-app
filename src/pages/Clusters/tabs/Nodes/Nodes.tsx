@@ -34,7 +34,7 @@ const clusterVariable = new QueryVariable({
     },
     query: {
       refId: 'cluster',
-      query: 'label_values(kube_namespace_labels, cluster)',
+      query: 'label_values(cluster)',
     }
 });
 

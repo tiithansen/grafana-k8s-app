@@ -1,4 +1,5 @@
 import { SceneVariables } from "@grafana/scenes";
+import { Metrics } from "metrics/metrics";
 import { resolveVariable } from "pages/Workloads/variableHelpers";
 
 export function createRowQueries(statefulSet: string, sceneVariables: SceneVariables) {
@@ -10,11 +11,11 @@ export function createRowQueries(statefulSet: string, sceneVariables: SceneVaria
             refId: 'replicas',
             expr: `
                 max(
-                    kube_statefulset_status_replicas{
-                        statefulset=~"${statefulSet}",
+                    ${Metrics.kubeStatefulsetStatusReplicas.name}{
+                        ${Metrics.kubeStatefulsetStatusReplicas.labels.statefulset}=~"${statefulSet}",
                         cluster="${cluster}"
                     }
-                ) by (statefulset)`,
+                ) by (${Metrics.kubeStatefulsetStatusReplicas.labels.statefulset})`,
             instant: true,
             format: 'table'
         },
@@ -22,11 +23,11 @@ export function createRowQueries(statefulSet: string, sceneVariables: SceneVaria
             refId: 'replicas_ready',
             expr: `
                 max(
-                    kube_statefulset_status_replicas_ready{
-                        statefulset=~"${statefulSet}",
+                    ${Metrics.kubeStatefulsetStatusReplicasReady.name}{
+                        ${Metrics.kubeStatefulsetStatusReplicasReady.labels.statefulset}=~"${statefulSet}",
                         cluster="${cluster}"
                     }
-                ) by (statefulset)`,
+                ) by (${Metrics.kubeStatefulsetStatusReplicasReady.labels.statefulset})`,
             instant: true,
             format: 'table'
         },

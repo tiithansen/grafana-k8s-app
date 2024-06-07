@@ -25,27 +25,13 @@ import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { buildExpandedRowScene } from './PodExpandedRow';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
 import { LabelFilters, asyncQueryRunner } from 'pages/Workloads/queryHelpers';
-import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { createNamespaceVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
 import { CellContext, ColumnDef, ColumnSort } from '@tanstack/react-table';
+import { Metrics } from 'metrics/metrics';
 
 function createVariables() {
     return [
-        new QueryVariable({
-            name: 'namespace',
-            label: 'Namespace',
-            datasource: {
-                uid: '$datasource',
-                type: 'prometheus',
-            },
-            query: {
-                refId: 'namespace',
-                query: 'label_values(kube_namespace_labels{cluster="$cluster"}, namespace)',
-            },
-            defaultToAll: true,
-            allValue: '.*',
-            includeAll: true,
-            isMulti: true,
-        }),
+        createNamespaceVariable(),
         new QueryVariable({
             name: 'node',
             label: 'Node',
@@ -54,8 +40,8 @@ function createVariables() {
                 type: 'prometheus',
             },
             query: {
-                refId: 'namespace',
-                query: 'label_values(kube_pod_info{cluster="$cluster", namespace=~"$namespace"}, node)',
+                refId: 'node',
+                query: `label_values(${Metrics.kubePodInfo.name}{cluster="$cluster", ${Metrics.kubePodInfo.labels.namespace}=~"$namespace"}, ${Metrics.kubePodInfo.labels.node})`,
             },
             defaultToAll: true,
             allValue: '.*',
@@ -71,7 +57,7 @@ function createVariables() {
             },
             query: {
                 refId: 'kind',
-                query: 'label_values(kube_pod_info{cluster="$cluster", namespace=~"$namespace"}, created_by_kind)',
+                query: `label_values(${Metrics.kubePodInfo.name}{cluster="$cluster", ${Metrics.kubePodInfo.labels.namespace}=~"$namespace"}, ${Metrics.kubePodInfo.labels.createdByKind})`,
             },
             defaultToAll: true,
             allValue: '.*',
@@ -87,7 +73,7 @@ function createVariables() {
             },
             query: {
                 refId: 'name',
-                query: 'label_values(kube_pod_info{cluster="$cluster", namespace=~"$namespace", created_by_kind=~"$ownerKind"}, created_by_name)',
+                query: `label_values(${Metrics.kubePodInfo.name}{cluster="$cluster", ${Metrics.kubePodInfo.labels.namespace}=~"$namespace", ${Metrics.kubePodInfo.labels.createdByKind}=~"$ownerKind"}, ${Metrics.kubePodInfo.labels.createdByName})`,
             },
             defaultToAll: true,
             allValue: '.*',
@@ -197,98 +183,133 @@ function createRootQuery(
         switch (sorting.rowId) {
             case 'restarts': {
                 sortQuery = `
-                    * on (pod, namespace) group_right(node)
+                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
                     max(
-                        kube_pod_container_status_restarts_total
-                    ) by (pod, namespace, cluster)`
+                        ${Metrics.kubePodContainerStatusRestartsTotal.name}
+                    ) by (
+                        ${Metrics.kubePodContainerStatusRestartsTotal.labels.pod},
+                        ${Metrics.kubePodContainerStatusRestartsTotal.labels.namespace},
+                        cluster
+                    )`
                 break;
             }
             case 'containers': {
                 sortQuery = `
-                    * on (pod, namespace) group_right(node)
+                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
                     sum(
-                        kube_pod_container_info{
-                            container!="",
+                        ${Metrics.kubePodContainerInfo.name}{
+                            ${Metrics.kubePodContainerInfo.labels.container}!="",
                             cluster="$cluster"
                         }
-                    ) by (pod, namespace, cluster)`
+                    ) by (
+                        ${Metrics.kubePodContainerInfo.labels.pod},
+                        ${Metrics.kubePodContainerInfo.labels.namespace},
+                        cluster
+                    )`
                 break;
             }
             case 'memory_usage': {
                 sortQuery = `
-                    * on (pod, namespace) group_right(node)
+                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
                     max(
-                        container_memory_working_set_bytes{
-                            container!="",
+                        ${Metrics.containerMemoryWorkingSetBytes.name}{
+                            ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
                             cluster="$cluster"
                         }
-                    ) by (pod, namespace, cluster)`
+                    ) by (
+                        ${Metrics.containerMemoryWorkingSetBytes.labels.pod},
+                        ${Metrics.containerMemoryWorkingSetBytes.labels.namespace},
+                        cluster
+                    )`
                 break
             }
             case 'memory_requests': {
                 sortQuery = `
-                    * on (pod, namespace) group_right(node)
+                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
                     max(
-                        kube_pod_container_resource_requests{
-                            resource="memory",
-                            container!="",
+                        ${Metrics.kubePodContainerResourceRequests.name}{
+                            ${Metrics.kubePodContainerResourceRequests.labels.resource}="memory",
+                            ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
                             cluster="$cluster"
                         }
-                    ) by (pod, namespace, cluster)
+                    ) by (
+                        ${Metrics.kubePodContainerResourceRequests.labels.pod},
+                        ${Metrics.kubePodContainerResourceRequests.labels.namespace},
+                        cluster
+                    )
                 `
                 break;
             }
             case 'memory_limits': {
                 sortQuery = `
-                    * on (pod, namespace) group_right(node)
+                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
                     max(
-                        kube_pod_container_resource_limits{
-                            resource="memory",
-                            container!="",
+                        ${Metrics.kubePodContainerResourceLimits.name}{
+                            ${Metrics.kubePodContainerResourceLimits.labels.resource}="memory",
+                            ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
                             cluster="$cluster"
                         }
-                    ) by (pod, namespace, cluster)
+                    ) by (
+                        ${Metrics.kubePodContainerResourceLimits.labels.pod},
+                        ${Metrics.kubePodContainerResourceLimits.labels.namespace},
+                        cluster
+                    )
                 `
                 break;
             }
             case 'cpu_usage': {
                 sortQuery = `
-                    * on (pod, namespace) group_right(node)
+                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
                     sum(
                         max(
                             avg_over_time(
-                                container_cpu_usage_seconds_total{
+                                ${Metrics.containerCpuUsageSecondsTotal.name}{
                                     cluster="$cluster",
-                                    container!=""
+                                    ${Metrics.containerCpuUsageSecondsTotal.labels.container}!=""
                                 }[$__rate_interval]
                             )
-                        ) by (pod, namespace, container)
-                    ) by (pod, namespace)`
+                        ) by (
+                            ${Metrics.containerCpuUsageSecondsTotal.labels.pod},
+                            ${Metrics.containerCpuUsageSecondsTotal.labels.namespace},
+                            ${Metrics.containerCpuUsageSecondsTotal.labels.container}
+                        )
+                    ) by (
+                        ${Metrics.containerCpuUsageSecondsTotal.labels.pod},
+                        ${Metrics.containerCpuUsageSecondsTotal.labels.namespace}
+                    )`
                 break;
             }
             case 'cpu_requests': {
                 sortQuery = `
-                    * on (pod, namespace) group_right(node)
+                * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
                     max(
-                        kube_pod_container_resource_requests{
-                            resource="cpu",
-                            container!="",
+                        ${Metrics.kubePodContainerResourceRequests.name}{
+                            ${Metrics.kubePodContainerResourceRequests.labels.resource}="cpu",
+                            ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
                             cluster="$cluster"
                         }
-                    ) by (pod, namespace, cluster)
+                    ) by (
+                        ${Metrics.kubePodContainerResourceRequests.labels.pod},
+                        ${Metrics.kubePodContainerResourceRequests.labels.namespace},
+                        cluster
+                    )
                 `
                 break;
             }
             case 'cpu_limits': {
                 sortQuery = `
-                    * on (pod, namespace) group_right(node)
+                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
                     max(
-                        kube_pod_container_resource_limits{
-                            resource="cpu",
-                            container!="",
+                        ${Metrics.kubePodContainerResourceLimits.name}{
+                            ${Metrics.kubePodContainerResourceLimits.labels.resource}="cpu",
+                            ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
                             cluster="$cluster"
                         }
-                    ) by (pod, namespace, cluster)
+                    ) by (
+                        ${Metrics.kubePodContainerResourceLimits.labels.pod},
+                        ${Metrics.kubePodContainerResourceLimits.labels.namespace},
+                        cluster
+                    )
                 `
                 break;
             }
@@ -305,13 +326,13 @@ function createRootQuery(
                 refId: 'pods',
                 expr: `
                     ${sortFn}(
-                        kube_pod_info{
+                        ${Metrics.kubePodInfo.name}{
                             cluster="$cluster",
-                            ${ hasNamespaceVariable ? 'namespace=~"$namespace",' : '' }
-                            ${ hasNodeVariable ? `node=~"$node",`: ``}
-                            ${ hasOwnerKindVariable ? `created_by_kind=~"$ownerKind",` : ''}
-                            ${ hasOwnerNameVariable ? `created_by_name=~"$ownerName",` : ''}
-                            ${ hasSearchVariable ? `pod=~".*$search.*",` : ''}
+                            ${ hasNamespaceVariable ? `${Metrics.kubePodInfo.labels.namespace}=~"$namespace",` : '' }
+                            ${ hasNodeVariable ? `${Metrics.kubePodInfo.labels.node}=~"$node",`: ``}
+                            ${ hasOwnerKindVariable ? `${Metrics.kubePodInfo.labels.createdByKind}=~"$ownerKind",` : ''}
+                            ${ hasOwnerNameVariable ? `${Metrics.kubePodInfo.labels.createdByName}=~"$ownerName",` : ''}
+                            ${ hasSearchVariable ? `${Metrics.kubePodInfo.labels.pod}=~".*$search.*",` : ''}
                             ${ staticFilters }
                         } ${sortQuery}
                     )`,

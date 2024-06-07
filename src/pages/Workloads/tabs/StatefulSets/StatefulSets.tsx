@@ -8,7 +8,6 @@ import {
     SceneObjectState,
     SceneObjectBase,
     SceneComponentProps,
-    QueryVariable,
     TextBoxVariable,
     SceneVariableSet,
     VariableValueSelectors,
@@ -20,27 +19,13 @@ import { buildExpandedRowScene } from './ExpandedRow';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
-import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { createNamespaceVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
 import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { createRowQueries } from './Queries';
 import { CellContext } from '@tanstack/react-table';
+import { Metrics } from 'metrics/metrics';
 
-const namespaceVariable = new QueryVariable({
-    name: 'namespace',
-    label: 'Namespace',
-    datasource: {
-        uid: '$datasource',
-        type: 'prometheus',
-    },
-    query: {
-      refId: 'namespace',
-      query: 'label_values(kube_namespace_labels{cluster="$cluster"}, namespace)',
-    },
-    defaultToAll: true,
-    allValue: '.*',
-    includeAll: true,
-    isMulti: true,
-});
+const namespaceVariable = createNamespaceVariable();
 
 const searchVariable = new TextBoxVariable({
     name: 'search',
@@ -58,12 +43,12 @@ const statefulSetsQueryRunner = new SceneQueryRunner({
             refId: 'statefulsets',
             expr: `
                 group(
-                    kube_statefulset_labels{
+                    ${Metrics.kubeStatefulsetLabels.name}{
                         cluster="$cluster",
-                        namespace=~"$namespace",
-                        statefulset=~".*$search.*"
+                        ${Metrics.kubeStatefulsetLabels.labels.namespace}=~"$namespace",
+                        ${Metrics.kubeStatefulsetLabels.labels.statefulset}=~".*$search.*"
                     }
-                ) by (statefulset, namespace)`,
+                ) by (${Metrics.kubeStatefulsetLabels.labels.statefulset}, ${Metrics.kubeStatefulsetLabels.labels.namespace})`,
             instant: true,
             format: 'table'
         },

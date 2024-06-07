@@ -1,6 +1,7 @@
 import { SceneVariables } from "@grafana/scenes";
 import { LabelFilters, serializeLabelFilters } from "pages/Workloads/queryHelpers";
 import { resolveVariable } from "pages/Workloads/variableHelpers";
+import { Metrics } from "metrics/metrics";
 
 export function createRowQueries(containers: string, staticLabelFilters: LabelFilters, sceneVariables: SceneVariables) {
 
@@ -13,14 +14,14 @@ export function createRowQueries(containers: string, staticLabelFilters: LabelFi
             expr: `
                 sum(
                     max(
-                        container_memory_working_set_bytes{
+                        ${Metrics.containerMemoryWorkingSetBytes.name}{
                             ${serializedFilters}
-                            container=~"${containers}",
-                            container!="",
+                            ${Metrics.containerMemoryWorkingSetBytes.labels.container}=~"${containers}",
+                            ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
                             cluster="${cluster}"
                         }
-                    ) by (pod, container)
-                ) by (pod, container)`,
+                    ) by (${Metrics.containerMemoryWorkingSetBytes.labels.pod}, ${Metrics.containerMemoryWorkingSetBytes.labels.container})
+                ) by (${Metrics.containerMemoryWorkingSetBytes.labels.pod}, ${Metrics.containerMemoryWorkingSetBytes.labels.container})`,
             instant: true,
             format: 'table'
         },
@@ -28,14 +29,14 @@ export function createRowQueries(containers: string, staticLabelFilters: LabelFi
             refId: 'memory_requests',
             expr: `
                 max(
-                    kube_pod_container_resource_requests{
-                        resource="memory",
+                    ${Metrics.kubePodContainerResourceRequests.name}{
                         ${serializedFilters}
-                        container=~"${containers}",
-                        container!="",
+                        ${Metrics.kubePodContainerResourceRequests.labels.resource}="memory",
+                        ${Metrics.kubePodContainerResourceRequests.labels.container}=~"${containers}",
+                        ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
                         cluster="${cluster}"
                     }
-                ) by (pod, container)`,
+                ) by (${Metrics.kubePodContainerResourceRequests.labels.pod}, ${Metrics.kubePodContainerResourceRequests.labels.container})`,
             instant: true,
             format: 'table'
         },
@@ -43,14 +44,14 @@ export function createRowQueries(containers: string, staticLabelFilters: LabelFi
             refId: 'memory_limit',
             expr: `
                 max(
-                    kube_pod_container_resource_limits{
-                        resource="memory",
+                    ${Metrics.kubePodContainerResourceLimits.name}{
                         ${serializedFilters}
-                        container=~"${containers}",
-                        container!="",
+                        ${Metrics.kubePodContainerResourceLimits.labels.resource}="memory",
+                        ${Metrics.kubePodContainerResourceLimits.labels.container}=~"${containers}",
+                        ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
                         cluster="${cluster}"
                     }
-                ) by (pod, container)`,
+                ) by (${Metrics.kubePodContainerResourceLimits.labels.pod}, ${Metrics.kubePodContainerResourceLimits.labels.container})`,
             instant: true,
             format: 'table'
         },
@@ -60,15 +61,15 @@ export function createRowQueries(containers: string, staticLabelFilters: LabelFi
                 sum(
                     max(
                         rate(
-                            container_cpu_usage_seconds_total{
+                            ${Metrics.containerCpuUsageSecondsTotal.name}{
                                 ${serializedFilters}
-                                container=~"${containers}",
+                                ${Metrics.containerCpuUsageSecondsTotal.labels.container}=~"${containers}",
+                                ${Metrics.containerCpuUsageSecondsTotal.labels.container}!="",
                                 cluster="${cluster}",
-                                container!=""
                             }[$__rate_interval]
                         )
-                    ) by (pod, container)
-                ) by (pod, container)`,
+                    ) by (${Metrics.containerCpuUsageSecondsTotal.labels.pod}, ${Metrics.containerCpuUsageSecondsTotal.labels.container})
+                ) by (${Metrics.containerCpuUsageSecondsTotal.labels.pod}, ${Metrics.containerCpuUsageSecondsTotal.labels.container})`,
             instant: true,
             format: 'table'
         },
@@ -76,14 +77,14 @@ export function createRowQueries(containers: string, staticLabelFilters: LabelFi
             refId: 'cpu_requests',
             expr: `
                 sum(
-                    kube_pod_container_resource_requests{
+                    ${Metrics.kubePodContainerResourceRequests.name}{
                         ${serializedFilters}
-                        resource="cpu",
-                        container=~"${containers}",
-                        cluster="${cluster}",
-                        container!=""
+                        ${Metrics.kubePodContainerResourceRequests.labels.resource}="cpu",
+                        ${Metrics.kubePodContainerResourceRequests.labels.container}=~"${containers}",
+                        ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
+                        cluster="${cluster}"
                     }
-                ) by (pod, container)`,
+                ) by (${Metrics.kubePodContainerResourceRequests.labels.pod}, ${Metrics.kubePodContainerResourceRequests.labels.container})`,
             instant: true,
             format: 'table'
         },
@@ -91,14 +92,14 @@ export function createRowQueries(containers: string, staticLabelFilters: LabelFi
             refId: 'cpu_limit',
             expr: `
                 sum(
-                    kube_pod_container_resource_limits{
+                    ${Metrics.kubePodContainerResourceLimits.name}{
                         ${serializedFilters}
-                        resource="cpu",
-                        container=~"${containers}",
-                        cluster="${cluster}",
-                        container!=""
+                        ${Metrics.kubePodContainerResourceLimits.labels.resource}="cpu",
+                        ${Metrics.kubePodContainerResourceLimits.labels.container}=~"${containers}",
+                        ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
+                        cluster="${cluster}"
                     }
-                ) by (pod, container)`,
+                ) by (${Metrics.kubePodContainerResourceLimits.labels.pod}, ${Metrics.kubePodContainerResourceLimits.labels.container})`,
             instant: true,
             format: 'table'
         },
@@ -106,12 +107,12 @@ export function createRowQueries(containers: string, staticLabelFilters: LabelFi
             refId: 'restarts',
             expr: `
                 sum(
-                    kube_pod_container_status_restarts_total{
-                        cluster="${cluster}",
-                        container=~"${containers}",
+                    ${Metrics.kubePodContainerStatusRestartsTotal.name}{
                         ${serializedFilters}
+                        ${Metrics.kubePodContainerStatusRestartsTotal.labels.container}=~"${containers}",
+                        cluster="${cluster}",
                     }
-                ) by (pod, container)`,
+                ) by (${Metrics.kubePodContainerStatusRestartsTotal.labels.pod}, ${Metrics.kubePodContainerStatusRestartsTotal.labels.container})`,
             instant: true,
             format: 'table'
         }

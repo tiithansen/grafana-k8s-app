@@ -1,5 +1,6 @@
 import { SceneVariables } from "@grafana/scenes";
 import { resolveVariable } from "pages/Workloads/variableHelpers";
+import { Metrics } from "metrics/metrics";
 
 export function createRowQueries(deployments: string, sceneVariables: SceneVariables) {
 
@@ -10,11 +11,11 @@ export function createRowQueries(deployments: string, sceneVariables: SceneVaria
             refId: 'replicas',
             expr: `
                 max(
-                    kube_deployment_status_replicas{
-                        deployment=~"${deployments}",
+                    ${Metrics.kubeDeploymentStatusReplicas.name}{
+                        ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}=~"${deployments}",
                         cluster="${cluster}"
                     }
-                ) by (deployment)`,
+                ) by (${Metrics.kubeDeploymentStatusReplicas.labels.deployment})`,
             instant: true,
             format: 'table'
         },
@@ -22,11 +23,11 @@ export function createRowQueries(deployments: string, sceneVariables: SceneVaria
             refId: 'replicas_ready',
             expr: `
                 max(
-                    kube_deployment_status_replicas_ready{
-                        deployment=~"${deployments}",
+                    ${Metrics.kubeDeploymentStatusReplicasReady.name}{
+                        ${Metrics.kubeDeploymentStatusReplicasReady.labels.deployment}=~"${deployments}",
                         cluster="${cluster}"
                     }
-                ) by (deployment)`,
+                ) by (${Metrics.kubeDeploymentStatusReplicasReady.labels.deployment})`,
             instant: true,
             format: 'table'
         },
