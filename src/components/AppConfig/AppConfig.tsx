@@ -1,7 +1,7 @@
-import React, { useState, ChangeEvent } from 'react';
-import { Button, Field, Input, useStyles2, FieldSet } from '@grafana/ui';
+import React, { useState, ChangeEvent, useEffect } from 'react';
+import { Button, Field, Input, useStyles2, FieldSet, TagList } from '@grafana/ui';
 import { PluginConfigPageProps, AppPluginMeta, PluginMeta, GrafanaTheme2 } from '@grafana/data';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { css } from '@emotion/css';
 import { testIds } from '../testIds';
 import { lastValueFrom } from 'rxjs';
@@ -13,6 +13,7 @@ export type JsonData = {
 type State = {
   // The regex pattern to match datasource
   datasource: string;
+  matchingDatasources?: string[];
 };
 
 interface Props extends PluginConfigPageProps<AppPluginMeta<JsonData>> {}
@@ -27,9 +28,30 @@ export const AppConfig = ({ plugin }: Props) => {
   const onChangeDatasource = (event: ChangeEvent<HTMLInputElement>) => {
     setState({
       ...state,
-      datasource: event.target.value.trim(),
+      datasource: event.target.value,
     });
   };
+
+  const onDiscoverDatasources = () => {
+    const datasources = getDataSourceSrv()
+      .getList({ type: 'prometheus' });
+    
+    const matchingNames: string[] = []
+    datasources.forEach((ds) => {
+      if (ds.name.match(state.datasource)) {
+        matchingNames.push(ds.name)
+      }
+    })
+
+    setState({
+      ...state,
+      matchingDatasources: matchingNames,
+    });
+  }
+
+  useEffect(() => {
+    onDiscoverDatasources();
+  })
 
   return (
     <div data-testid={testIds.appConfig.container}>
@@ -78,7 +100,7 @@ export const AppConfig = ({ plugin }: Props) => {
       {/* CUSTOM SETTINGS */}
       <FieldSet label="Settings" className={s.marginTopXl}>
         {/* API Url */}
-        <Field label="Datasource" description="" className={s.marginTop}>
+        <Field label="Metrics Datasource (Prometheus compatible)" description="" className={s.marginTop}>
           <Input
             width={60}
             id="datasource"
@@ -87,8 +109,10 @@ export const AppConfig = ({ plugin }: Props) => {
             value={state?.datasource}
             placeholder={`E.g.: Prometheus`}
             onChange={onChangeDatasource}
+            onBlur={onDiscoverDatasources}
           />
         </Field>
+        <TagList className={s.justifyStart} getColorIndex={() => 9} tags={state.matchingDatasources || []} />
 
         <div className={s.marginTop}>
           <Button
@@ -122,6 +146,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   marginTopXl: css`
     margin-top: ${theme.spacing(6)};
+  `,
+  justifyStart: css`
+    justify-content: flex-start;
   `,
 });
 
