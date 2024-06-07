@@ -27,19 +27,23 @@ export function createTopLevelVariables({ datasource }: { datasource: string }) 
                 pluginId: 'prometheus',
                 regex: datasource,
             }),
-            new QueryVariable({
-                name: 'cluster',
-                label: 'Cluster',
-                datasource: {
-                    uid: '$datasource',
-                    type: 'prometheus',
-                },
-                query: {
-                  refId: 'cluster',
-                  query: 'label_values(cluster)',
-                },
-            }),
+            createClusterVariable(),
         ],
+    })
+}
+
+export function createClusterVariable() {
+    return new QueryVariable({
+        name: 'cluster',
+        label: 'Cluster',
+        datasource: {
+            uid: '$datasource',
+            type: 'prometheus',
+        },
+        query: {
+          refId: 'cluster',
+          query: 'label_values(cluster)',
+        },
     })
 }
 

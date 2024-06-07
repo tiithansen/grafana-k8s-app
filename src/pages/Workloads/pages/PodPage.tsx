@@ -6,8 +6,9 @@ import { createResourceLabels } from "../components/ResourceLabels";
 import { getContainersScene } from "../components/ContainersTable/ContainersTable";
 import { usePluginProps } from "utils/utils.plugin";
 import { createTopLevelVariables, createTimeRange } from "../variableHelpers";
+import { Metrics } from "metrics/metrics";
 
-function getMemoryPanel(pod: string) {
+export function getPodMemoryPanel(pod: string) {
     return PanelBuilders
         .timeseries()
         .setTitle('Memory')
@@ -22,26 +23,48 @@ function getMemoryPanel(pod: string) {
                     refId: 'memory_usage',
                     expr: `
                         max(
-                            container_memory_working_set_bytes{
-                                pod="${pod}",
+                            ${Metrics.containerMemoryWorkingSetBytes.name}{
+                                ${Metrics.containerMemoryWorkingSetBytes.labels.pod}="${pod}",
+                                ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
                                 cluster="$cluster",
-                                container!=""
                             }
-                        ) by (pod, container)`,
+                        ) by (
+                            ${Metrics.containerMemoryWorkingSetBytes.labels.pod},
+                            ${Metrics.containerMemoryWorkingSetBytes.labels.container}
+                        )`,
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Usage {{container}}'
                 },
                 {
                     refId: 'memory_requests',
-                    expr: `max(kube_pod_container_resource_requests{resource="memory", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
+                    expr: `
+                        max(
+                            ${Metrics.kubePodContainerResourceRequests.name}{
+                                ${Metrics.kubePodContainerResourceRequests.labels.resource}="memory",
+                                ${Metrics.kubePodContainerResourceRequests.labels.pod}="${pod}",
+                                ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
+                                cluster="$cluster"
+                            }
+                        ) by (
+                            ${Metrics.kubePodContainerResourceRequests.labels.pod},
+                            ${Metrics.kubePodContainerResourceRequests.labels.container}
+                        )`,
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Requests {{container}}'
                 },
                 {
                     refId: 'memory_limit',
-                    expr: `max(kube_pod_container_resource_limits{resource="memory", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
+                    expr: `
+                        max(
+                            ${Metrics.kubePodContainerResourceLimits.name}{
+                                ${Metrics.kubePodContainerResourceLimits.labels.resource}="memory",
+                                ${Metrics.kubePodContainerResourceLimits.labels.pod}="${pod}",
+                                ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
+                                cluster="$cluster"
+                            }
+                        ) by (${Metrics.kubePodContainerResourceLimits.labels.pod}, ${Metrics.kubePodContainerResourceLimits.labels.container})`,
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Limits {{container}}'
@@ -59,7 +82,7 @@ function getMemoryPanel(pod: string) {
         .build()
 }
 
-function getCPUPanel(pod: string) {
+export function getPodCPUPanel(pod: string) {
     return PanelBuilders
         .timeseries()
         .setTitle('CPU')
@@ -71,21 +94,55 @@ function getCPUPanel(pod: string) {
             queries: [
                 {
                     refId: 'cpu_usage',
-                    expr: `max(rate(container_cpu_usage_seconds_total{pod="${pod}",cluster="$cluster", container!=""}[$__rate_interval])) by (pod, container)`,
+                    expr: `
+                        max(
+                            rate(
+                                ${Metrics.containerCpuUsageSecondsTotal.name}{
+                                    ${Metrics.containerCpuUsageSecondsTotal.labels.pod}="${pod}",
+                                    ${Metrics.containerCpuUsageSecondsTotal.labels.container}!="",
+                                    cluster="$cluster",
+                                }[$__rate_interval]
+                            )
+                        ) by (
+                            ${Metrics.containerCpuUsageSecondsTotal.labels.pod},
+                            ${Metrics.containerCpuUsageSecondsTotal.labels.container}
+                        )`,
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Usage {{container}}'
                 },
                 {
                     refId: 'cpu_requests',
-                    expr: `max(kube_pod_container_resource_requests{resource="cpu", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
+                    expr: `
+                        max(
+                            ${Metrics.kubePodContainerResourceRequests.name}{
+                                ${Metrics.kubePodContainerResourceRequests.labels.resource}="cpu",
+                                ${Metrics.kubePodContainerResourceRequests.labels.pod}="${pod}",
+                                ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
+                                cluster="$cluster"
+                            }
+                        ) by (
+                            ${Metrics.kubePodContainerResourceRequests.labels.pod},
+                            ${Metrics.kubePodContainerResourceRequests.labels.container}
+                        )`,
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Requests {{container}}'
                 },
                 {
                     refId: 'cpu_limit',
-                    expr: `max(kube_pod_container_resource_limits{resource="cpu", pod="${pod}",cluster="$cluster", container!=""}) by (pod, container)`,
+                    expr: `
+                        max(
+                            ${Metrics.kubePodContainerResourceLimits.name}{
+                                ${Metrics.kubePodContainerResourceLimits.labels.resource}="cpu",
+                                ${Metrics.kubePodContainerResourceLimits.labels.pod}="${pod}",
+                                ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
+                                cluster="$cluster"
+                            }
+                        ) by (
+                            ${Metrics.kubePodContainerResourceLimits.labels.pod},
+                            ${Metrics.kubePodContainerResourceLimits.labels.container}
+                        )`,
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Limits {{container}}'
@@ -120,17 +177,19 @@ function getNetworkPanel(pod: string) {
                         sort_desc(
                             sum(
                                 rate(
-                                    container_network_receive_bytes_total{
-                                        cluster="$cluster",
-                                        pod=~"${pod}",
+                                    ${Metrics.containerNetworkReceiveBytesTotal.name}{
+                                        ${Metrics.containerNetworkReceiveBytesTotal.labels.pod}=~"${pod}",
+                                        cluster="$cluster"
                                     }[$__rate_interval]
                                 )
-                            ) by (pod)
+                            ) by (
+                                ${Metrics.containerNetworkReceiveBytesTotal.labels.pod}
+                            )
                         )
                     `,
                     instant: false,
                     timeseries: true,
-                    legendFormat: 'Receive'
+                    legendFormat: 'Receive {{container}}'
                 },
                 {
                     refId: 'transmit_bytes',
@@ -138,17 +197,19 @@ function getNetworkPanel(pod: string) {
                         sort_desc(
                             sum(
                                 rate(
-                                    container_network_transmit_bytes_total{
-                                        cluster="$cluster",
-                                        pod=~"${pod}",
+                                    ${Metrics.containerNetworkTransmitBytesTotal.name}{
+                                        ${Metrics.containerNetworkTransmitBytesTotal.labels.pod}=~"${pod}",
+                                        cluster="$cluster"
                                     }[$__rate_interval]
                                 )
-                            ) by (pod)
+                            ) by (
+                                ${Metrics.containerNetworkTransmitBytesTotal.labels.pod}
+                            )
                         )
                     `,
                     instant: false,
                     timeseries: true,
-                    legendFormat: 'Receive'
+                    legendFormat: 'Transmit {{container}}'
                 },
             ],
         }))
@@ -179,23 +240,23 @@ function getCPUThrottling(pod: string) {
                         (
                             sum(
                                 rate(
-                                    container_cpu_cfs_throttled_periods_total{
-                                        container!="",
-                                        cluster="$cluster",
-                                        pod="${pod}"
+                                    ${Metrics.containerCpuCfsThrottledPeriodsTotal.name}{
+                                        ${Metrics.containerCpuCfsThrottledPeriodsTotal.labels.container}!="",
+                                        ${Metrics.containerCpuCfsThrottledPeriodsTotal.labels.pod}="${pod}",
+                                        cluster="$cluster"
                                     }[$__rate_interval]
                                 )
-                            ) by (container)
+                            ) by (${Metrics.containerCpuCfsThrottledPeriodsTotal.labels.container})
                             /
                             sum(
                                 rate(
-                                    container_cpu_cfs_periods_total{
-                                        container!="",
-                                        cluster="$cluster",
-                                        pod="${pod}"
+                                    ${Metrics.containerCpuCfsPeriodsTotal.name}{
+                                        ${Metrics.containerCpuCfsPeriodsTotal.labels.container}!="",
+                                        ${Metrics.containerCpuCfsPeriodsTotal.labels.pod}="${pod}",
+                                        cluster="$cluster"
                                     }[$__rate_interval]
                                 )
-                            ) by (container)
+                            ) by (${Metrics.containerCpuCfsPeriodsTotal.labels.container})
                         ) * 100 > 0.01`,
                     instant: false,
                     timeseries: true,
@@ -251,10 +312,10 @@ function getScene(pod: string) {
                     height: 300,
                     children: [
                         new SceneFlexItem({
-                            body: getMemoryPanel(pod),
+                            body: getPodMemoryPanel(pod),
                         }),
                         new SceneFlexItem({
-                            body: getCPUPanel(pod),
+                            body: getPodCPUPanel(pod),
                         }),
                         new SceneFlexItem({
                             body: getCPUThrottling(pod),

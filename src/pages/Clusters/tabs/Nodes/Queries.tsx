@@ -1,5 +1,6 @@
 import { SceneVariables } from "@grafana/scenes";
 import { resolveVariable } from "pages/Workloads/variableHelpers";
+import { Metrics } from "metrics/metrics";
 
 export function createRowQueries(nodes: string, nodeNames: string, sceneVariables: SceneVariables) {
 
@@ -10,11 +11,14 @@ export function createRowQueries(nodes: string, nodeNames: string, sceneVariable
             refId: 'memory_total',
             expr: `
                 max(
-                    node_memory_MemTotal_bytes{
-                        instance=~"${nodes}",
+                    ${Metrics.nodeMemoryMemTotalBytes.name}{
+                        ${Metrics.nodeMemoryMemTotalBytes.labels.instance}=~"${nodes}",
                         cluster="${cluster}"
                     }
-                ) by (instance, cluster)`,
+                ) by (
+                    ${Metrics.nodeMemoryMemTotalBytes.labels.instance},
+                    cluster
+                )`,
             instant: true,
             format: 'table'
        },
@@ -22,11 +26,14 @@ export function createRowQueries(nodes: string, nodeNames: string, sceneVariable
             refId: 'memory_free',
             expr: `
                 max(
-                    node_memory_MemAvailable_bytes{
-                        instance=~"${nodes}",
+                    ${Metrics.nodeMemoryMemAvailableBytes.name}{
+                        ${Metrics.nodeMemoryMemAvailableBytes.labels.instance}=~"${nodes}",
                         cluster="${cluster}"
                     }
-                ) by (instance, cluster)`,
+                ) by (
+                    ${Metrics.nodeMemoryMemAvailableBytes.labels.instance},
+                    cluster
+                )`,
             instant: true,
             format: 'table'
         },
@@ -34,27 +41,25 @@ export function createRowQueries(nodes: string, nodeNames: string, sceneVariable
             refId: 'memory_requests',
             expr: `
                 sum(
-                    kube_pod_container_resource_requests{
-                        resource="memory",
-                        node=~"${nodeNames}",
-                        container!="",
+                    ${Metrics.kubePodContainerResourceRequests.name}{
+                        ${Metrics.kubePodContainerResourceRequests.labels.resource}="memory",
+                        ${Metrics.kubePodContainerResourceRequests.labels.node}=~"${nodeNames}",
+                        ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
                         cluster="${cluster}"
                     }
-                ) by (node)`,
+                ) by (${Metrics.kubePodContainerResourceRequests.labels.node})`,
             instant: true,
             format: 'table'
         },
         {
             refId: 'cores',
             expr: `
-                count(
-                    count(
-                        node_cpu_seconds_total{
-                            instance=~"${nodes}",
-                            cluster="${cluster}"
-                        }
-                    ) by (cpu, instance)
-                ) by (instance)`,
+                max(
+                    ${Metrics.machineCpuCores.name}{
+                        ${Metrics.machineCpuCores.labels.node}=~"${nodeNames}",
+                        cluster="${cluster}"
+                    }
+                ) by (${Metrics.machineCpuCores.labels.node})`,    
             instant: true,
             format: 'table'
        },
@@ -62,13 +67,13 @@ export function createRowQueries(nodes: string, nodeNames: string, sceneVariable
             refId: 'cpu_requests',
             expr: `
                 sum(
-                    kube_pod_container_resource_requests{
-                        resource="cpu",
-                        node=~"${nodeNames}",
-                        container!="",
+                    ${Metrics.kubePodContainerResourceRequests.name}{
+                        ${Metrics.kubePodContainerResourceRequests.labels.resource}="cpu",
+                        ${Metrics.kubePodContainerResourceRequests.labels.node}=~"${nodeNames}",
+                        ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
                         cluster="${cluster}"
                     }
-                ) by (node)`,
+                ) by (${Metrics.kubePodContainerResourceRequests.labels.node})`,
             instant: true,
             format: 'table'
         },
@@ -76,21 +81,21 @@ export function createRowQueries(nodes: string, nodeNames: string, sceneVariable
             refId: 'cpu_usage',
             expr: `
                 (
-                    sum by(instance) (
+                    sum by(${Metrics.nodeCpuSecondsTotal.labels.instance}) (
                         irate(
-                            node_cpu_seconds_total{
-                                instance=~"${nodes}",
-                                cluster="${cluster}",
-                                mode!="idle"
+                            ${Metrics.nodeCpuSecondsTotal.name}{
+                                ${Metrics.nodeCpuSecondsTotal.labels.instance}=~"${nodes}",
+                                ${Metrics.nodeCpuSecondsTotal.labels.mode}!="idle",
+                                cluster="${cluster}"
                             }[$__rate_interval]
                         )
                     )
                     /
-                    on (instance) group_left sum by (instance) (
+                    on (${Metrics.nodeCpuSecondsTotal.labels.instance}) group_left sum by (${Metrics.nodeCpuSecondsTotal.labels.instance}) (
                         (
                             irate(
-                                node_cpu_seconds_total{
-                                    instance=~"${nodes}",
+                                ${Metrics.nodeCpuSecondsTotal.name}{
+                                    ${Metrics.nodeCpuSecondsTotal.labels.instance}=~"${nodes}",
                                     cluster="${cluster}",
                                 }[$__rate_interval]
                             )
@@ -104,11 +109,11 @@ export function createRowQueries(nodes: string, nodeNames: string, sceneVariable
             refId: 'pod_count',
             expr: `
                 count(
-                    kube_pod_info{
-                        cluster="${cluster}",
-                        node=~"${nodeNames}"
+                    ${Metrics.kubePodInfo.name}{
+                        ${Metrics.kubePodInfo.labels.node}=~"${nodeNames}",
+                        cluster="${cluster}"
                     }
-                ) by (node)`,
+                ) by (${Metrics.kubePodInfo.labels.node})`,
             instant: true,
             format: 'table'
         }

@@ -38,6 +38,7 @@ export const Metrics = {
             pod: 'pod',
             container: 'container',
             resource: 'resource',
+            node: 'node',
         }
     },
     kubePodContainerResourceLimits: {
@@ -75,6 +76,38 @@ export const Metrics = {
     },
     containerCpuUsageSecondsTotal: {
         name: 'container_cpu_usage_seconds_total',
+        labels:{
+            namespace: 'namespace',
+            pod: 'pod',
+            container: 'container',
+        }
+    },
+    containerCpuCfsThrottledPeriodsTotal: {
+        name: 'container_cpu_cfs_throttled_periods_total',
+        labels:{
+            namespace: 'namespace',
+            pod: 'pod',
+            container: 'container',
+        }
+    },
+    containerCpuCfsPeriodsTotal: {
+        name: 'container_cpu_cfs_periods_total',
+        labels:{
+            namespace: 'namespace',
+            pod: 'pod',
+            container: 'container',
+        }
+    },
+    containerNetworkReceiveBytesTotal: {
+        name: 'container_network_receive_bytes_total',
+        labels:{
+            namespace: 'namespace',
+            pod: 'pod',
+            container: 'container',
+        }
+    },
+    containerNetworkTransmitBytesTotal: {
+        name: 'container_network_transmit_bytes_total',
         labels:{
             namespace: 'namespace',
             pod: 'pod',
@@ -210,6 +243,42 @@ export const Metrics = {
         labels:{
             namespace: 'namespace',
             cronJob: 'cronjob',
+        }
+    },
+    // Nodes
+    kubeNodeInfo: {
+        name: 'kube_node_info',
+        labels:{
+            node: 'node',
+            internalIP: 'internal_ip',
+        }
+    },
+    machineCpuCores: {
+        name: 'machine_cpu_cores',
+        labels:{
+            node: 'node',
+        }
+    },
+    nodeMemoryMemTotalBytes: {
+        name: 'node_memory_MemTotal_bytes',
+        labels:{
+            node: 'node',
+            instance: 'instance',
+        }
+    },
+    nodeMemoryMemAvailableBytes: {
+        name: 'node_memory_MemAvailable_bytes',
+        labels:{
+            node: 'node',
+            instance: 'instance',
+        }
+    },
+    nodeCpuSecondsTotal: {
+        name: 'node_cpu_seconds_total',
+        labels:{
+            node: 'node',
+            mode: 'mode',
+            instance: 'instance',
         }
     },
 }

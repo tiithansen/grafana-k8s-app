@@ -11,7 +11,6 @@ import {
     TextBoxVariable,
     VariableValueSelectors,
     SceneVariableSet,
-    QueryVariable,
 } from '@grafana/scenes';
 import React, { useEffect, useMemo } from 'react';
 import { DataFrameView } from '@grafana/data';
@@ -20,23 +19,13 @@ import { createRowQueries } from './Queries';
 import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
 import { buildExpandedRowScene } from './NodeExpandedRowScene';
 import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
-import { resolveVariable } from 'pages/Workloads/variableHelpers';
+import { createClusterVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { CellContext } from '@tanstack/react-table';
 import { FormattedCell, TextColor } from 'pages/Workloads/components/FormattedCell';
+import { Metrics } from 'metrics/metrics';
 
-const clusterVariable = new QueryVariable({
-    name: 'cluster',
-    label: 'Cluster',
-    datasource: {
-        uid: '$datasource',
-        type: 'prometheus',
-    },
-    query: {
-      refId: 'cluster',
-      query: 'label_values(cluster)',
-    }
-});
+const clusterVariable = createClusterVariable();
 
 const searchVariable = new TextBoxVariable({
     name: 'search',
@@ -54,11 +43,15 @@ const nodesQueryRunner = new SceneQueryRunner({
             refId: 'nodes',
             expr: `
                 group(
-                    kube_node_info{
+                    ${Metrics.kubeNodeInfo.name}{
                         cluster="$cluster",
-                        node=~".*$search.*"
+                        ${Metrics.kubeNodeInfo.labels.node}=~".*$search.*"
                     }
-                ) by (internal_ip, node, cluster)`,
+                ) by (
+                    ${Metrics.kubeNodeInfo.labels.internalIP},
+                    ${Metrics.kubeNodeInfo.labels.node},
+                    cluster
+                )`,
             instant: true,
             format: 'table'
         },
@@ -262,7 +255,7 @@ class TableViz extends SceneObjectBase<TableVizState> {
                 row.cpu = {
                     usage: getSeriesValue(asyncRowData, 'cpu_usage', serieMatcherPredicate(row)),
                     requests: getSeriesValue(asyncRowData, 'cpu_requests', serieMatcherByNodeNamePredicate(row)),
-                    cores: getSeriesValue(asyncRowData, 'cores', serieMatcherPredicate(row))
+                    cores: getSeriesValue(asyncRowData, 'cores', serieMatcherByNodeNamePredicate(row))
                 }
 
                 row.pod_count = getSeriesValue(asyncRowData, 'pod_count', serieMatcherByNodeNamePredicate(row))
