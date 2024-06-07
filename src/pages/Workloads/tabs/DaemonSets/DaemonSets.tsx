@@ -43,13 +43,13 @@ const daemonSetsQueryRunner = new SceneQueryRunner({
             refId: 'daemonsets',
             expr: `
                 group(
-                    ${Metrics.kubeDaemonsetLabels.name}{
+                    ${Metrics.kubeDaemonSetCreated.name}{
                         cluster="$cluster",
-                        ${Metrics.kubeDaemonsetLabels.labels.namespace}=~"$namespace"
+                        ${Metrics.kubeDaemonSetCreated.labels.namespace}=~"$namespace"
                     }
                 ) by (
-                    ${Metrics.kubeDaemonsetLabels.labels.daemonset},
-                    ${Metrics.kubeDaemonsetLabels.labels.namespace}
+                    ${Metrics.kubeDaemonSetCreated.labels.daemonset},
+                    ${Metrics.kubeDaemonSetCreated.labels.namespace}
                 )`,
             instant: true,
             format: 'table'

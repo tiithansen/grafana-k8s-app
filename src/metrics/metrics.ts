@@ -115,8 +115,8 @@ export const Metrics = {
         }
     },
     // StatefulSets
-    kubeStatefulsetLabels: {
-        name: 'kube_statefulset_labels',
+    kubeStatefulSetCreated: {
+        name: 'kube_statefulset_created',
         labels:{
             namespace: 'namespace',
             statefulset: 'statefulset',
@@ -201,8 +201,8 @@ export const Metrics = {
         }
     },
     // DaemonSets
-    kubeDaemonsetLabels: {
-        name: 'kube_daemonset_labels',
+    kubeDaemonSetCreated: {
+        name: 'kube_daemonset_created',
         labels:{
             namespace: 'namespace',
             daemonset: 'daemonset',

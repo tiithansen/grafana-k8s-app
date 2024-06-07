@@ -43,12 +43,15 @@ const statefulSetsQueryRunner = new SceneQueryRunner({
             refId: 'statefulsets',
             expr: `
                 group(
-                    ${Metrics.kubeStatefulsetLabels.name}{
+                    ${Metrics.kubeStatefulSetCreated.name}{
                         cluster="$cluster",
-                        ${Metrics.kubeStatefulsetLabels.labels.namespace}=~"$namespace",
-                        ${Metrics.kubeStatefulsetLabels.labels.statefulset}=~".*$search.*"
+                        ${Metrics.kubeStatefulSetCreated.labels.namespace}=~"$namespace",
+                        ${Metrics.kubeStatefulSetCreated.labels.statefulset}=~".*$search.*"
                     }
-                ) by (${Metrics.kubeStatefulsetLabels.labels.statefulset}, ${Metrics.kubeStatefulsetLabels.labels.namespace})`,
+                ) by (
+                    ${Metrics.kubeStatefulSetCreated.labels.statefulset},
+                    ${Metrics.kubeStatefulSetCreated.labels.namespace}
+                )`,
             instant: true,
             format: 'table'
         },
