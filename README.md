@@ -15,7 +15,7 @@ This plugin relies on presence of default kube-state-metrics and node-exporter m
 
 ### Metrics used
 
-* `kube_pod_info` expected labels `namespace`, `pod`, `node`, `created_by_kind`, `created_by_name`  - Used to get the pod information
+Metrics and required labels used by application can be found in [metrics.ts](src/metrics/metrics.ts).
 
 ### Screenshots
 
