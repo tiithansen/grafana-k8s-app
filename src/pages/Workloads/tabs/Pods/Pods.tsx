@@ -180,12 +180,15 @@ function createRootQuery(
     let sortQuery = ''
     const remoteSort = !sortConfig[sorting.rowId].local
 
+    const carryOverLabels = `${Metrics.kubePodInfo.labels.node}, ${Metrics.kubePodInfo.labels.createdByKind}, ${Metrics.kubePodInfo.labels.createdByName}`
+    const onLabels = `${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}`
+
     if (remoteSort) {
         sortFn = sorting.direction === 'asc' ? 'sort' : 'sort_desc'
         switch (sorting.rowId) {
             case 'restarts': {
                 sortQuery = `
-                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
+                    * on (${onLabels}) group_right(${carryOverLabels})
                     max(
                         ${Metrics.kubePodContainerStatusRestartsTotal.name}
                     ) by (
@@ -197,7 +200,7 @@ function createRootQuery(
             }
             case 'containers': {
                 sortQuery = `
-                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
+                    * on (${onLabels}) group_right(${carryOverLabels})
                     sum(
                         ${Metrics.kubePodContainerInfo.name}{
                             ${Metrics.kubePodContainerInfo.labels.container}!="",
@@ -212,7 +215,7 @@ function createRootQuery(
             }
             case 'memory_usage': {
                 sortQuery = `
-                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
+                    * on (${onLabels}) group_right(${carryOverLabels})
                     max(
                         ${Metrics.containerMemoryWorkingSetBytes.name}{
                             ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
@@ -227,7 +230,7 @@ function createRootQuery(
             }
             case 'memory_requests': {
                 sortQuery = `
-                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
+                    * on (${onLabels}) group_right(${carryOverLabels})
                     max(
                         ${Metrics.kubePodContainerResourceRequests.name}{
                             ${Metrics.kubePodContainerResourceRequests.labels.resource}="memory",
@@ -244,7 +247,7 @@ function createRootQuery(
             }
             case 'memory_limits': {
                 sortQuery = `
-                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
+                    * on (${onLabels}) group_right(${carryOverLabels})
                     max(
                         ${Metrics.kubePodContainerResourceLimits.name}{
                             ${Metrics.kubePodContainerResourceLimits.labels.resource}="memory",
@@ -261,7 +264,7 @@ function createRootQuery(
             }
             case 'cpu_usage': {
                 sortQuery = `
-                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
+                    * on (${onLabels}) group_right(${carryOverLabels})
                     sum(
                         max(
                             avg_over_time(
@@ -283,7 +286,7 @@ function createRootQuery(
             }
             case 'cpu_requests': {
                 sortQuery = `
-                * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
+                * on (${onLabels}) group_right(${carryOverLabels})
                     max(
                         ${Metrics.kubePodContainerResourceRequests.name}{
                             ${Metrics.kubePodContainerResourceRequests.labels.resource}="cpu",
@@ -300,7 +303,7 @@ function createRootQuery(
             }
             case 'cpu_limits': {
                 sortQuery = `
-                    * on (${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}) group_right(${Metrics.kubePodInfo.labels.node})
+                    * on (${onLabels}) group_right(${carryOverLabels})
                     max(
                         ${Metrics.kubePodContainerResourceLimits.name}{
                             ${Metrics.kubePodContainerResourceLimits.labels.resource}="cpu",
@@ -318,6 +321,44 @@ function createRootQuery(
         }
     }
 
+    const baseQuery = `
+        group(${Metrics.kubePodInfo.name}{
+            cluster="$cluster",
+            ${ hasNamespaceVariable ? `${Metrics.kubePodInfo.labels.namespace}=~"$namespace",` : '' }
+            ${ hasNodeVariable ? `${Metrics.kubePodInfo.labels.node}=~"$node",`: ``}
+            ${ hasOwnerKindVariable ? `${Metrics.kubePodInfo.labels.createdByKind}=~"$ownerKind",` : ''}
+            ${ hasOwnerNameVariable ? `${Metrics.kubePodInfo.labels.createdByName}=~"$ownerName",` : ''}
+            ${ hasSearchVariable ? `${Metrics.kubePodInfo.labels.pod}=~".*$search.*",` : ''}
+            ${ staticFilters }
+        }) by (
+            cluster,
+            ${Metrics.kubePodInfo.labels.namespace},
+            ${Metrics.kubePodInfo.labels.node},
+            ${Metrics.kubePodInfo.labels.pod},
+            ${Metrics.kubePodInfo.labels.createdByKind},
+            ${Metrics.kubePodInfo.labels.createdByName}
+        )
+    `
+    
+    let finalQuery: string
+    if (sortQuery.length > 0) {
+        finalQuery = `
+            (
+                ${baseQuery}
+                ${sortQuery}
+            )
+            or
+            (
+                ${baseQuery}
+                *
+                0
+            )
+        `
+    } else {
+        finalQuery = baseQuery
+    }
+
+
     return new SceneQueryRunner({
         datasource: {
             uid: '$datasource',
@@ -328,15 +369,7 @@ function createRootQuery(
                 refId: 'pods',
                 expr: `
                     ${sortFn}(
-                        ${Metrics.kubePodInfo.name}{
-                            cluster="$cluster",
-                            ${ hasNamespaceVariable ? `${Metrics.kubePodInfo.labels.namespace}=~"$namespace",` : '' }
-                            ${ hasNodeVariable ? `${Metrics.kubePodInfo.labels.node}=~"$node",`: ``}
-                            ${ hasOwnerKindVariable ? `${Metrics.kubePodInfo.labels.createdByKind}=~"$ownerKind",` : ''}
-                            ${ hasOwnerNameVariable ? `${Metrics.kubePodInfo.labels.createdByName}=~"$ownerName",` : ''}
-                            ${ hasSearchVariable ? `${Metrics.kubePodInfo.labels.pod}=~".*$search.*",` : ''}
-                            ${ staticFilters }
-                        } ${sortQuery}
+                        ${finalQuery}
                     )`,
                 instant: true,
                 format: 'table'
