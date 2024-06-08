@@ -30,6 +30,7 @@ import { CellContext, ColumnDef, ColumnSort } from '@tanstack/react-table';
 import { Metrics } from 'metrics/metrics';
 import { prefixRoute } from 'utils/utils.routing';
 import { ROUTES } from '../../../../constants';
+import { SortingConfig, SortingState } from 'common/sortingHelpers';
 
 function createVariables() {
     return [
@@ -88,21 +89,6 @@ function createVariables() {
             value: '',
         })
     ]
-}
-
-type SortingDirection = 'asc' | 'desc'
-
-interface SortingState {
-    rowId: string;
-    direction: SortingDirection;
-}
-
-interface SortingConfig<Row> {
-    [key: string]: {
-        local: boolean;
-        type: 'label' | 'value',
-        compare?: (a: Row, b: Row, direction: SortingDirection) => number
-    }
 }
 
 const sortConfig: SortingConfig<TableRow> = {
@@ -280,7 +266,8 @@ function createRootQuery(
                         )
                     ) by (
                         ${Metrics.containerCpuUsageSecondsTotal.labels.pod},
-                        ${Metrics.containerCpuUsageSecondsTotal.labels.namespace}
+                        ${Metrics.containerCpuUsageSecondsTotal.labels.namespace},
+                        cluster
                     )`
                 break;
             }

@@ -2,6 +2,8 @@ import { EmbeddedScene, PanelBuilders, SceneFlexItem, SceneFlexLayout, SceneQuer
 import { LegendDisplayMode } from "@grafana/schema"
 import { Metrics } from "metrics/metrics"
 import { createClusterVariable } from "common/variableHelpers"
+import { ResourceBreakdownTable } from "components/ResourceBreakdownTable"
+import Heading from "components/Heading"
 
 function getNodesPerClusterPanel() {
     return PanelBuilders.timeseries()
@@ -57,6 +59,14 @@ function getNodesMemoryPanel() {
                             ${Metrics.kubePodContainerResourceRequests.name}{resource="memory",cluster=~"$cluster"}
                         ) by (cluster)`,
                     legendFormat: 'Requested [{{cluster}}]'
+                },
+                {
+                    refId: 'memory_limits',
+                    expr: `
+                        sum(
+                            ${Metrics.kubePodContainerResourceLimits.name}{resource="memory",cluster=~"$cluster"}
+                        ) by (cluster)`,
+                    legendFormat: 'Limits [{{cluster}}]'
                 }
             ],
         }))
@@ -65,9 +75,12 @@ function getNodesMemoryPanel() {
         .setOverrides((builder) => {
             builder.matchFieldsByQuery('memory_total')
                 .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [5, 5] })
-                .overrideCustomFieldConfig('fillOpacity', 5)
+                .overrideCustomFieldConfig('fillOpacity', 15)
             builder.matchFieldsByQuery('memory_requested')
                 .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [20, 5] })
+                .overrideCustomFieldConfig('fillOpacity', 10)
+            builder.matchFieldsByQuery('memory_limits')
+                .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [30, 5] })
                 .overrideCustomFieldConfig('fillOpacity', 5)
         })
         .build()
@@ -132,6 +145,14 @@ function getNodesCpuPanel() {
                             ${Metrics.kubePodContainerResourceRequests.name}{resource="cpu", cluster=~"$cluster"}
                         ) by (cluster)`,
                     legendFormat: 'Requested [{{cluster}}]'
+                },
+                {
+                    refId: 'cpu_limits',
+                    expr: `
+                        sum(
+                            ${Metrics.kubePodContainerResourceLimits.name}{resource="cpu",cluster=~"$cluster"}
+                        ) by (cluster)`,
+                    legendFormat: 'Limits [{{cluster}}]'
                 }
             ],
         }))
@@ -140,9 +161,12 @@ function getNodesCpuPanel() {
         .setOverrides((builder) => {
             builder.matchFieldsByQuery('cpu_total')
                 .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [5, 5] })
-                .overrideCustomFieldConfig('fillOpacity', 5)
+                .overrideCustomFieldConfig('fillOpacity', 15)
             builder.matchFieldsByQuery('cpu_requested')
                 .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [20, 5] })
+                .overrideCustomFieldConfig('fillOpacity', 10)
+            builder.matchFieldsByQuery('cpu_limits')
+                .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [30, 5] })
                 .overrideCustomFieldConfig('fillOpacity', 5)
         })
         .build()
@@ -159,17 +183,35 @@ export const getOverviewScene = () => {
             new VariableValueSelectors({}),
         ],
         body: new SceneFlexLayout({
-            height: 400,
+            direction: 'column',
             children: [
-                new SceneFlexItem({
-                    body: getNodesPerClusterPanel(),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    height: 400,
+                    children: [
+                        new SceneFlexItem({
+                            body: getNodesPerClusterPanel(),
+                        }),
+                        new SceneFlexItem({
+                            body: getNodesMemoryPanel(),
+                        }),
+                        new SceneFlexItem({
+                            body: getNodesCpuPanel(),
+                        }),
+                    ]
                 }),
-                new SceneFlexItem({
-                    body: getNodesMemoryPanel(),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Resource Usage Breakdown' }),
+                    ]
                 }),
-                new SceneFlexItem({
-                    body: getNodesCpuPanel(),
-                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        ResourceBreakdownTable()
+                    ]
+                }),         
             ],
         }),
     })
