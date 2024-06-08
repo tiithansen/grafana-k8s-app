@@ -20,7 +20,7 @@ import { getOverviewScene } from './tabs/Overview/Overview';
 import { usePluginProps } from 'utils/utils.plugin';
 import { DeploymentPage } from './pages/DeploymentPage';
 import { StatefulSetPage } from './pages/StatefulSetPage';
-import { createTimeRange, createTopLevelVariables } from './variableHelpers';
+import { createTimeRange, createTopLevelVariables } from '../../common/variableHelpers';
 import { DaemonSetPage } from './pages/DaemonSetPage';
 import { CronJobPage } from './pages/CronJobPage';
 import { JobPage } from './pages/JobPage';

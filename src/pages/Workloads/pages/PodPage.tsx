@@ -5,7 +5,7 @@ import { GraphTransform } from "@grafana/schema";
 import { createResourceLabels } from "../components/ResourceLabels";
 import { getContainersScene } from "../components/ContainersTable/ContainersTable";
 import { usePluginProps } from "utils/utils.plugin";
-import { createTopLevelVariables, createTimeRange } from "../variableHelpers";
+import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
 import { Metrics } from "metrics/metrics";
 
 export function getPodMemoryPanel(pod: string) {

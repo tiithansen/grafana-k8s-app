@@ -17,11 +17,11 @@ import { DataFrameView } from '@grafana/data';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
 import { createRowQueries } from './Queries';
 import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
-import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
-import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
+import { asyncQueryRunner } from 'common/queryHelpers';
+import { getSeriesValue } from 'common/seriesHelpers';
 import { buildExpandedRowScene } from './DeploymentExpandedRow';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
-import { createNamespaceVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
+import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
 import { CellContext } from '@tanstack/react-table';
 import { Metrics } from 'metrics/metrics';
 

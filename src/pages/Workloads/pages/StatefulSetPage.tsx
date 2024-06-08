@@ -1,7 +1,7 @@
 import { EmbeddedScene, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexLayout, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
-import { createTimeRange, createTopLevelVariables } from "../variableHelpers";
+import { createTimeRange, createTopLevelVariables } from "../../../common/variableHelpers";
 import { usePluginProps } from "utils/utils.plugin";
 
 function getScene(statefulSet: string) {

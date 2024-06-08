@@ -15,9 +15,9 @@ import {
 import React, { useEffect, useMemo } from 'react';
 import { DataFrameView } from '@grafana/data';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
-import { asyncQueryRunner } from 'pages/Workloads/queryHelpers';
-import { getSeries } from 'pages/Workloads/seriesHelpers';
-import { createNamespaceVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
+import { asyncQueryRunner } from 'common/queryHelpers';
+import { getSeries } from 'common/seriesHelpers';
+import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
 import { createRowQueries } from './Queries';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { CellContext } from '@tanstack/react-table';

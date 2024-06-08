@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneQueryRunner, sceneGraph } from "@grafana/scenes";
-import { LabelFilters, serializeLabelFilters } from '../queryHelpers';
+import { LabelFilters, serializeLabelFilters } from '../../../common/queryHelpers';
 import { DataFrameView, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
@@ -95,8 +95,6 @@ class ResourceLabels extends SceneObjectBase<ResourceLabelsState> {
         const resourceLabels: Label[] = useMemo(() => {
 
             const result: Label[] = [];
-
-            console.log(data)
 
             if (data && data.state === LoadingState.Done) {
                 const df = new DataFrameView(data.series[0] || [])

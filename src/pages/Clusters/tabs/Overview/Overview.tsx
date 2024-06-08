@@ -1,7 +1,7 @@
 import { EmbeddedScene, PanelBuilders, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneVariableSet, VariableValueSelectors} from "@grafana/scenes"
 import { LegendDisplayMode } from "@grafana/schema"
 import { Metrics } from "metrics/metrics"
-import { createClusterVariable } from "pages/Workloads/variableHelpers"
+import { createClusterVariable } from "common/variableHelpers"
 
 function getNodesPerClusterPanel() {
     return PanelBuilders.timeseries()

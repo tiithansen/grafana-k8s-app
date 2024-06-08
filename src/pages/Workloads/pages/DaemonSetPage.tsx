@@ -2,7 +2,7 @@ import { EmbeddedScene, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, Sce
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { usePluginProps } from "utils/utils.plugin";
-import { createTopLevelVariables, createTimeRange } from "../variableHelpers";
+import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
 
 function getScene(daemonSet: string) {
     return new EmbeddedScene({

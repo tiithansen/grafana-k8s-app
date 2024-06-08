@@ -15,9 +15,9 @@ import { FormattedCell } from '../FormattedCell';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
 import { RestartsCellBuilder } from '../../components/RestartsCell';
 import { createRowQueries } from './Queries';
-import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
-import { LabelFilters, asyncQueryRunner } from 'pages/Workloads/queryHelpers';
-import { createNamespaceVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
+import { getSeriesValue } from 'common/seriesHelpers';
+import { LabelFilters, asyncQueryRunner } from 'common/queryHelpers';
+import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
 import { CellContext } from '@tanstack/react-table';
 import { Metrics } from 'metrics/metrics';
 

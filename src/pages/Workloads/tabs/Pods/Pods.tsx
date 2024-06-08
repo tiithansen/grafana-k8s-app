@@ -23,11 +23,13 @@ import { RestartsCellBuilder } from '../../components/RestartsCell';
 import { createRowQueries } from './Queries';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { buildExpandedRowScene } from './PodExpandedRow';
-import { getSeriesValue } from 'pages/Workloads/seriesHelpers';
-import { LabelFilters, asyncQueryRunner } from 'pages/Workloads/queryHelpers';
-import { createNamespaceVariable, resolveVariable } from 'pages/Workloads/variableHelpers';
+import { getSeriesValue } from 'common/seriesHelpers';
+import { LabelFilters, asyncQueryRunner } from 'common/queryHelpers';
+import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
 import { CellContext, ColumnDef, ColumnSort } from '@tanstack/react-table';
 import { Metrics } from 'metrics/metrics';
+import { prefixRoute } from 'utils/utils.routing';
+import { ROUTES } from '../../../../constants';
 
 function createVariables() {
     return [
@@ -424,6 +426,7 @@ interface TableVizState extends SceneObjectState {
     asyncRowData?: Map<string, number[]>;
     visibleRowIds?: string;
     sorting?: SortingState;
+    staticLabelFilters: LabelFilters;
 }
 
 class TableViz extends SceneObjectBase<TableVizState> {
@@ -459,7 +462,7 @@ class TableViz extends SceneObjectBase<TableVizState> {
             }
 
             if (!sortConfig[newSortingState.rowId].local) {
-                newState.$data = createRootQuery([], sceneGraph.getVariables(this), newSortingState)
+                newState.$data = createRootQuery(this.state.staticLabelFilters, sceneGraph.getVariables(this), newSortingState)
             }
 
             this.setState(newState)
@@ -498,8 +501,16 @@ class TableViz extends SceneObjectBase<TableVizState> {
        
         const columns: Array<ColumnDef<TableRow>> = useMemo(
             () => [
-                { id: 'pod', header: 'POD', cell: (props: CellContext<TableRow, any>) => LinkCell('pods', props.row.original.pod) },
-                { id: 'node', header: 'NODE', cell: (props: CellContext<TableRow, any>) => LinkCell('nodes', props.row.original.node) },
+                {
+                    id: 'pod',
+                    header: 'POD',
+                    cell: (props: CellContext<TableRow, any>) => LinkCell(prefixRoute(`${ROUTES.Workloads}/pods`), props.row.original.pod)
+                },
+                {
+                    id: 'node',
+                    header: 'NODE',
+                    cell: (props: CellContext<TableRow, any>) => LinkCell(prefixRoute(`${ROUTES.Clusters}/nodes`), props.row.original.node)
+                },
                 { id: 'namespace', header: 'NAMESPACE' },
                 { id: 'containers', header: 'CONTAINERS', cell: (props: CellContext<TableRow, any>) => ContainersCellBuilder(props.cell.row.original.containers) },
                 { id: 'restarts', header: 'RESTARTS', cell: (props: CellContext<TableRow, any>) => RestartsCellBuilder(props.cell.row.original.restarts) },
@@ -686,6 +697,7 @@ export const getPodsScene = (staticLabelFilters: LabelFilters, showVariableContr
                     width: '100%',
                     height: '100%',
                     body: new TableViz({
+                        staticLabelFilters: staticLabelFilters,
                         $data: createRootQuery(staticLabelFilters, variableSet, { rowId: 'pod', direction: 'asc' }),
                     }),
                 }),

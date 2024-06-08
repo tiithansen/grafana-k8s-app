@@ -15,6 +15,7 @@ import { prefixRoute } from 'utils/utils.routing';
 import { getOverviewScene } from './tabs/Overview/Overview';
 import { getNodesScene } from './tabs/Nodes/Nodes';
 import { usePluginProps } from 'utils/utils.plugin';
+import { NodePage } from './pages/Node/Node';
 
 const timeRange = new SceneTimeRange({
     from: 'now-1h',
@@ -60,6 +61,12 @@ function getScene({ datasource }: { datasource: string }) {
                     }),
                 ],
                 getScene: getOverviewScene,
+                drilldowns: [
+                    {
+                        routePath: prefixRoute(`${ROUTES.Clusters}/nodes/:name`),
+                        getPage: NodePage
+                    },
+                ]
             }),
         ]
     })

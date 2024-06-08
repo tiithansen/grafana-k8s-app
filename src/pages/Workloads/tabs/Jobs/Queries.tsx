@@ -1,5 +1,5 @@
 import { SceneVariables } from "@grafana/scenes";
-import { resolveVariable } from "pages/Workloads/variableHelpers";
+import { resolveVariable } from "common/variableHelpers";
 import { Metrics } from "metrics/metrics";
 
 export function createRowQueries(job: string, sceneVariables: SceneVariables) {

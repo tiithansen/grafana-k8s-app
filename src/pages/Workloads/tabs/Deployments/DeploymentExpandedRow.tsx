@@ -1,6 +1,6 @@
 import { SceneFlexLayout } from "@grafana/scenes";
 import { getPodsScene } from "../Pods/Pods";
-import { LabelFilters } from "pages/Workloads/queryHelpers";
+import { LabelFilters } from "common/queryHelpers";
 
 export function buildExpandedRowScene(deploymentName: string) {
 

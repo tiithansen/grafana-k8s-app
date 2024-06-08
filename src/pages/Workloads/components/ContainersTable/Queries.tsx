@@ -1,6 +1,6 @@
 import { SceneVariables } from "@grafana/scenes";
-import { LabelFilters, serializeLabelFilters } from "pages/Workloads/queryHelpers";
-import { resolveVariable } from "pages/Workloads/variableHelpers";
+import { LabelFilters, serializeLabelFilters } from "common/queryHelpers";
+import { resolveVariable } from "common/variableHelpers";
 import { Metrics } from "metrics/metrics";
 
 export function createRowQueries(containers: string, staticLabelFilters: LabelFilters, sceneVariables: SceneVariables) {

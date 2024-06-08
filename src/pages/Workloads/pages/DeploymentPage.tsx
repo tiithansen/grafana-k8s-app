@@ -2,10 +2,10 @@ import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneCont
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { usePluginProps } from "utils/utils.plugin";
-import { createTopLevelVariables, createTimeRange } from "../variableHelpers";
+import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
 import { createResourceLabels } from "../components/ResourceLabels";
 import { getPodsScene } from "../tabs/Pods/Pods";
-import { LabelFilters } from "../queryHelpers";
+import { LabelFilters } from "../../../common/queryHelpers";
 import { Metrics } from "metrics/metrics";
 
 function getPods(deployment: string) {
