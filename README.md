@@ -70,6 +70,6 @@ grafana.ini:
 1. Clone the repository.
 2. Run `npm install` to install the dependencies.
 3. Run `npm run dev` to start development server.
-4. Run `docker-compose up` to start Grafana with the plugin.
+4. Run `docker compose up` to start Grafana with the plugin.
 5. Navigate to `http://localhost:3000/plugins/k8s-app` and configure the plugins datasource.
 6. Open Grafana at `http://localhost:3000/a/k8s-app/workloads`.
