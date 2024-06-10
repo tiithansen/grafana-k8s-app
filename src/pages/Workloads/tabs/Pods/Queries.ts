@@ -87,15 +87,13 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
             refId: 'cpu_usage',
             expr: `
                 sum(
-                    max(
-                        rate(
-                            ${Metrics.containerCpuUsageSecondsTotal.name}{
-                                ${Metrics.containerCpuUsageSecondsTotal.labels.pod}=~"${pods}",
-                                cluster="${cluster}",
-                                ${Metrics.containerCpuUsageSecondsTotal.labels.container}!=""
-                            }[$__rate_interval]
-                        )
-                    ) by (${Metrics.containerCpuUsageSecondsTotal.labels.pod}, ${Metrics.containerCpuUsageSecondsTotal.labels.container})
+                    rate(
+                        ${Metrics.containerCpuUsageSecondsTotal.name}{
+                            ${Metrics.containerCpuUsageSecondsTotal.labels.pod}=~"${pods}",
+                            cluster="${cluster}",
+                            ${Metrics.containerCpuUsageSecondsTotal.labels.container}!=""
+                        }[$__rate_interval]
+                    )
                 ) by (${Metrics.containerCpuUsageSecondsTotal.labels.pod})`,
             instant: true,
             format: 'table'

@@ -187,18 +187,11 @@ function createRootQuery(
                 sortQuery = `
                     * on (${onLabels}) group_right(${carryOverLabels})
                     sum(
-                        max(
-                            avg_over_time(
-                                ${Metrics.containerCpuUsageSecondsTotal.name}{
-                                    cluster="$cluster",
-                                    ${Metrics.containerCpuUsageSecondsTotal.labels.container}!=""
-                                }[$__rate_interval]
-                            )
-                        ) by (
-                            ${Metrics.containerCpuUsageSecondsTotal.labels.pod},
-                            ${Metrics.containerCpuUsageSecondsTotal.labels.namespace},
-                            ${Metrics.containerCpuUsageSecondsTotal.labels.container},
-                            cluster
+                        rate(
+                            ${Metrics.containerCpuUsageSecondsTotal.name}{
+                                cluster="$cluster",
+                                ${Metrics.containerCpuUsageSecondsTotal.labels.container}!=""
+                            }[$__rate_interval]
                         )
                     ) by (
                         ${Metrics.containerCpuUsageSecondsTotal.labels.pod},
