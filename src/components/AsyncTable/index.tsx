@@ -10,14 +10,14 @@ import {
 import React, { useEffect, useMemo } from 'react';
 import { DataFrameView } from '@grafana/data';
 import { InteractiveTable } from '../InteractiveTable/InterativeTable';
-import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { asyncQueryRunner } from 'common/queryHelpers';
 import { resolveVariable } from 'common/variableHelpers';
 import { CellContext, ColumnDef, ColumnSort, Row } from '@tanstack/react-table';
-import { FormattedCell } from 'pages/Workloads/components/FormattedCell';
+import { FormattedCell } from 'components/Cell/FormattedCell';
 import { SortingState } from 'common/sortingHelpers';
 import { TextColor } from 'common/types';
 import { isFunction } from 'lodash';
+import { LinkCell } from 'components/Cell/LinkCell';
 
 export type CellType = 'link' | 'formatted' | 'custom'
 

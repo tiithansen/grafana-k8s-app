@@ -15,7 +15,6 @@ import {
 import React, { useEffect, useMemo } from 'react';
 import { DataFrameView } from '@grafana/data';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
-import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { asyncQueryRunner } from 'common/queryHelpers';
 import { getSeriesValue } from 'common/seriesHelpers';
 import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
@@ -23,6 +22,7 @@ import { createRowQueries } from './Queries';
 import { DurationCell } from 'pages/Workloads/components/DurationCell';
 import { CellContext } from '@tanstack/react-table';
 import { Metrics } from 'metrics/metrics';
+import { LinkCell } from 'components/Cell/LinkCell';
 
 const namespaceVariable = createNamespaceVariable();
 

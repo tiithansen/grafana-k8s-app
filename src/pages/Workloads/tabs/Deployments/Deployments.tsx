@@ -20,10 +20,10 @@ import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
 import { asyncQueryRunner } from 'common/queryHelpers';
 import { getSeriesValue } from 'common/seriesHelpers';
 import { buildExpandedRowScene } from './DeploymentExpandedRow';
-import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
 import { CellContext } from '@tanstack/react-table';
 import { Metrics } from 'metrics/metrics';
+import { LinkCell } from 'components/Cell/LinkCell';
 
 const namespaceVariable = createNamespaceVariable();
 

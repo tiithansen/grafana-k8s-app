@@ -20,11 +20,12 @@ import { asyncQueryRunner } from 'common/queryHelpers';
 import { buildExpandedRowScene } from './NodeExpandedRowScene';
 import { getSeriesValue } from 'common/seriesHelpers';
 import { createClusterVariable, resolveVariable } from 'common/variableHelpers';
-import { LinkCell } from 'pages/Workloads/components/LinkCell';
+
 import { CellContext } from '@tanstack/react-table';
-import { FormattedCell } from 'pages/Workloads/components/FormattedCell';
+import { FormattedCell } from 'components/Cell/FormattedCell';
 import { Metrics } from 'metrics/metrics';
 import { TextColor } from 'common/types';
+import { LinkCell } from 'components/Cell/LinkCell';
 
 const clusterVariable = createClusterVariable();
 

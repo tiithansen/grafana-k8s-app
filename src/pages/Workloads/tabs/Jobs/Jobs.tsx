@@ -19,9 +19,9 @@ import { asyncQueryRunner } from 'common/queryHelpers';
 import { getSeries } from 'common/seriesHelpers';
 import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
 import { createRowQueries } from './Queries';
-import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { CellContext } from '@tanstack/react-table';
 import { Metrics } from 'metrics/metrics';
+import { LinkCell } from 'components/Cell/LinkCell';
 
 const namespaceVariable = createNamespaceVariable();
 

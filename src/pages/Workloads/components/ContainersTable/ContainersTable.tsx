@@ -11,7 +11,7 @@ import {
 } from '@grafana/scenes';
 import React, { useEffect, useMemo } from 'react';
 import { DataFrameView } from '@grafana/data';
-import { FormattedCell } from '../FormattedCell';
+import { FormattedCell } from '../../../../components/Cell/FormattedCell';
 import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
 import { RestartsCellBuilder } from '../../components/RestartsCell';
 import { createRowQueries } from './Queries';
