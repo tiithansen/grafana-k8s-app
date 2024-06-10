@@ -164,14 +164,14 @@ function createRootQuery(
 
     let sortFn = ''
     let sortQuery = ''
-    const remoteSort = !sortConfig[sorting.rowId].local
+    const remoteSort = !sortConfig[sorting.columnId].local
 
     const carryOverLabels = `${Metrics.kubePodInfo.labels.node}, ${Metrics.kubePodInfo.labels.createdByKind}, ${Metrics.kubePodInfo.labels.createdByName}`
     const onLabels = `${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}`
 
     if (remoteSort) {
         sortFn = sorting.direction === 'asc' ? 'sort' : 'sort_desc'
-        switch (sorting.rowId) {
+        switch (sorting.columnId) {
             case 'restarts': {
                 sortQuery = `
                     * on (${onLabels}) group_right(${carryOverLabels})
@@ -451,13 +451,11 @@ interface TableVizState extends SceneObjectState {
 
 class TableViz extends SceneObjectBase<TableVizState> {
 
-    private onSortFn: (newSorting: any) => void;
+    private onSortFn  = this.onSort.bind(this);;
     private onRowsChangedFn = this.onRowsChanged.bind(this);
 
     constructor(state: TableVizState) {
         super({ ...state, asyncRowData: new Map<string, number[]>() });
-
-        this.onSortFn = this.onSort.bind(this);
     }
 
     private setAsyncRowData(data: any) {
@@ -472,7 +470,7 @@ class TableViz extends SceneObjectBase<TableVizState> {
         if (newSorting && newSorting.length > 0) {
 
             const newSortingState: SortingState = {
-                rowId: newSorting[0].id,
+                columnId: newSorting[0].id,
                 direction: newSorting[0].desc ? 'desc' : 'asc'
             }
 
@@ -481,7 +479,7 @@ class TableViz extends SceneObjectBase<TableVizState> {
                 sorting: newSortingState
             }
 
-            if (!sortConfig[newSortingState.rowId].local) {
+            if (!sortConfig[newSortingState.columnId].local) {
                 newState.$data = createRootQuery(this.state.staticLabelFilters, sceneGraph.getVariables(this), newSortingState)
             }
 
@@ -655,8 +653,8 @@ class TableViz extends SceneObjectBase<TableVizState> {
                 }
             }
 
-            if (sorting && sorting.rowId && sorting.direction) {
-                const sorter = sortConfig[sorting.rowId]
+            if (sorting && sorting.columnId && sorting.direction) {
+                const sorter = sortConfig[sorting.columnId]
                 if (sorter && sorter.compare) {
                     return rows.sort((a, b) => {
                         return sorter.compare!(a, b, sorting.direction)
@@ -669,7 +667,7 @@ class TableViz extends SceneObjectBase<TableVizState> {
 
         const currentSorting = useMemo(() => {
             if (sorting) {
-                return [{ id: sorting.rowId, desc: sorting.direction === 'desc' }];
+                return [{ id: sorting.columnId, desc: sorting.direction === 'desc' }];
             }
 
             return [];
@@ -718,7 +716,7 @@ export const getPodsScene = (staticLabelFilters: LabelFilters, showVariableContr
                     height: '100%',
                     body: new TableViz({
                         staticLabelFilters: staticLabelFilters,
-                        $data: createRootQuery(staticLabelFilters, variableSet, { rowId: 'pod', direction: 'asc' }),
+                        $data: createRootQuery(staticLabelFilters, variableSet, { columnId: 'pod', direction: 'asc' }),
                     }),
                 }),
             ],

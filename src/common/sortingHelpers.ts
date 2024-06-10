@@ -1,7 +1,7 @@
 export type SortingDirection = 'asc' | 'desc'
 
 export interface SortingState {
-    rowId: string;
+    columnId: string;
     direction: SortingDirection;
 }
 

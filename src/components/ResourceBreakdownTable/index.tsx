@@ -1,31 +1,18 @@
 import { 
-    EmbeddedScene, 
-    sceneGraph, 
+    EmbeddedScene,
     SceneFlexLayout, 
     SceneFlexItem, 
     SceneQueryRunner,
-    SceneObject,
-    SceneObjectState,
-    SceneObjectBase,
-    SceneComponentProps,
     TextBoxVariable,
     SceneVariableSet,
     VariableValueSelectors,
     SceneVariables,
 } from '@grafana/scenes';
-import React, { useEffect, useMemo } from 'react';
-import { DataFrameView } from '@grafana/data';
-import { InteractiveTable } from '../InteractiveTable/InterativeTable';
-// import { buildExpandedRowScene } from './ExpandedRow';
-import { LinkCell } from 'pages/Workloads/components/LinkCell';
-import { asyncQueryRunner } from 'common/queryHelpers';
 import { getSeriesValue } from 'common/seriesHelpers';
 import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
-// import { createRowQueries } from './Queries';
-import { CellContext, ColumnSort } from '@tanstack/react-table';
 import { Metrics } from 'metrics/metrics';
-import { FormattedCell } from 'pages/Workloads/components/FormattedCell';
-import { SortingConfig, SortingState } from 'common/sortingHelpers';
+import { SortingState } from 'common/sortingHelpers';
+import { AsyncTable, Column, ColumnSortingConfig } from 'components/AsyncTable';
 
 const namespaceVariable = createNamespaceVariable();
 
@@ -34,11 +21,6 @@ const searchVariable = new TextBoxVariable({
     label: 'Search',
     value: '',
 });
-
-interface ExpandedRowProps {
-    table: Table;
-    row: TableRow;
-}
 
 interface TableRow {
     cluster: string;
@@ -55,71 +37,161 @@ interface TableRow {
     };
 }
 
-const sortingConfig: SortingConfig<TableRow> = {
-    namespace: {
-        local: true,
-        type: 'label',
-        compare: (a, b, direction) => {
-            return direction === 'asc' ? a.namespace.localeCompare(b.namespace) : b.namespace.localeCompare(a.namespace);
-        }
+const columns: Array<Column<TableRow>> = [
+    {
+        id: 'namespace',
+        header: 'NAMESPACE',
+        accessor: (row: TableRow) => row.namespace,
+        cellType: 'link',
+        cellProps: {},
+        sortingConfig: {
+            enabled: true,
+            type: 'label',
+            local: true,
+            compare: (a, b, direction) => {
+                return direction === 'asc' ? a.namespace.localeCompare(b.namespace) : b.namespace.localeCompare(a.namespace);
+            }
+        },
     },
-    cpu_requested: {
-        local: false,
-        type: 'value',
+    {
+        id: 'cpu',
+        header: 'CPU',
+        sortingConfig: {
+            enabled: false,
+        },
+        columns: [
+            {
+                id: 'cpu_requested',
+                header: 'REQUESTS',
+                accessor: (row: TableRow) => row.cpu.requests,
+                cellType: 'formatted',
+                cellProps: {
+                    decimals: 2,
+                },
+                sortingConfig: {
+                    enabled: true,
+                    type: 'value',
+                    local: false
+                }
+            },
+            {
+                id: 'cpu_limits',
+                header: 'LIMITS',
+                accessor: (row: TableRow) => row.cpu.limits,
+                cellType: 'formatted',
+                cellProps: {
+                    decimals: 2,
+                },
+                sortingConfig: {
+                    enabled: true,
+                    type: 'value',
+                    local: false
+                }
+            },
+            {
+                id: 'cpu_usage',
+                header: 'USAGE',
+                accessor: (row: TableRow) => row.cpu.usage,
+                cellType: 'formatted',
+                cellProps: {
+                    decimals: 5,
+                },
+                sortingConfig: {
+                    enabled: true,
+                    type: 'value',
+                    local: false
+                }
+            },
+        ]
     },
-    cpu_usage: {
-        local: false,
-        type: 'value',
-    },
-    cpu_limits: {
-        local: false,
-        type: 'value',
-    },
-    memory_requested: {
-        local: false,
-        type: 'value',
-    },
-    memory_usage: {
-        local: false,
-        type: 'value',
-    },
-    memory_limits: {
-        local: false,
-        type: 'value',
-    },
+    {
+        id: 'memory',
+        header: 'MEMORY',
+        sortingConfig: {
+            enabled: false,
+        },
+        columns: [
+            {
+                id: 'memory_requested',
+                header: 'REQUESTS',
+                accessor: (row: TableRow) => row.memory.requests,
+                cellType: 'formatted',
+                cellProps: {
+                    decimals: 2,
+                    format: 'bytes',
+                },
+                sortingConfig: {
+                    enabled: true,
+                    type: 'value',
+                    local: false
+                }
+            },
+            {
+                id: 'memory_limits',
+                header: 'LIMITS',
+                accessor: (row: TableRow) => row.memory.limits,
+                cellType: 'formatted',
+                cellProps: {
+                    decimals: 2,
+                    format: 'bytes',
+                },
+                sortingConfig: {
+                    enabled: true,
+                    type: 'value',
+                    local: false
+                }
+            },
+            {
+                id: 'memory_usage',
+                header: 'USAGE',
+                accessor: (row: TableRow) => row.memory.usage,
+                cellType: 'formatted',
+                cellProps: {
+                    decimals: 2,
+                    format: 'bytes',
+                },
+                sortingConfig: {
+                    enabled: true,
+                    type: 'value',
+                    local: false
+                }
+            }
+        ]
+    }
+]
+
+const serieMatcherPredicate = (row: TableRow) => (value: any) => value.namespace === row.namespace;
+
+function rowMapper(row: TableRow, asyncRowData: any) {
+
+    const cpuRequested = getSeriesValue(asyncRowData, 'cpu_requested', serieMatcherPredicate(row))
+    const cpuUsage = getSeriesValue(asyncRowData, 'cpu_usage', serieMatcherPredicate(row))
+    const cpuLimits = getSeriesValue(asyncRowData, 'cpu_limits', serieMatcherPredicate(row))
+
+    row.cpu = {
+        requests: cpuRequested,
+        limits: cpuLimits,
+        usage: cpuUsage,
+    };
+
+    const memoryRequested = getSeriesValue(asyncRowData, 'memory_requested', serieMatcherPredicate(row))
+    const memoryUsage = getSeriesValue(asyncRowData, 'memory_usage', serieMatcherPredicate(row))
+    const memoryLimits = getSeriesValue(asyncRowData, 'memory_limits', serieMatcherPredicate(row))
+
+    row.memory = {
+        requests: memoryRequested,
+        limits: memoryLimits,
+        usage: memoryUsage,
+    };
 }
 
-interface TableState extends SceneObjectState {
-    expandedRows?: SceneObject[];
-    asyncRowData?: Map<string, number[]>;
-    visibleRowIds?: string;
-    sorting?: SortingState;
-}
-
-function ExpandedRow({ table, row }: ExpandedRowProps) {
-    const { expandedRows } = table.useState();
-  
-    const rowScene = expandedRows?.find((scene) => scene.state.key === row.namespace);
-  
-    useEffect(() => {
-      if (!rowScene) {
-        // const newRowScene = buildExpandedRowScene(row.daemonset);
-        // table.setState({ expandedRows: [...(table.state.expandedRows ?? []), newRowScene] });
-      }
-    }, [row, table, rowScene]);
-  
-    return rowScene ? <rowScene.Component model={rowScene} /> : null;
-}
-
-function createRootQuery(sceneVariables: SceneVariableSet | SceneVariables, sorting?: SortingState) {
-
-    // const cluster = resolveVariable(sceneVariables, 'cluster');
+function createRootQuery(sceneVariables: SceneVariableSet | SceneVariables, sorting?: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) {
 
     const baseQuery = `
         group(
             ${Metrics.kubeNamespaceStatusPhase.name}{
+                ${Metrics.kubeNamespaceStatusPhase.labels.namespace}=~"$namespace",
                 cluster="$cluster",
-                ${Metrics.kubeNamespaceStatusPhase.labels.namespace}=~"$namespace"
             }
         ) by (
             ${Metrics.kubeNamespaceStatusPhase.labels.namespace},
@@ -130,9 +202,9 @@ function createRootQuery(sceneVariables: SceneVariableSet | SceneVariables, sort
     let sortFunction = undefined
     let groupStatement = `* on (${Metrics.kubeNamespaceStatusPhase.labels.namespace}) group_right()`
 
-    if (sorting && sortingConfig[sorting.rowId].local === false) {
+    if (sorting && sortingConfig && sortingConfig.local === false) {
         sortFunction = sorting.direction === 'desc' ? 'sort_desc' : 'sort';
-        sortQuery = getQuery(sorting.rowId, '$cluster', '.*')
+        sortQuery = getQuery(sorting.columnId, '$cluster', '.*')
     }
 
     let finalQuery = baseQuery;
@@ -214,13 +286,13 @@ function getQuery(name: string, cluster: string, ids: string) {
                 max(
                     ${Metrics.containerMemoryWorkingSetBytes.name}{
                         ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
-                        namespace=~"${ids}",
+                        ${Metrics.containerMemoryWorkingSetBytes.labels.namespace}=~"${ids}",
                         cluster="${cluster}"
                     }
                 ) by (
                     ${Metrics.containerMemoryWorkingSetBytes.labels.pod},
                     ${Metrics.containerMemoryWorkingSetBytes.labels.container},
-                    namespace
+                    ${Metrics.containerMemoryWorkingSetBytes.labels.namespace}
                 )
             ) by (namespace, cluster)`
         case 'memory_limits':
@@ -237,7 +309,9 @@ function getQuery(name: string, cluster: string, ids: string) {
     return undefined;
 }
 
-function createRowQueries(ids: string, sceneVariables: SceneVariableSet | SceneVariables) {
+function createRowQueries(rows: TableRow[], sceneVariables: SceneVariableSet | SceneVariables) {
+
+    const ids = rows.map((row: TableRow) => row.namespace).join('|');
 
     const cluster = resolveVariable(sceneVariables, 'cluster');
     const clusterValue = cluster?.toString() || '.*'
@@ -282,238 +356,6 @@ function createRowQueries(ids: string, sceneVariables: SceneVariableSet | SceneV
     ]
 }
 
-class Table extends SceneObjectBase<TableState> {
-
-    private onSortFn  = this.onSort.bind(this);;
-    private onRowsChangedFn = this.onRowsChanged.bind(this);
-
-    constructor(state: TableState) {
-        super({ ...state, asyncRowData: new Map<string, number[]>() });
-    }
-
-    private setAsyncRowData(data: any) {
-        this.setState({ ...this.state, asyncRowData: data });
-    }
-
-    private setVisibleRowIds(ids: string) {
-        this.setState({ ...this.state, visibleRowIds: ids });
-    }
-
-    private onRowsChanged(rows: any) {
-
-        // We need to use cluster and namespace to identify the rows, otherwise it might not refresh if multiple
-        // clusters have exactly same namespaces
-        const ids = rows.map((row: any) => `${row.id}:${row.original.cluster}`).join('|');
-        const namespaces = rows.map((row: any) => row.id).join('|');
-        
-        if (!ids || ids.length === 0 || this.state.visibleRowIds === ids) {
-            return;
-        }
-
-        const sceneVariables = sceneGraph.getVariables(this)
-        const timeRange = sceneGraph.getTimeRange(this)
-        const datasourceVariable = resolveVariable(sceneVariables, 'datasource')
-
-        asyncQueryRunner({
-            datasource: {
-                uid: datasourceVariable?.toString(),
-                type: 'prometheus',
-            },
-            
-            queries: [
-                ...createRowQueries(namespaces, sceneVariables),
-            ],
-            $timeRange: timeRange.clone(),
-        }).then((data) => {
-            this.setVisibleRowIds(ids);
-            this.setAsyncRowData(data);
-        });
-    }
-
-    private onSort(newSorting: ColumnSort[]) {
-        if (newSorting && newSorting.length > 0) {
-
-            const newSortingState: SortingState = {
-                rowId: newSorting[0].id,
-                direction: newSorting[0].desc ? 'desc' : 'asc'
-            }
-
-            const newState: TableState = {
-                ...this.state,
-                sorting: newSortingState
-            }
-
-            if (!sortingConfig[newSortingState.rowId].local) {
-                newState.$data = createRootQuery(sceneGraph.getVariables(this), newSortingState)
-            }
-
-            this.setState(newState)
-        }
-    }
-
-    static Component = (props: SceneComponentProps<Table>) => {
-        const { data } = sceneGraph.getData(props.model).useState();
-        const { asyncRowData, sorting } = props.model.useState();
-       
-        const columns = useMemo(
-            () => [
-                { 
-                    id: 'namespace', 
-                    header: 'NAMESPACE',
-                    cell: (props: CellContext<TableRow, any>) => LinkCell('namespaces', props.row.original.namespace)
-                },
-                {
-                    id: 'cluster',
-                    header: 'CLUSTER',
-                },
-                {
-                    id: 'cpu',
-                    header: 'CPU',
-                    enableSorting: false,
-                    columns: [
-                        {
-                            id: 'cpu_requested',
-                            header: 'REQUESTS',
-                            accessorFn: (row: TableRow) => row.cpu.requests,
-                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
-                                value: props.row.original.cpu.requests,
-                                decimals: 2,
-                            })
-                        },
-                        {
-                            id: 'cpu_limits',
-                            header: 'LIMITS',
-                            accessorFn: (row: TableRow) => row.cpu.limits,
-                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
-                                value: props.row.original.cpu.limits,
-                                decimals: 2,
-                            })
-                        },
-                        {
-                            id: 'cpu_usage',
-                            header: 'USAGE',
-                            accessorFn: (row: TableRow) => row.cpu.usage,
-                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
-                                value: props.row.original.cpu.usage,
-                                decimals: 5,
-                            })
-                        },
-                    ]
-                },
-                {
-                    id: 'memory',
-                    header: 'MEMORY',
-                    enableSorting: false,
-                    columns: [
-                        {
-                            id: 'memory_requested',
-                            header: 'REQUESTS',
-                            accessorFn: (row: TableRow) => row.memory.requests,
-                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
-                                value: props.row.original.memory.requests,
-                                decimals: 2,
-                                format: 'bytes',
-                            })
-                        },
-                        {
-                            id: 'memory_limits',
-                            header: 'LIMITS',
-                            accessorFn: (row: TableRow) => row.memory.limits,
-                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
-                                value: props.row.original.memory.limits,
-                                decimals: 2,
-                                format: 'bytes',
-                            })
-                        },
-                        {
-                            id: 'memory_usage',
-                            header: 'USAGE',
-                            accessorFn: (row: TableRow) => row.memory.usage,
-                            cell: (props: CellContext<TableRow, any>) => FormattedCell({
-                                value: props.row.original.memory.usage,
-                                decimals: 2,
-                                format: 'bytes',
-                            })
-                        }
-                    ]
-                }
-            ],
-            []
-        );
-
-        const tableData = useMemo(() => {
-            if (!data || data.series.length === 0) {
-                return [];
-            }
-
-            const frame = data.series[0];
-            const view = new DataFrameView<TableRow>(frame);
-            const rows = view.toArray();
-
-            const serieMatcherPredicate = (row: TableRow) => (value: any) => value.namespace === row.namespace;
-
-            for (const row of rows) {
-
-                const cpuRequested = getSeriesValue(asyncRowData, 'cpu_requested', serieMatcherPredicate(row))
-                const cpuUsage = getSeriesValue(asyncRowData, 'cpu_usage', serieMatcherPredicate(row))
-                const cpuLimits = getSeriesValue(asyncRowData, 'cpu_limits', serieMatcherPredicate(row))
-
-                row.cpu = {
-                    requests: cpuRequested,
-                    limits: cpuLimits,
-                    usage: cpuUsage,
-                };
-
-                const memoryRequested = getSeriesValue(asyncRowData, 'memory_requested', serieMatcherPredicate(row))
-                const memoryUsage = getSeriesValue(asyncRowData, 'memory_usage', serieMatcherPredicate(row))
-                const memoryLimits = getSeriesValue(asyncRowData, 'memory_limits', serieMatcherPredicate(row))
-
-                row.memory = {
-                    requests: memoryRequested,
-                    limits: memoryLimits,
-                    usage: memoryUsage,
-                };
-                
-            }
-
-            if (sorting && sorting.rowId && sorting.direction) {
-                const sorter = sortingConfig[sorting.rowId]
-                if (sorter && sorter.compare) {
-                    return rows.sort((a, b) => {
-                        return sorter.compare!(a, b, sorting.direction)
-                    })
-                }
-            }
-            
-            return rows;
-        }, [data, asyncRowData, sorting]);
-
-        const currentSorting = useMemo(() => {
-            if (sorting) {
-                return [{
-                    id: sorting.rowId,
-                    desc: sorting.direction === 'desc'
-                }];
-            }
-
-            return [];
-        }, [sorting]);
-
-        return (
-            <InteractiveTable
-                columns={columns}
-                currentSorting={currentSorting}
-                getRowId={(row: any) => row.namespace}
-                data={tableData}
-                renderExpandedRow={(row) => <ExpandedRow table={props.model} row={row} />}
-                pageSize={10}
-                onRowsChanged={props.model.onRowsChangedFn}
-                onSort={props.model.onSortFn}
-            />
-        );
-    };
-}
-
 export const ResourceBreakdownTable = () => {
 
     const variables = new SceneVariableSet({
@@ -522,6 +364,11 @@ export const ResourceBreakdownTable = () => {
             searchVariable,
         ]
     });
+
+    const defaultSorting: SortingState = {
+        columnId: 'namespace',
+        direction: 'asc'
+    }
 
     return new EmbeddedScene({
         $variables: variables,
@@ -533,8 +380,13 @@ export const ResourceBreakdownTable = () => {
                 new SceneFlexItem({
                     width: '100%',
                     height: '100%',
-                    body: new Table({
-                        $data: createRootQuery(variables, { rowId: 'namespace', direction: 'asc' })
+                    body: new AsyncTable<TableRow>({
+                        columns: columns,
+                        createRowId: (row) => `${row.namespace}:${row.cluster}`,
+                        asyncDataRowMapper: rowMapper,
+                        $data: createRootQuery(variables, defaultSorting),
+                        rowQueryBuilder: createRowQueries,
+                        rootQueryBuilder: createRootQuery,
                     }),
                 }),
             ],
