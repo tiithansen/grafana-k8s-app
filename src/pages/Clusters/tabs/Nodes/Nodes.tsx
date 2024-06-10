@@ -22,8 +22,9 @@ import { getSeriesValue } from 'common/seriesHelpers';
 import { createClusterVariable, resolveVariable } from 'common/variableHelpers';
 import { LinkCell } from 'pages/Workloads/components/LinkCell';
 import { CellContext } from '@tanstack/react-table';
-import { FormattedCell, TextColor } from 'pages/Workloads/components/FormattedCell';
+import { FormattedCell } from 'pages/Workloads/components/FormattedCell';
 import { Metrics } from 'metrics/metrics';
+import { TextColor } from 'common/types';
 
 const clusterVariable = createClusterVariable();
 

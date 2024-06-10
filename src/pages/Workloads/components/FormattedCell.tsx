@@ -1,8 +1,7 @@
 import React from 'react';
 import { Text } from '@grafana/ui';
-import { GrafanaTheme2, getValueFormat } from '@grafana/data';
-
-export type TextColor = keyof GrafanaTheme2['colors']['text'] | 'error' | 'success' | 'warning' | 'info'
+import { getValueFormat } from '@grafana/data';
+import { TextColor } from 'common/types';
 
 export interface FormattedCellProps {
     color?: TextColor;

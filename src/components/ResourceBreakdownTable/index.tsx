@@ -385,8 +385,10 @@ export const ResourceBreakdownTable = () => {
                         createRowId: (row) => `${row.namespace}:${row.cluster}`,
                         asyncDataRowMapper: rowMapper,
                         $data: createRootQuery(variables, defaultSorting),
-                        rowQueryBuilder: createRowQueries,
-                        rootQueryBuilder: createRootQuery,
+                        queryBuilder: {
+                            rowQueryBuilder: createRowQueries,
+                            rootQueryBuilder: createRootQuery,
+                        }
                     }),
                 }),
             ],

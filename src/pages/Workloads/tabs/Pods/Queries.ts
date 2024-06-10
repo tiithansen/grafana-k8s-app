@@ -1,9 +1,11 @@
 import { SceneVariables } from "@grafana/scenes";
 import { Metrics } from "metrics/metrics";
 import { resolveVariable } from "common/variableHelpers";
+import { TableRow } from "./types";
 
-export function createRowQueries(pods: string, sceneVariables: SceneVariables) {
+export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
 
+    const pods = rows.map(row => row.pod).join('|');
     const cluster = resolveVariable(sceneVariables, 'cluster');
 
     return [

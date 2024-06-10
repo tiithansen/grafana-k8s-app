@@ -16,19 +16,22 @@ import { resolveVariable } from 'common/variableHelpers';
 import { CellContext, ColumnDef, ColumnSort, Row } from '@tanstack/react-table';
 import { FormattedCell } from 'pages/Workloads/components/FormattedCell';
 import { SortingState } from 'common/sortingHelpers';
+import { TextColor } from 'common/types';
+import { isFunction } from 'lodash';
 
-export type CellType = 'link' | 'formatted'
+export type CellType = 'link' | 'formatted' | 'custom'
 
-type LinkCellProps = {
-    urlBuilder?: (value: any) => string;
+type LinkCellProps<TableRow> = {
+    urlBuilder?: (value: TableRow) => string;
 }
 
-export type FormattedCellProps = {
+export type FormattedCellProps<TableRow> = {
     decimals?: number;
     format?: string;
+    color?: TextColor | ((row: TableRow) => TextColor)
 }
 
-export type CellProps = LinkCellProps | FormattedCellProps;
+export type CellProps<TableRow> = LinkCellProps<TableRow> | FormattedCellProps<TableRow>;
 
 export interface ColumnSortingConfig<TableRow> {
     enabled: boolean;
@@ -42,9 +45,15 @@ export interface Column<TableRow> {
     header: string;
     accessor?: (row: TableRow) => any;
     cellType?: CellType;
-    cellProps?: CellProps;
+    cellProps?: CellProps<TableRow>;
+    cellBuilder?: (row: TableRow) => React.JSX.Element;
     sortingConfig: ColumnSortingConfig<TableRow>;
     columns?: Array<Column<TableRow>>;
+}
+
+export interface QueryBuilder<TableRow> {
+    rootQueryBuilder: (variables: SceneVariables | SceneVariableSet, sorting: SortingState, sortingConfig: ColumnSortingConfig<TableRow>) => any;
+    rowQueryBuilder: (rows: TableRow[], variables: SceneVariables | SceneVariableSet) => any;
 }
 
 interface TableState<TableRow> extends SceneObjectState {
@@ -55,9 +64,8 @@ interface TableState<TableRow> extends SceneObjectState {
     columns: Array<Column<TableRow>>;
     createRowId: (row: TableRow) => string;
     asyncDataRowMapper: (row: TableRow, asyncRowData: any) => void;
-    rootQueryBuilder: (variables: SceneVariables | SceneVariableSet, sorting: SortingState, sortingConfig: ColumnSortingConfig<TableRow>) => any;
-    rowQueryBuilder: (rows: TableRow[], variables: SceneVariables | SceneVariableSet) => any;
     expandedRowBuilder?: (row: TableRow) => SceneObject;
+    queryBuilder: QueryBuilder<TableRow>;
 }
 
 interface ExpandedRowProps<TableRow> {
@@ -85,15 +93,22 @@ function mapColumn<TableRow>(column: Column<TableRow>): ColumnDef<TableRow> {
     let cell = undefined;
     switch (column.cellType) {
         case 'link':
-            cell = (props: CellContext<TableRow, any>) => LinkCell('namespaces', props.row.getValue(column.id))
+            const linkCellProps = column.cellProps as LinkCellProps<TableRow>;
+            cell = (props: CellContext<TableRow, any>) => LinkCell(linkCellProps.urlBuilder ? linkCellProps.urlBuilder(props.row.original) : '', props.row.getValue(column.id))
             break;
         case 'formatted':
-            const formattedCellProps = column.cellProps as FormattedCellProps;
+            const formattedCellProps = column.cellProps as FormattedCellProps<TableRow>;
             cell = (props: CellContext<TableRow, any>) => FormattedCell({
                 value: props.row.getValue(column.id),
                 decimals: formattedCellProps.decimals,
                 format: formattedCellProps.format,
+                color: (formattedCellProps.color && isFunction(formattedCellProps.color)) 
+                    ? formattedCellProps.color(props.row.original)
+                    : formattedCellProps.color,
             })
+            break;
+        case 'custom':
+            cell = (props: CellContext<TableRow, any>) => column.cellBuilder!(props.row.original)
             break;
     }
 
@@ -170,7 +185,7 @@ export class AsyncTable<TableRow> extends SceneObjectBase<TableState<TableRow>> 
             },
             
             queries: [
-                ...this.state.rowQueryBuilder(rows.map(row => row.original), sceneVariables),
+                ...this.state.queryBuilder.rowQueryBuilder(rows.map(row => row.original), sceneVariables),
             ],
             $timeRange: timeRange.clone(),
         }).then((data) => {
@@ -195,7 +210,7 @@ export class AsyncTable<TableRow> extends SceneObjectBase<TableState<TableRow>> 
             const sortingConfig = this.getColumnById(newSortingState.columnId)?.sortingConfig;
 
             if (sortingConfig && sortingConfig.local === false) {
-                newState.$data = this.state.rootQueryBuilder(sceneGraph.getVariables(this), newSortingState, sortingConfig)
+                newState.$data = this.state.queryBuilder.rootQueryBuilder(sceneGraph.getVariables(this), newSortingState, sortingConfig)
             }
 
             this.setState(newState)

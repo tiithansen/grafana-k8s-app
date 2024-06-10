@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text } from '@grafana/ui';
 
-export const ContainersCellBuilder = ({ total, ready }: { total: number, ready: number }) => {
+export const ContainersCell = ({ total, ready }: { total: number, ready: number }) => {
 
     return (
         <span>
