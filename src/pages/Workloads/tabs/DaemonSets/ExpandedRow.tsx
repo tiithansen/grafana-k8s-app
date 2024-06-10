@@ -1,14 +1,15 @@
 import { SceneFlexLayout } from "@grafana/scenes";
 import { getPodsScene } from "../Pods/Pods";
 import { LabelFilters } from "common/queryHelpers";
+import { TableRow } from "./types";
 
-export function buildExpandedRowScene(daemonSet: string) {
+export function buildExpandedRowScene(row: TableRow) {
 
     const staticLabelFilters: LabelFilters = [
         {
             label: 'created_by_name',
             op: '=',
-            value: `${daemonSet}`
+            value: `${row.daemonset}`
         },
         {
             label: 'created_by_kind',
@@ -18,7 +19,7 @@ export function buildExpandedRowScene(daemonSet: string) {
     ]
 
     return new SceneFlexLayout({
-      key: daemonSet,
+      key: `${row.namespace}/${row.daemonset}`,
       width: '100%',
       height: 500,
       children: [
