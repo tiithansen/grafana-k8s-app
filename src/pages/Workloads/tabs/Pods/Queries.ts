@@ -19,8 +19,13 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
                             ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
                             cluster="${cluster}"
                         }
-                    ) by (${Metrics.containerMemoryWorkingSetBytes.labels.pod}, ${Metrics.containerMemoryWorkingSetBytes.labels.container})
-                ) by (${Metrics.containerMemoryWorkingSetBytes.labels.pod})`,
+                    ) by (
+                        ${Metrics.containerMemoryWorkingSetBytes.labels.pod},
+                        ${Metrics.containerMemoryWorkingSetBytes.labels.container}
+                    )
+                ) by (
+                    ${Metrics.containerMemoryWorkingSetBytes.labels.pod}
+                )`,
             instant: true,
             format: 'table'
         },

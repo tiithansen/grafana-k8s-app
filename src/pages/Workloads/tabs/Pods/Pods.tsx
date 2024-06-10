@@ -197,7 +197,8 @@ function createRootQuery(
                         ) by (
                             ${Metrics.containerCpuUsageSecondsTotal.labels.pod},
                             ${Metrics.containerCpuUsageSecondsTotal.labels.namespace},
-                            ${Metrics.containerCpuUsageSecondsTotal.labels.container}
+                            ${Metrics.containerCpuUsageSecondsTotal.labels.container},
+                            cluster
                         )
                     ) by (
                         ${Metrics.containerCpuUsageSecondsTotal.labels.pod},

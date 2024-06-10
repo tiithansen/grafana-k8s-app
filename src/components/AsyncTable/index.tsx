@@ -52,7 +52,7 @@ export interface Column<TableRow> {
 }
 
 export interface QueryBuilder<TableRow> {
-    rootQueryBuilder: (variables: SceneVariables | SceneVariableSet, sorting: SortingState, sortingConfig: ColumnSortingConfig<TableRow>) => any;
+    rootQueryBuilder: (variables: SceneVariables | SceneVariableSet, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) => any;
     rowQueryBuilder: (rows: TableRow[], variables: SceneVariables | SceneVariableSet) => any;
 }
 

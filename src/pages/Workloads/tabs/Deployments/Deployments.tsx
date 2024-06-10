@@ -117,7 +117,7 @@ class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
 }
 
 function createRowId(row: TableRow) {
-    return `${row.namespace}:${row.deployment}`
+    return `${row.namespace}/${row.deployment}`
 }
 
 export const getDeploymentsScene = () => {
