@@ -90,7 +90,7 @@ function getScene({ datasource }: { datasource: string }) {
                     getPage: PodPage
                 },
                 {
-                    routePath: prefixRoute(`${ROUTES.Workloads}/deployments/:name`),
+                    routePath: prefixRoute(`${ROUTES.Workloads}/deployments/:namespace/:name`),
                     getPage: DeploymentPage
                 },
                 {

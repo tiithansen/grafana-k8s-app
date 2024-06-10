@@ -1,14 +1,15 @@
 import { SceneFlexLayout } from "@grafana/scenes";
 import { getPodsScene } from "../Pods/Pods";
 import { LabelFilters } from "common/queryHelpers";
+import { TableRow } from "./types";
 
-export function buildExpandedRowScene(deploymentName: string) {
+export function buildExpandedRowScene(row: TableRow) {
 
     const staticLabelFilters: LabelFilters = [
         {
             label: 'created_by_name',
             op: '=~',
-            value: `${deploymentName}.*`
+            value: `${row.deployment}.*`
         },
         // ReplicaSet creates pods for Deployments
         {
@@ -19,7 +20,7 @@ export function buildExpandedRowScene(deploymentName: string) {
     ]
 
     return new SceneFlexLayout({
-      key: deploymentName,
+      key: `${row.namespace}/${row.deployment}`,
       width: '100%',
       height: 500,
       children: [

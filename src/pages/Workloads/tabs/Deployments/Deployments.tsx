@@ -1,29 +1,24 @@
 import { 
-    EmbeddedScene, 
-    sceneGraph, 
+    EmbeddedScene,
     SceneFlexLayout, 
     SceneFlexItem, 
     SceneQueryRunner,
-    SceneObject,
-    SceneObjectState,
-    SceneObjectBase,
-    SceneComponentProps,
     TextBoxVariable,
     VariableValueSelectors,
     SceneVariableSet,
+    SceneVariables,
 } from '@grafana/scenes';
-import React, { useEffect, useMemo } from 'react';
-import { DataFrameView } from '@grafana/data';
-import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
 import { createRowQueries } from './Queries';
 import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
-import { asyncQueryRunner } from 'common/queryHelpers';
 import { getSeriesValue } from 'common/seriesHelpers';
 import { buildExpandedRowScene } from './DeploymentExpandedRow';
-import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
-import { CellContext } from '@tanstack/react-table';
+import { createNamespaceVariable } from 'common/variableHelpers';
 import { Metrics } from 'metrics/metrics';
-import { LinkCell } from 'components/Cell/LinkCell';
+import { TableRow } from './types';
+import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
+import { SortingState } from 'common/sortingHelpers';
+import { prefixRoute } from 'utils/utils.routing';
+import { ROUTES } from '../../../../constants';
 
 const namespaceVariable = createNamespaceVariable();
 
@@ -33,174 +28,116 @@ const searchVariable = new TextBoxVariable({
     value: '',
 });
 
-const deploymentsQueryRunner = new SceneQueryRunner({
-    datasource: {
-        uid: '$datasource',
-        type: 'prometheus',
-    },
-    queries: [
-        {
-            refId: 'deployments',
-            expr: `
-                group(
-                    ${Metrics.kubeReplicasetOwner.name}{
-                        cluster="$cluster",
-                        ${Metrics.kubeReplicasetOwner.labels.namespace}=~"$namespace",
-                        ${Metrics.kubeReplicasetOwner.labels.ownerName}=~".*$search.*",
-                        ${Metrics.kubeReplicasetOwner.labels.ownerKind}="Deployment"
-                    }
-                ) by (
-                    ${Metrics.kubeReplicasetOwner.labels.ownerName},
-                    ${Metrics.kubeReplicasetOwner.labels.namespace}
-                )`,
-            instant: true,
-            format: 'table'
+const columns: Array<Column<TableRow>> = [
+    {
+        id: 'deployment',
+        header: 'DEPLOYMENT',
+        cellType: 'link',
+        cellProps: {
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Workloads}/deployments/${row.namespace}/${row.deployment}`),
         },
-    ], 
-})
+        sortingConfig: {
+            enabled: true,
+            type: 'label',
+            local: true,
+        }
+    },
+    { 
+        id: 'namespace',
+        header: 'NAMESPACE',
+        cellType: 'link',
+        cellProps: {
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Workloads}/namespaces/${row.namespace}`),
+        },
+        sortingConfig: {
+            enabled: true,
+            type: 'label',
+            local: true,
+        }
+    },
+    { 
+        id: 'replicas',
+        header: 'REPLICAS',
+        cellType: 'custom',
+        cellBuilder: (row: TableRow) => ReplicasCell(row.replicas),
+        sortingConfig: {
+            enabled: true,
+            type: 'value',
+            local: true,
+        }
+    }
+]
 
-interface ExpandedRowProps {
-    tableViz: TableViz;
-    row: TableRow;
-}
+const serieMatcherPredicate = (row: TableRow) => (value: any) => value.deployment === row.deployment && value.namespace === row.namespace;
 
-function ExpandedRow({ tableViz, row }: ExpandedRowProps) {
-    const { expandedRows } = tableViz.useState();
-  
-    const rowScene = expandedRows?.find((scene) => scene.state.key === row.deployment);
-  
-    useEffect(() => {
-      if (!rowScene) {
-        const newRowScene = buildExpandedRowScene(row.deployment);
-        tableViz.setState({ expandedRows: [...(tableViz.state.expandedRows ?? []), newRowScene] });
-      }
-    }, [row, tableViz, rowScene]);
-  
-    return rowScene ? <rowScene.Component model={rowScene} /> : null;
-}
+function asyncRowMapper(row: TableRow, asyncRowData: any) {
+    
+    row.deployment = row.owner_name
 
-interface TableRow {
-    cluster: string;
-    deployment: string;
-    owner_name: string;
-    replicasets: string[];
-    namespace: string;
-    replicas: {
-        ready: number;
-        total: number;
+    const total = getSeriesValue(asyncRowData, 'replicas', serieMatcherPredicate(row))
+    const ready = getSeriesValue(asyncRowData, 'replicas_ready', serieMatcherPredicate(row))
+
+    row.replicas = {
+        total,
+        ready
     }
 }
 
-interface TableVizState extends SceneObjectState {
-    expandedRows?: SceneObject[];
-    asyncRowData?: Map<string, number[]>;
-    visibleRowIds?: string;
-}
-
-class TableViz extends SceneObjectBase<TableVizState> {
-
-    constructor(state: TableVizState) {
-        super({ ...state, asyncRowData: new Map<string, number[]>() });
-    }
-
-    private setAsyncRowData(data: any) {
-        this.setState({ ...this.state, asyncRowData: data });
-    }
-
-    private setVisibleRowIds(ids: string) {
-        this.setState({ ...this.state, visibleRowIds: ids });
-    }
-
-    static Component = (props: SceneComponentProps<TableViz>) => {
-        const { data } = sceneGraph.getData(props.model).useState();
-        const sceneVariables = sceneGraph.getVariables(props.model)
-        const timeRange = sceneGraph.getTimeRange(props.model)
-        const { asyncRowData } = props.model.useState();
-        const { visibleRowIds } = props.model.useState();
-       
-        const columns = useMemo(
-            () => [
-                { id: 'deployment', header: 'DEPLOYMENT', cell: (props: CellContext<TableRow, any>) =>  LinkCell('deployments', props.cell.row.original.deployment)},
-                { id: 'namespace', header: 'NAMESPACE' },
-                { id: 'replicas', header: 'REPLICAS', cell: (props: CellContext<TableRow, any>) => ReplicasCell(props.cell.row.original.replicas) }
-            ],
-            []
-        );
-
-        const tableData = useMemo(() => {
-            if (!data || data.series.length === 0) {
-                return [];
-            }
-
-            const frame = data.series[0];
-            const view = new DataFrameView<TableRow>(frame);
-            const rows = view.toArray();
-
-            // Group rows toghether based on the deployment name
-            const serieMatcherPredicate = (row: TableRow) => (value: any) => value.deployment === row.deployment;
-
-            for (const row of rows) {
-
-                row.deployment = row.owner_name
-
-                const total = getSeriesValue(asyncRowData, 'replicas', serieMatcherPredicate(row))
-                const ready = getSeriesValue(asyncRowData, 'replicas_ready', serieMatcherPredicate(row))
-
-                row.replicas = {
-                    total,
-                    ready
-                }
-            }
-            
-            return rows;
-        }, [data, asyncRowData]);
-
-        const onRowsChanged = (rows: any) => {
-            const ids = rows.map((row: any) => row.id).join('|');
-            
-            if (!ids || ids.length === 0 || visibleRowIds === ids) {
-                return;
-            }
-
-            const datasource = resolveVariable(sceneVariables, 'datasource')
-
-            asyncQueryRunner({
-                datasource: {
-                    uid: datasource?.toString(),
-                    type: 'prometheus',
+class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
+    rootQueryBuilder(variables: SceneVariableSet | SceneVariables, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) {
+        return new SceneQueryRunner({
+            datasource: {
+                uid: '$datasource',
+                type: 'prometheus',
+            },
+            queries: [
+                {
+                    refId: 'deployments',
+                    expr: `
+                        group(
+                            ${Metrics.kubeReplicasetOwner.name}{
+                                cluster="$cluster",
+                                ${Metrics.kubeReplicasetOwner.labels.namespace}=~"$namespace",
+                                ${Metrics.kubeReplicasetOwner.labels.ownerName}=~".*$search.*",
+                                ${Metrics.kubeReplicasetOwner.labels.ownerKind}="Deployment"
+                            }
+                        ) by (
+                            ${Metrics.kubeReplicasetOwner.labels.ownerName},
+                            ${Metrics.kubeReplicasetOwner.labels.namespace}
+                        )`,
+                    instant: true,
+                    format: 'table'
                 },
-                
-                queries: [
-                    ...createRowQueries(ids, sceneVariables),
-                ],
-                $timeRange: timeRange.clone(),
-            }).then((data) => {
-                props.model.setVisibleRowIds(ids);
-                props.model.setAsyncRowData(data);
-            });
-        };
+            ], 
+        })
+    }
+    rowQueryBuilder(rows: TableRow[], variables: SceneVariableSet | SceneVariables) {
+        return createRowQueries(rows, variables)
+    }
+}
 
-        return (
-            <InteractiveTable
-                columns={columns}
-                getRowId={(row: any) => row.deployment}
-                data={tableData}
-                renderExpandedRow={(row) => <ExpandedRow tableViz={props.model} row={row} />}
-                pageSize={10}
-                onRowsChanged={onRowsChanged}
-            />
-        );
-    };
+function createRowId(row: TableRow) {
+    return `${row.namespace}:${row.deployment}`
 }
 
 export const getDeploymentsScene = () => {
+
+    const queryBuilder = new DeploymentQueryBuilder()
+
+    const variables = new SceneVariableSet({
+        variables: [
+            namespaceVariable,
+            searchVariable,
+        ],
+    })
+
+    const defaultSorting: SortingState = {
+        columnId: 'deployment',
+        direction: 'asc',
+    }
+
     return new EmbeddedScene({
-        $variables: new SceneVariableSet({
-            variables: [
-                namespaceVariable,
-                searchVariable
-            ]
-        }),
+        $variables: variables,
         controls: [
             new VariableValueSelectors({}),
         ],
@@ -209,8 +146,13 @@ export const getDeploymentsScene = () => {
                 new SceneFlexItem({
                     width: '100%',
                     height: '100%',
-                    body: new TableViz({
-                        $data: deploymentsQueryRunner,
+                    body: new AsyncTable<TableRow>({
+                        columns: columns,
+                        $data: queryBuilder.rootQueryBuilder(variables, defaultSorting, undefined),
+                        createRowId: createRowId,
+                        asyncDataRowMapper: asyncRowMapper,
+                        queryBuilder: queryBuilder,
+                        expandedRowBuilder: buildExpandedRowScene,
                     }),
                 }),
             ],

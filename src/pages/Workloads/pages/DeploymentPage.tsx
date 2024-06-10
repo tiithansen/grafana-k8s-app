@@ -142,7 +142,7 @@ export function DeploymentPage(routeMatch: SceneRouteMatch<any>, parent: SceneAp
         titleIcon: 'dashboard',
         $variables: variables,
         $timeRange: timeRange,
-        url: prefixRoute(`${ROUTES.Workloads}/deployments/${routeMatch.params.name}`),
+        url: prefixRoute(`${ROUTES.Workloads}/deployments/${routeMatch.params.namespace}/${routeMatch.params.name}`),
         getScene: () => getScene(routeMatch.params.name),
         getParentPage: () => parent,
     })

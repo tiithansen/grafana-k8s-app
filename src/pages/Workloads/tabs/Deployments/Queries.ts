@@ -1,9 +1,11 @@
 import { SceneVariables } from "@grafana/scenes";
 import { resolveVariable } from "common/variableHelpers";
 import { Metrics } from "metrics/metrics";
+import { TableRow } from "./types";
 
-export function createRowQueries(deployments: string, sceneVariables: SceneVariables) {
+export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
 
+    const deployments = rows.map(row => row.deployment).join('|');
     const cluster = resolveVariable(sceneVariables, 'cluster');
 
     return [
@@ -15,7 +17,10 @@ export function createRowQueries(deployments: string, sceneVariables: SceneVaria
                         ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}=~"${deployments}",
                         cluster="${cluster}"
                     }
-                ) by (${Metrics.kubeDeploymentStatusReplicas.labels.deployment})`,
+                ) by (
+                    ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}, 
+                    ${Metrics.kubeDeploymentStatusReplicas.labels.namespace}
+                )`,
             instant: true,
             format: 'table'
         },
@@ -27,7 +32,10 @@ export function createRowQueries(deployments: string, sceneVariables: SceneVaria
                         ${Metrics.kubeDeploymentStatusReplicasReady.labels.deployment}=~"${deployments}",
                         cluster="${cluster}"
                     }
-                ) by (${Metrics.kubeDeploymentStatusReplicasReady.labels.deployment})`,
+                ) by (
+                    ${Metrics.kubeDeploymentStatusReplicasReady.labels.deployment},
+                    ${Metrics.kubeDeploymentStatusReplicasReady.labels.namespace}
+                )`,
             instant: true,
             format: 'table'
         },
