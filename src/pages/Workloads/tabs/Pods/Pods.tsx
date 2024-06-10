@@ -21,6 +21,7 @@ import { ContainersCell } from 'pages/Workloads/components/ContainersCell';
 import { TextColor } from 'common/types';
 import { TableRow } from './types';
 import { createRowQueries } from './Queries';
+import { buildExpandedRowScene } from './PodExpandedRow';
 
 function createVariables() {
     return [
@@ -602,6 +603,7 @@ export const getPodsScene = (staticLabelFilters: LabelFilters, showVariableContr
                         asyncDataRowMapper: asyncDataRowMapper,
                         queryBuilder: queryBuilder,
                         createRowId: (row: TableRow) => row.pod,
+                        expandedRowBuilder: buildExpandedRowScene
                     }),
                 }),
             ],
