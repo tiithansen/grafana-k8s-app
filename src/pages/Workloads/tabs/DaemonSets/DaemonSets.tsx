@@ -53,6 +53,9 @@ const columns: Array<Column<TableRow>> = [
             enabled: true,
             type: 'label',
             local: true,
+            compare(a, b, direction) {
+                return direction === 'asc' ? a.daemonset.localeCompare(b.daemonset) : b.daemonset.localeCompare(a.daemonset)
+            },
         }
     },
     { 
@@ -66,6 +69,9 @@ const columns: Array<Column<TableRow>> = [
             enabled: true,
             type: 'label',
             local: true,
+            compare(a, b, direction) {
+                return direction === 'asc' ? a.namespace.localeCompare(b.namespace) : b.namespace.localeCompare(a.namespace)
+            },
         }
     },
     { 
