@@ -2,8 +2,11 @@ import { SceneVariables } from "@grafana/scenes";
 import { LabelFilters, serializeLabelFilters } from "common/queryHelpers";
 import { resolveVariable } from "common/variableHelpers";
 import { Metrics } from "metrics/metrics";
+import { TableRow } from "./types";
 
-export function createRowQueries(containers: string, staticLabelFilters: LabelFilters, sceneVariables: SceneVariables) {
+export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilters, sceneVariables: SceneVariables) {
+
+    const containers = rows.map(row => row.container).join('|');
 
     const cluster = resolveVariable(sceneVariables, 'cluster');
     const serializedFilters = serializeLabelFilters(staticLabelFilters);
