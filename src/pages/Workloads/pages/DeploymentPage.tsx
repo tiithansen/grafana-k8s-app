@@ -7,6 +7,9 @@ import { createResourceLabels } from "../components/ResourceLabels";
 import { getPodsScene } from "../tabs/Pods/Pods";
 import { LabelFilters } from "../../../common/queryHelpers";
 import { Metrics } from "metrics/metrics";
+import Heading from "components/Heading";
+import { CPUUsagePanel } from "../components/CPUUsagePanel";
+import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 
 function getPods(deployment: string) {
     const staticLabelFilters: LabelFilters = [
@@ -115,8 +118,35 @@ function getScene(deployment: string) {
                 new SceneFlexLayout({
                     direction: 'row',
                     children: [
+                        new Heading({ title: 'Resource Usage Overview'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 400,
+                    children: [
+                        CPUUsagePanel([{
+                            label: 'pod',
+                            op: '=~',
+                            value: `${deployment}.*`
+                        }]),
+                        MemoryUsagePanel([{
+                            label: 'pod',
+                            op: '=~',
+                            value: `${deployment}.*`
+                        }]),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Pods'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
                         new SceneFlexItem({
-                            height: 'auto',
                             width: '100%',
                             body: getPods(deployment),
                         }),
