@@ -3,6 +3,7 @@ export interface TableRow {
     pod: string;
     namespace: string;
     node: string;
+    host_ip: string;
     containers: {
         total: number;
         ready: number;

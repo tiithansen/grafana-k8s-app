@@ -19,6 +19,7 @@ export const Metrics = {
             namespace: 'namespace',
             pod: 'pod',
             node: 'node',
+            hostIP: 'host_ip',
             createdByKind: 'created_by_kind',
             createdByName: 'created_by_name',
         }

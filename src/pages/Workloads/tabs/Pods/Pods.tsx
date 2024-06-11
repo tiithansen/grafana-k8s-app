@@ -101,7 +101,7 @@ function createRootQuery(
     let sortQuery = ''
     const remoteSort = sortingConfig && sortingConfig.local === false
 
-    const carryOverLabels = `${Metrics.kubePodInfo.labels.node}, ${Metrics.kubePodInfo.labels.createdByKind}, ${Metrics.kubePodInfo.labels.createdByName}`
+    const carryOverLabels = `${Metrics.kubePodInfo.labels.hostIP}, ${Metrics.kubePodInfo.labels.createdByKind}, ${Metrics.kubePodInfo.labels.createdByName}`
     const onLabels = `${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}`
 
     if (remoteSort) {
@@ -250,6 +250,7 @@ function createRootQuery(
             cluster,
             ${Metrics.kubePodInfo.labels.namespace},
             ${Metrics.kubePodInfo.labels.node},
+            ${Metrics.kubePodInfo.labels.hostIP},
             ${Metrics.kubePodInfo.labels.pod},
             ${Metrics.kubePodInfo.labels.createdByKind},
             ${Metrics.kubePodInfo.labels.createdByName}
@@ -346,18 +347,18 @@ const columns: Array<Column<TableRow>> = [
         },
     },
     {
-        id: 'node',
+        id: 'host_ip',
         header: 'NODE',
         cellType: 'link',
         cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.cluster}/${row.node}`)
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.cluster}/${row.host_ip}`)
         },
         sortingConfig: {
             enabled: true,
             local: true,
             type: 'label',
             compare: (a, b, direction) => {
-                return direction === 'asc' ? a.node.localeCompare(b.node) : b.node.localeCompare(a.node)
+                return direction === 'asc' ? a.host_ip.localeCompare(b.host_ip) : b.host_ip.localeCompare(a.host_ip)
             }
         },
     },
