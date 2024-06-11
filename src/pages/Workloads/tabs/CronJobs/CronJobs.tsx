@@ -1,28 +1,22 @@
 import { 
-    EmbeddedScene, 
-    sceneGraph, 
+    EmbeddedScene,
     SceneFlexLayout, 
     SceneFlexItem, 
     SceneQueryRunner,
-    SceneObject,
-    SceneObjectState,
-    SceneObjectBase,
-    SceneComponentProps,
     SceneVariableSet,
     TextBoxVariable,
     VariableValueSelectors,
+    SceneVariables,
 } from '@grafana/scenes';
-import React, { useEffect, useMemo } from 'react';
-import { DataFrameView } from '@grafana/data';
-import { InteractiveTable } from '../../../../components/InteractiveTable/InterativeTable';
-import { asyncQueryRunner } from 'common/queryHelpers';
 import { getSeriesValue } from 'common/seriesHelpers';
-import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
+import { createNamespaceVariable } from 'common/variableHelpers';
 import { createRowQueries } from './Queries';
-import { DurationCell } from 'pages/Workloads/components/DurationCell';
-import { CellContext } from '@tanstack/react-table';
 import { Metrics } from 'metrics/metrics';
-import { LinkCell } from 'components/Cell/LinkCell';
+import { TableRow } from './types';
+import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
+import { SortingState } from 'common/sortingHelpers';
+import { ROUTES } from '../../../../constants';
+import { prefixRoute } from 'utils/utils.routing';
 
 const namespaceVariable = createNamespaceVariable();
 
@@ -32,165 +26,126 @@ const searchVariable = new TextBoxVariable({
     value: '',
 });
 
-const cronJobsQueryRunner = new SceneQueryRunner({
-    datasource: {
-        uid: '$datasource',
-        type: 'prometheus',
-    },
-    queries: [
-        {
-            refId: 'cronjobs',
-            expr: `
-                group(
-                    ${Metrics.kubeCronJobInfo.name}{
-                        cluster="$cluster",
-                        ${Metrics.kubeCronJobInfo.labels.namespace}=~"$namespace"
-                    }
-                ) by (
-                    ${Metrics.kubeCronJobInfo.labels.cronJob},
-                    ${Metrics.kubeCronJobInfo.labels.schedule},
-                    ${Metrics.kubeCronJobInfo.labels.namespace}
-                )`,
-            instant: true,
-            format: 'table'
+const columns: Array<Column<TableRow>> = [
+    {
+        id: 'cronjob',
+        header: 'CRONJOB',
+        cellType: 'link',
+        cellProps: {
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Workloads}/cronjobs/${row.namespace}/${row.cronjob}`),
         },
-    ], 
-})
-
-interface ExpandedRowProps {
-    tableViz: TableViz;
-    row: TableRow;
-}
-
-function ExpandedRow({ tableViz, row }: ExpandedRowProps) {
-    const { expandedRows } = tableViz.useState();
-  
-    const rowScene = expandedRows?.find((scene) => scene.state.key === row.cronjob);
-  
-    useEffect(() => {
-      if (!rowScene) {
-        // const newRowScene = buildExpandedRowScene(row.pod);
-        // tableViz.setState({ expandedRows: [...(tableViz.state.expandedRows ?? []), newRowScene] });
-      }
-    }, [row, tableViz, rowScene]);
-  
-    return rowScene ? <rowScene.Component model={rowScene} /> : null;
-}
-
-interface TableRow {
-    cluster: string;
-    cronjob: string;
-    namespace: string;
-    schedule: string;
-    suspended: boolean;
-    lastSchedule: number;
-}
-
-interface TableVizState extends SceneObjectState {
-    expandedRows?: SceneObject[];
-    asyncRowData?: Map<string, number[]>;
-    visibleRowIds?: string;
-}
-
-class TableViz extends SceneObjectBase<TableVizState> {
-
-    constructor(state: TableVizState) {
-        super({ ...state, asyncRowData: new Map<string, number[]>() });
-    }
-
-    private setAsyncRowData(data: any) {
-        this.setState({ ...this.state, asyncRowData: data });
-    }
-
-    private setVisibleRowIds(ids: string) {
-        this.setState({ ...this.state, visibleRowIds: ids });
-    }
-
-    static Component = (props: SceneComponentProps<TableViz>) => {
-        const { data } = sceneGraph.getData(props.model).useState();
-        const sceneVariables = sceneGraph.getVariables(props.model)
-        const timeRange = sceneGraph.getTimeRange(props.model)
-        const { asyncRowData } = props.model.useState();
-        const { visibleRowIds } = props.model.useState();
-       
-        const columns = useMemo(
-            () => [
-                { id: 'cronjob', header: 'CRONJOB', cell: (props: CellContext<TableRow, any>) => LinkCell('cronjobs', props.row.original.cronjob) },
-                { id: 'namespace', header: 'NAMESPACE' },
-                { id: 'schedule', header: 'SCHEDULE' },
-                { id: 'suspended', header: 'SUSPENDED' },
-                { id: 'lastSchedule', header: 'LAST SCHEDULE', cell: (props: CellContext<TableRow, any>) => DurationCell(props.row.original.lastSchedule)},
-            ],
-            []
-        );
-
-        const tableData = useMemo(() => {
-            if (!data || data.series.length === 0) {
-                return [];
-            }
-
-            const frame = data.series[0];
-            const view = new DataFrameView<TableRow>(frame);
-            const rows = view.toArray();
-
-            const serieMatcherPredicate = (row: TableRow) => (value: any) => value.cronjob === row.cronjob;
-
-            for (const row of rows) {
-                row.suspended = getSeriesValue(asyncRowData, 'suspended', serieMatcherPredicate(row));
-                const lastSchedule = getSeriesValue(asyncRowData, 'last_schedule', serieMatcherPredicate(row));
-                if (lastSchedule > 0) {
-                    row.lastSchedule = lastSchedule - new Date().getTime() / 1000;
-                } else {
-                    row.lastSchedule = 0;
-                }
-            }
-            
-            return rows;
-        }, [data, asyncRowData]);
-
-        const onRowsChanged = (rows: any) => {
-            const ids = rows.map((row: any) => row.id).join('|');
-            
-            if (!ids || ids.length === 0 || visibleRowIds === ids) {
-                return;
-            }
-
-            const datasource = resolveVariable(sceneVariables, 'datasource')
-
-            asyncQueryRunner({
-                datasource: {
-                    uid: datasource?.toString(),
-                    type: 'prometheus',
-                },
-                
-                queries: [
-                    ...createRowQueries(ids, sceneVariables),
-                ],
-                $timeRange: timeRange.clone(),
-            }).then((data) => {
-                props.model.setVisibleRowIds(ids);
-                props.model.setAsyncRowData(data);
-            });
+        sortingConfig: {
+            enabled: true,
+            type: 'label',
+            local: true
         }
+    },
+    {
+        id: 'namespace',
+        header: 'NAMESPACE',
+        cellType: 'link',
+        cellProps: {
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/namespaces/${row.namespace}`),
+        },
+        sortingConfig: {
+            enabled: true,
+            type: 'label',
+            local: true
+        }
+    },
+    {
+        id: 'schedule',
+        header: 'SCHEDULE',
+        sortingConfig: {
+            enabled: true,
+            type: 'value',
+            local: false
+        }
+    },
+    {
+        id: 'suspended',
+        header: 'SUSPENDED',
+        sortingConfig: {
+            enabled: true,
+            type: 'value',
+            local: false
+        }
+    },
+    {
+        id: 'lastSchedule',
+        header: 'LAST SCHEDULE',
+        cellType: 'formatted',
+        cellProps: {
+            format: 'dtdurations'
+        },
+        sortingConfig: {
+            enabled: true,
+            type: 'value',
+            local: false
+        }
+    }
+]
 
-        return (
-            <InteractiveTable
-                columns={columns}
-                getRowId={(row: any) => row.cronjob}
-                data={tableData}
-                renderExpandedRow={(row) => <ExpandedRow tableViz={props.model} row={row} />}
-                pageSize={10}
-                onRowsChanged={onRowsChanged}
-            />
-        );
-    };
+const serieMatcherPredicate = (row: TableRow) => (value: any) => value.cronjob === row.cronjob;
+
+function asyncDataRowMapper(row: TableRow, asyncRowData: Record<string, number[]>) {
+    
+    row.suspended = getSeriesValue(asyncRowData, 'suspended', serieMatcherPredicate(row));
+    const lastSchedule = getSeriesValue(asyncRowData, 'last_schedule', serieMatcherPredicate(row));
+    if (lastSchedule > 0) {
+        row.lastSchedule = lastSchedule - new Date().getTime() / 1000;
+    } else {
+        row.lastSchedule = 0;
+    }
+}
+
+class CronJobsQueryBuilder implements QueryBuilder<TableRow> {
+    rootQueryBuilder(variables: SceneVariableSet | SceneVariables, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow> | undefined) {
+        return new SceneQueryRunner({
+            datasource: {
+                uid: '$datasource',
+                type: 'prometheus',
+            },
+            queries: [
+                {
+                    refId: 'cronjobs',
+                    expr: `
+                        group(
+                            ${Metrics.kubeCronJobInfo.name}{
+                                cluster="$cluster",
+                                ${Metrics.kubeCronJobInfo.labels.namespace}=~"$namespace"
+                            }
+                        ) by (
+                            ${Metrics.kubeCronJobInfo.labels.cronJob},
+                            ${Metrics.kubeCronJobInfo.labels.schedule},
+                            ${Metrics.kubeCronJobInfo.labels.namespace}
+                        )`,
+                    instant: true,
+                    format: 'table'
+                },
+            ], 
+        })
+    }
+    rowQueryBuilder(rows: TableRow[], variables: SceneVariableSet | SceneVariables) {
+        return createRowQueries(rows, variables);
+    }
 }
 
 export const getCronJobsScene = () => {
+
+    const variables = new SceneVariableSet({
+        variables: [namespaceVariable, searchVariable],
+    });
+
+    const defaultSorting: SortingState = {
+        columnId: 'cronjob',
+        direction: 'asc',
+    }
+
+    const queryBuilder = new CronJobsQueryBuilder();
+
     return new EmbeddedScene({
-        $variables: new SceneVariableSet({
-            variables: [namespaceVariable, searchVariable],
-        }),
+        $variables: variables,
         controls: [
             new VariableValueSelectors({})
         ],
@@ -199,8 +154,12 @@ export const getCronJobsScene = () => {
                 new SceneFlexItem({
                     width: '100%',
                     height: '100%',
-                    body: new TableViz({
-                        $data: cronJobsQueryRunner,
+                    body: new AsyncTable<TableRow>({
+                        columns: columns,
+                        $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
+                        createRowId: (row: TableRow) => `${row.namespace}/${row.cronjob}`,
+                        queryBuilder: queryBuilder,
+                        asyncDataRowMapper: asyncDataRowMapper,
                     }),
                 }),
             ],

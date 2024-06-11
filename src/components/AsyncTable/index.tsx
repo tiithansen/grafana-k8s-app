@@ -18,6 +18,7 @@ import { SortingState } from 'common/sortingHelpers';
 import { TextColor } from 'common/types';
 import { isFunction } from 'lodash';
 import { LinkCell } from 'components/Cell/LinkCell';
+import { DefaultCell } from 'components/Cell/DefaultCell';
 
 export type CellType = 'link' | 'formatted' | 'custom'
 
@@ -94,7 +95,12 @@ function mapColumn<TableRow>(column: Column<TableRow>): ColumnDef<TableRow> {
     switch (column.cellType) {
         case 'link':
             const linkCellProps = column.cellProps as LinkCellProps<TableRow>;
-            cell = (props: CellContext<TableRow, any>) => LinkCell(linkCellProps.urlBuilder ? linkCellProps.urlBuilder(props.row.original) : '', props.row.getValue(column.id))
+            cell = (props: CellContext<TableRow, any>) => LinkCell(
+                linkCellProps.urlBuilder 
+                    ? linkCellProps.urlBuilder(props.row.original) 
+                    : '',
+                props.row.getValue(column.id)
+            )
             break;
         case 'formatted':
             const formattedCellProps = column.cellProps as FormattedCellProps<TableRow>;
@@ -110,6 +116,9 @@ function mapColumn<TableRow>(column: Column<TableRow>): ColumnDef<TableRow> {
         case 'custom':
             cell = (props: CellContext<TableRow, any>) => column.cellBuilder!(props.row.original)
             break;
+        default:
+            cell = (props: CellContext<TableRow, any>) => DefaultCell(props.row.getValue(column.id))
+            break;
     }
 
     return {
@@ -120,6 +129,7 @@ function mapColumn<TableRow>(column: Column<TableRow>): ColumnDef<TableRow> {
         cell: cell,
         columns: column.columns?.map((column) => mapColumn(column)),
     }
+
 }
 
 export class AsyncTable<TableRow> extends SceneObjectBase<TableState<TableRow>> {
