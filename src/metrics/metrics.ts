@@ -237,6 +237,20 @@ export const Metrics = {
             daemonset: 'daemonset',
         }
     },
+    kubeDaemonsetStatusNumberAvailable: {
+        name: 'kube_daemonset_status_number_available',
+        labels:{
+            namespace: 'namespace',
+            daemonset: 'daemonset',
+        }
+    },
+    kubeDaemonsetStatusNumberUnavailable: {
+        name: 'kube_daemonset_status_number_unavailable',
+        labels:{
+            namespace: 'namespace',
+            daemonset: 'daemonset',
+        }
+    },
     // CronJobs
     kubeCronJobInfo: {
         name: 'kube_cronjob_info',

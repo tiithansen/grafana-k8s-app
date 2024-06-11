@@ -79,6 +79,6 @@ export function CPUUsagePanel(filters: LabelFilters) {
                 .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [20, 5] })
                 .overrideCustomFieldConfig('fillOpacity', 10)
         })
-        .setOption('legend', { displayMode: LegendDisplayMode.Table })
+        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
         .build()
 }

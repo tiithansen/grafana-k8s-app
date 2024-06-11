@@ -1,10 +1,95 @@
-import { EmbeddedScene, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexLayout, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
+import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { usePluginProps } from "utils/utils.plugin";
 import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
+import { createResourceLabels } from "../components/ResourceLabels";
+import { getPodsScene } from "../tabs/Pods/Pods";
+import { LabelFilters } from "../../../common/queryHelpers";
+import { Metrics } from "metrics/metrics";
+import Heading from "components/Heading";
+import { CPUUsagePanel } from "../components/CPUUsagePanel";
+import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 
-function getScene(daemonSet: string) {
+function getPods(daemonset: string, namespace: string) {
+    const staticLabelFilters: LabelFilters = [
+        {
+            label: 'created_by_name',
+            op: '=~',
+            value: `${daemonset}`
+        },
+        {
+            label: 'created_by_kind',
+            op: '=',
+            value: 'DaemonSet' 
+        },
+        {
+            label: 'namespace',
+            op: '=',
+            value: namespace
+        }
+    ]
+
+    return getPodsScene(staticLabelFilters, false, false)
+}
+
+function getNumberPanel(daemonset: string, namespace: string) {
+    return PanelBuilders.timeseries()
+        .setTitle('Number')
+        .setData(new SceneQueryRunner({
+            datasource: {
+                uid: '$datasource',
+                type: 'prometheus',
+            },
+            queries: [
+                {
+                    refId: 'unavailable_replicas',
+                    expr: `
+                        max(
+                            ${Metrics.kubeDaemonsetStatusNumberUnavailable.name}{
+                                ${Metrics.kubeDaemonsetStatusNumberUnavailable.labels.daemonset}=~"${daemonset}",
+                                ${Metrics.kubeDaemonsetStatusNumberUnavailable.labels.namespace}="${namespace}",
+                                cluster="$cluster"
+                            }
+                        ) by (${Metrics.kubeDaemonsetStatusNumberUnavailable.labels.daemonset})`,
+                    legendFormat: 'Unavailable'
+                },
+                {
+                    refId: 'available_replicas',
+                    expr: `
+                        max(
+                            ${Metrics.kubeDaemonsetStatusNumberAvailable.name}{
+                                ${Metrics.kubeDaemonsetStatusNumberAvailable.labels.daemonset}=~"${daemonset}",
+                                ${Metrics.kubeDaemonsetStatusNumberAvailable.labels.namespace}="${namespace}",
+                                cluster="$cluster"
+                            }
+                        ) by (${Metrics.kubeDaemonsetStatusNumberAvailable.labels.daemonset})`,
+                    legendFormat: 'Available'
+                },
+                {
+                    refId: 'replicas',
+                    expr: `
+                        max(
+                            ${Metrics.kubeDaemonsetStatusNumberReady.name}{
+                                ${Metrics.kubeDaemonsetStatusNumberReady.labels.daemonset}=~"${daemonset}",
+                                ${Metrics.kubeDaemonsetStatusNumberReady.labels.namespace}="${namespace}",
+                                cluster="$cluster"
+                            }
+                        ) by (${Metrics.kubeDaemonsetStatusNumberReady.labels.daemonset})`,
+                    legendFormat: 'Ready'
+                },
+            ]
+        }))
+        .setOverrides((builder) => {
+            builder.matchFieldsByQuery('replicas')
+                .overrideCustomFieldConfig('fillOpacity', 10)
+            builder.matchFieldsByQuery('available_replicas')
+                .overrideCustomFieldConfig('fillOpacity', 10)
+        })
+        .build()
+}
+
+function getScene(daemonset: string, namespace = '$namespace') {
     return new EmbeddedScene({
         controls: [
             new VariableValueSelectors({}),
@@ -17,7 +102,77 @@ function getScene(daemonSet: string) {
         ],
         body: new SceneFlexLayout({
             direction: 'column',
-            children: []
+            children: [
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 200,
+                    children: [
+                        new SceneFlexItem({
+                            height: 'auto',
+                            width: `${(1/3) * 100}%`,
+                            body: createResourceLabels('daemonset', [{
+                                label: 'daemonset',
+                                op: '=',
+                                value: daemonset,
+                            }, {
+                                label: 'namespace',
+                                op: '=',
+                                value: namespace,
+                            }]),
+                        }),
+                        new SceneFlexItem({
+                            height: 200,
+                            width: `${(2/3) * 100}%`,
+                            body: getNumberPanel(daemonset, namespace),
+                        })
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Resource Usage Overview'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 400,
+                    children: [
+                        CPUUsagePanel([{
+                            label: 'pod',
+                            op: '=~',
+                            value: `${daemonset}.*`
+                        }, {
+                            label: 'namespace',
+                            op: '=',
+                            value: namespace
+                        }]),
+                        MemoryUsagePanel([{
+                            label: 'pod',
+                            op: '=~',
+                            value: `${daemonset}.*`
+                        }, {
+                            label: 'namespace',
+                            op: '=',
+                            value: namespace
+                        }]),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Pods'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new SceneFlexItem({
+                            width: '100%',
+                            body: getPods(daemonset, namespace),
+                        }),
+                    ]
+                }),
+            ]
         }),
     })
 }
@@ -33,12 +188,12 @@ export function DaemonSetPage(routeMatch: SceneRouteMatch<any>, parent: SceneApp
     const timeRange = createTimeRange()
 
     return new SceneAppPage({
-        title: `DaemonSet - ${routeMatch.params.name}`,
+        title: `DaemonSet - ${routeMatch.params.namespace}/${routeMatch.params.name}`,
         titleIcon: 'dashboard',
         $variables: variables,
         $timeRange: timeRange,
         url: prefixRoute(`${ROUTES.Workloads}/daemonsets/${routeMatch.params.namespace}/${routeMatch.params.name}`),
-        getScene: () => getScene(routeMatch.params.name),
+        getScene: () => getScene(routeMatch.params.name, routeMatch.params.namespace),
         getParentPage: () => parent,
     })
 }
