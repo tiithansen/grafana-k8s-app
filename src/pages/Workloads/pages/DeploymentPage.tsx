@@ -11,7 +11,7 @@ import Heading from "components/Heading";
 import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 
-function getPods(deployment: string) {
+function getPods(deployment: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
         {
             label: 'created_by_name',
@@ -22,13 +22,18 @@ function getPods(deployment: string) {
             label: 'created_by_kind',
             op: '=',
             value: 'ReplicaSet' 
+        },
+        {
+            label: 'namespace',
+            op: '=',
+            value: namespace
         }
     ]
 
     return getPodsScene(staticLabelFilters, false, false)
 }
 
-function getReplicasPanel(deployment: string) {
+function getReplicasPanel(deployment: string, namespace: string) {
     return PanelBuilders.timeseries()
         .setTitle('Replicas')
         .setData(new SceneQueryRunner({
@@ -43,6 +48,7 @@ function getReplicasPanel(deployment: string) {
                         max(
                             ${Metrics.kubeDeploymentStatusReplicasUnavailable.name}{
                                 ${Metrics.kubeDeploymentStatusReplicasUnavailable.labels.deployment}=~"${deployment}",
+                                ${Metrics.kubeDeploymentStatusReplicasUnavailable.labels.namespace}="${namespace}",
                                 cluster="$cluster"
                             }
                         ) by (${Metrics.kubeDeploymentStatusReplicasUnavailable.labels.deployment})`,
@@ -54,6 +60,7 @@ function getReplicasPanel(deployment: string) {
                         max(
                             ${Metrics.kubeDeploymentStatusReplicasAvailable.name}{
                                 ${Metrics.kubeDeploymentStatusReplicasAvailable.labels.deployment}=~"${deployment}",
+                                ${Metrics.kubeDeploymentStatusReplicasAvailable.labels.namespace}="${namespace}",
                                 cluster="$cluster"
                             }
                         ) by (${Metrics.kubeDeploymentStatusReplicasAvailable.labels.deployment})`,
@@ -65,6 +72,7 @@ function getReplicasPanel(deployment: string) {
                         max(
                             ${Metrics.kubeDeploymentStatusReplicas.name}{
                                 ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}=~"${deployment}",
+                                ${Metrics.kubeDeploymentStatusReplicas.labels.namespace}="${namespace}",
                                 cluster="$cluster"
                             }
                         ) by (${Metrics.kubeDeploymentStatusReplicas.labels.deployment})`,
@@ -81,7 +89,7 @@ function getReplicasPanel(deployment: string) {
         .build()
 }
 
-function getScene(deployment: string) {
+function getScene(deployment: string, namespace = '$namespace') {
     return new EmbeddedScene({
         controls: [
             new VariableValueSelectors({}),
@@ -106,12 +114,16 @@ function getScene(deployment: string) {
                                 label: 'deployment',
                                 op: '=',
                                 value: deployment,
+                            }, {
+                                label: 'namespace',
+                                op: '=',
+                                value: namespace,
                             }]),
                         }),
                         new SceneFlexItem({
                             height: 200,
                             width: `${(2/3) * 100}%`,
-                            body: getReplicasPanel(deployment),
+                            body: getReplicasPanel(deployment, namespace),
                         })
                     ]
                 }),
@@ -129,11 +141,19 @@ function getScene(deployment: string) {
                             label: 'pod',
                             op: '=~',
                             value: `${deployment}.*`
+                        }, {
+                            label: 'namespace',
+                            op: '=',
+                            value: namespace
                         }]),
                         MemoryUsagePanel([{
                             label: 'pod',
                             op: '=~',
                             value: `${deployment}.*`
+                        }, {
+                            label: 'namespace',
+                            op: '=',
+                            value: namespace
                         }]),
                     ]
                 }),
@@ -148,7 +168,7 @@ function getScene(deployment: string) {
                     children: [
                         new SceneFlexItem({
                             width: '100%',
-                            body: getPods(deployment),
+                            body: getPods(deployment, namespace),
                         }),
                     ]
                 }),
@@ -168,12 +188,12 @@ export function DeploymentPage(routeMatch: SceneRouteMatch<any>, parent: SceneAp
     const timeRange = createTimeRange()
 
     return new SceneAppPage({
-        title: `Deployment - ${routeMatch.params.name}`,
+        title: `Deployment - ${routeMatch.params.namespace}/${routeMatch.params.name}`,
         titleIcon: 'dashboard',
         $variables: variables,
         $timeRange: timeRange,
         url: prefixRoute(`${ROUTES.Workloads}/deployments/${routeMatch.params.namespace}/${routeMatch.params.name}`),
-        getScene: () => getScene(routeMatch.params.name),
+        getScene: () => getScene(routeMatch.params.name, routeMatch.params.namespace),
         getParentPage: () => parent,
     })
 }
