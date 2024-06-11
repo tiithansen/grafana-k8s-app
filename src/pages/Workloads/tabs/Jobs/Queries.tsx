@@ -1,9 +1,11 @@
 import { SceneVariables } from "@grafana/scenes";
 import { resolveVariable } from "common/variableHelpers";
 import { Metrics } from "metrics/metrics";
+import { TableRow } from "./types";
 
-export function createRowQueries(job: string, sceneVariables: SceneVariables) {
-
+export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
+    
+    const jobs = rows.map(row => row.job_name).join('|');
     const cluster = resolveVariable(sceneVariables, 'cluster');
 
     return [
@@ -12,7 +14,7 @@ export function createRowQueries(job: string, sceneVariables: SceneVariables) {
             expr: `
                 max(
                     ${Metrics.kubeJobComplete.name}{
-                        ${Metrics.kubeJobComplete.labels.jobName}=~"${job}",
+                        ${Metrics.kubeJobComplete.labels.jobName}=~"${jobs}",
                         ${Metrics.kubeJobComplete.labels.condition}="true",
                         cluster="${cluster}"
                     }
@@ -25,7 +27,7 @@ export function createRowQueries(job: string, sceneVariables: SceneVariables) {
             expr: `
                 max(
                     ${Metrics.kubeJobOwner.name}{
-                        ${Metrics.kubeJobOwner.labels.jobName}=~"${job}",
+                        ${Metrics.kubeJobOwner.labels.jobName}=~"${jobs}",
                         cluster="${cluster}"
                     }
                 ) by (
