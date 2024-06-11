@@ -94,8 +94,9 @@ class DaemonSetsQueryBuilder implements QueryBuilder<TableRow> {
                     expr: `
                         group(
                             ${Metrics.kubeDaemonSetCreated.name}{
+                                ${Metrics.kubeDaemonSetCreated.labels.namespace}=~"$namespace",
+                                ${Metrics.kubeDaemonSetCreated.labels.daemonset}=~".*$search.*",
                                 cluster="$cluster",
-                                ${Metrics.kubeDaemonSetCreated.labels.namespace}=~"$namespace"
                             }
                         ) by (
                             ${Metrics.kubeDaemonSetCreated.labels.daemonset},
