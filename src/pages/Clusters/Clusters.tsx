@@ -63,7 +63,7 @@ function getScene({ datasource }: { datasource: string }) {
                 getScene: getOverviewScene,
                 drilldowns: [
                     {
-                        routePath: prefixRoute(`${ROUTES.Clusters}/nodes/:name`),
+                        routePath: prefixRoute(`${ROUTES.Clusters}/nodes/:cluster/:name`),
                         getPage: NodePage
                     },
                 ]

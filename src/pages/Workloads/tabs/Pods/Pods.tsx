@@ -350,7 +350,7 @@ const columns: Array<Column<TableRow>> = [
         header: 'NODE',
         cellType: 'link',
         cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.node}`)
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.cluster}/${row.node}`)
         },
         sortingConfig: {
             enabled: true,

@@ -205,7 +205,7 @@ export function NodePage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageL
             datasource: props?.meta.jsonData?.datasource || 'prometheus'
         }),
         $timeRange: createTimeRange(),
-        url: prefixRoute(`${ROUTES.Clusters}/nodes/${routeMatch.params.name}`),
+        url: prefixRoute(`${ROUTES.Clusters}/nodes/${routeMatch.params.cluster}/${routeMatch.params.name}`),
         getScene: () => getScene(routeMatch.params.name),
         getParentPage: () => parent,
     })
