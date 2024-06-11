@@ -10,7 +10,7 @@ import {
     SceneVariables,
 } from '@grafana/scenes';
 import { getSeriesValue } from 'common/seriesHelpers';
-import { LabelFilters } from 'common/queryHelpers';
+import { LabelFilters, serializeLabelFilters } from 'common/queryHelpers';
 import { createNamespaceVariable } from 'common/variableHelpers';
 import { Metrics } from 'metrics/metrics';
 import { prefixRoute } from 'utils/utils.routing';
@@ -93,15 +93,13 @@ function createRootQuery(
     const hasOwnerNameVariable = variableSet.getByName('ownerName') !== undefined
     const hasSearchVariable = variableSet.getByName('search') !== undefined
 
-    const staticFilters = staticLabelFilters
-        .map((filter) => `${filter.label}${filter.op}"${filter.value}",`)
-        .join('\n')
+    const staticFilters = serializeLabelFilters(staticLabelFilters)
 
     let sortFn = ''
     let sortQuery = ''
     const remoteSort = sortingConfig && sortingConfig.local === false
 
-    const carryOverLabels = `${Metrics.kubePodInfo.labels.hostIP}, ${Metrics.kubePodInfo.labels.createdByKind}, ${Metrics.kubePodInfo.labels.createdByName}`
+    const carryOverLabels = `${Metrics.kubePodInfo.labels.hostIP}, ${Metrics.kubePodInfo.labels.node}, ${Metrics.kubePodInfo.labels.createdByKind}, ${Metrics.kubePodInfo.labels.createdByName}`
     const onLabels = `${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}`
 
     if (remoteSort) {
