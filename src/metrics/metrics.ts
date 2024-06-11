@@ -137,6 +137,20 @@ export const Metrics = {
             statefulset: 'statefulset',
         }
     },
+    kubeStatefulsetStatusReplicasAvailable: {
+        name: 'kube_statefulset_status_replicas_available',
+        labels:{
+            namespace: 'namespace',
+            statefulset: 'statefulset',
+        }
+    },
+    kubeStatefulsetStatusReplicasUnavailable: {
+        name: 'kube_statefulset_status_replicas_unavailable',
+        labels:{
+            namespace: 'namespace',
+            statefulset: 'statefulset',
+        }
+    },
     // Jobs
     kubeJobInfo: {
         name: 'kube_job_info',

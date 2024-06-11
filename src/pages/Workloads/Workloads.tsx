@@ -94,7 +94,7 @@ function getScene({ datasource }: { datasource: string }) {
                     getPage: DeploymentPage
                 },
                 {
-                    routePath: prefixRoute(`${ROUTES.Workloads}/statefulsets/:name`),
+                    routePath: prefixRoute(`${ROUTES.Workloads}/statefulsets/:namespace/:name`),
                     getPage: StatefulSetPage
                 },
                 {
