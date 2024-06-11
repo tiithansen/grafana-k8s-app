@@ -37,7 +37,7 @@ export function DaemonSetPage(routeMatch: SceneRouteMatch<any>, parent: SceneApp
         titleIcon: 'dashboard',
         $variables: variables,
         $timeRange: timeRange,
-        url: prefixRoute(`${ROUTES.Workloads}/daemonsets/${routeMatch.params.name}`),
+        url: prefixRoute(`${ROUTES.Workloads}/daemonsets/${routeMatch.params.namespace}/${routeMatch.params.name}`),
         getScene: () => getScene(routeMatch.params.name),
         getParentPage: () => parent,
     })
