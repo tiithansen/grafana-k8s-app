@@ -22,6 +22,7 @@ export const Metrics = {
             hostIP: 'host_ip',
             createdByKind: 'created_by_kind',
             createdByName: 'created_by_name',
+            uid: 'uid',
         }
     },
     kubePodContainerInfo: {
@@ -40,6 +41,7 @@ export const Metrics = {
             container: 'container',
             resource: 'resource',
             node: 'node',
+            uid: 'uid',
         }
     },
     kubePodContainerResourceLimits: {
@@ -49,6 +51,7 @@ export const Metrics = {
             pod: 'pod',
             container: 'container',
             resource: 'resource',
+            uid: 'uid',
         }
     },
     kubePodContainerStatusRestartsTotal: {
@@ -57,6 +60,7 @@ export const Metrics = {
             namespace: 'namespace',
             pod: 'pod',
             container: 'container',
+            uid: 'uid',
         }
     },
     kubePodContainerStatusReady: {
@@ -73,6 +77,7 @@ export const Metrics = {
             namespace: 'namespace',
             pod: 'pod',
             container: 'container',
+            name: 'name',
         }
     },
     containerCpuUsageSecondsTotal: {

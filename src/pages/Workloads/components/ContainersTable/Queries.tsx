@@ -4,9 +4,18 @@ import { resolveVariable } from "common/variableHelpers";
 import { Metrics } from "metrics/metrics";
 import { TableRow } from "./types";
 
+function removeContainerIdPrefix(id: string): string {
+    // Currently only known prefix
+    return id.replace('containerd://', '');
+}
+
 export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilters, sceneVariables: SceneVariables) {
 
-    const containers = rows.map(row => row.container).join('|');
+    // For cAdvisor metrics we can use the container name to match the container_id
+    // For KSM we can use uid to match container resources
+
+    const uids = rows.map(row => row.uid).join('|');
+    const containerIds = rows.map(row => removeContainerIdPrefix(row.container_id)).join('|');
 
     const cluster = resolveVariable(sceneVariables, 'cluster');
     const serializedFilters = serializeLabelFilters(staticLabelFilters);
@@ -16,14 +25,11 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
             refId: 'memory_usage',
             expr: `
                 sum(
-                    max(
-                        ${Metrics.containerMemoryWorkingSetBytes.name}{
-                            ${serializedFilters}
-                            ${Metrics.containerMemoryWorkingSetBytes.labels.container}=~"${containers}",
-                            ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
-                            cluster="${cluster}"
-                        }
-                    ) by (${Metrics.containerMemoryWorkingSetBytes.labels.pod}, ${Metrics.containerMemoryWorkingSetBytes.labels.container})
+                    ${Metrics.containerMemoryWorkingSetBytes.name}{
+                        ${serializedFilters}
+                        ${Metrics.containerMemoryWorkingSetBytes.labels.name}=~"${containerIds}",
+                        cluster="${cluster}"
+                    }
                 ) by (${Metrics.containerMemoryWorkingSetBytes.labels.pod}, ${Metrics.containerMemoryWorkingSetBytes.labels.container})`,
             instant: true,
             format: 'table'
@@ -35,8 +41,7 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
                     ${Metrics.kubePodContainerResourceRequests.name}{
                         ${serializedFilters}
                         ${Metrics.kubePodContainerResourceRequests.labels.resource}="memory",
-                        ${Metrics.kubePodContainerResourceRequests.labels.container}=~"${containers}",
-                        ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
+                        ${Metrics.kubePodContainerResourceRequests.labels.uid}=~"${uids}",
                         cluster="${cluster}"
                     }
                 ) by (${Metrics.kubePodContainerResourceRequests.labels.pod}, ${Metrics.kubePodContainerResourceRequests.labels.container})`,
@@ -50,8 +55,7 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
                     ${Metrics.kubePodContainerResourceLimits.name}{
                         ${serializedFilters}
                         ${Metrics.kubePodContainerResourceLimits.labels.resource}="memory",
-                        ${Metrics.kubePodContainerResourceLimits.labels.container}=~"${containers}",
-                        ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
+                        ${Metrics.kubePodContainerResourceLimits.labels.uid}=~"${uids}",
                         cluster="${cluster}"
                     }
                 ) by (${Metrics.kubePodContainerResourceLimits.labels.pod}, ${Metrics.kubePodContainerResourceLimits.labels.container})`,
@@ -61,17 +65,14 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
         {
             refId: 'cpu_usage',
             expr: `
-                sum(
-                    max(
-                        rate(
-                            ${Metrics.containerCpuUsageSecondsTotal.name}{
-                                ${serializedFilters}
-                                ${Metrics.containerCpuUsageSecondsTotal.labels.container}=~"${containers}",
-                                ${Metrics.containerCpuUsageSecondsTotal.labels.container}!="",
-                                cluster="${cluster}",
-                            }[$__rate_interval]
-                        )
-                    ) by (${Metrics.containerCpuUsageSecondsTotal.labels.pod}, ${Metrics.containerCpuUsageSecondsTotal.labels.container})
+                max(
+                    rate(
+                        ${Metrics.containerCpuUsageSecondsTotal.name}{
+                            ${serializedFilters}
+                            ${Metrics.containerMemoryWorkingSetBytes.labels.name}=~"${containerIds}",
+                            cluster="${cluster}",
+                        }[$__rate_interval]
+                    )
                 ) by (${Metrics.containerCpuUsageSecondsTotal.labels.pod}, ${Metrics.containerCpuUsageSecondsTotal.labels.container})`,
             instant: true,
             format: 'table'
@@ -79,12 +80,11 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
         {
             refId: 'cpu_requests',
             expr: `
-                sum(
+                max(
                     ${Metrics.kubePodContainerResourceRequests.name}{
                         ${serializedFilters}
                         ${Metrics.kubePodContainerResourceRequests.labels.resource}="cpu",
-                        ${Metrics.kubePodContainerResourceRequests.labels.container}=~"${containers}",
-                        ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
+                        ${Metrics.kubePodContainerResourceRequests.labels.uid}=~"${uids}",
                         cluster="${cluster}"
                     }
                 ) by (${Metrics.kubePodContainerResourceRequests.labels.pod}, ${Metrics.kubePodContainerResourceRequests.labels.container})`,
@@ -94,12 +94,11 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
         {
             refId: 'cpu_limit',
             expr: `
-                sum(
+                max(
                     ${Metrics.kubePodContainerResourceLimits.name}{
                         ${serializedFilters}
                         ${Metrics.kubePodContainerResourceLimits.labels.resource}="cpu",
-                        ${Metrics.kubePodContainerResourceLimits.labels.container}=~"${containers}",
-                        ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
+                        ${Metrics.kubePodContainerResourceLimits.labels.uid}=~"${uids}",
                         cluster="${cluster}"
                     }
                 ) by (${Metrics.kubePodContainerResourceLimits.labels.pod}, ${Metrics.kubePodContainerResourceLimits.labels.container})`,
@@ -112,7 +111,7 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
                 sum(
                     ${Metrics.kubePodContainerStatusRestartsTotal.name}{
                         ${serializedFilters}
-                        ${Metrics.kubePodContainerStatusRestartsTotal.labels.container}=~"${containers}",
+                        ${Metrics.kubePodContainerStatusRestartsTotal.labels.uid}=~"${uids}",
                         cluster="${cluster}",
                     }
                 ) by (${Metrics.kubePodContainerStatusRestartsTotal.labels.pod}, ${Metrics.kubePodContainerStatusRestartsTotal.labels.container})`,

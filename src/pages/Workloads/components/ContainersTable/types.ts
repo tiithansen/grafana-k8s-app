@@ -5,6 +5,8 @@ export interface TableRow {
     container: string;
     image: string;
     restarts: number;
+    container_id: string;
+    uid: string;
     memory: {
         usage: number;
         requests: number;
