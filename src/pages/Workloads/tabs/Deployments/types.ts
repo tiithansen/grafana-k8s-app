@@ -1,3 +1,10 @@
+
+export interface DeploymentAlert {
+    deployment: string;
+    alertname: string;
+    severity: string;
+}
+
 export interface TableRow {
     cluster: string;
     deployment: string;
@@ -8,4 +15,5 @@ export interface TableRow {
         ready: number;
         total: number;
     }
+    alerts: DeploymentAlert[];
 }

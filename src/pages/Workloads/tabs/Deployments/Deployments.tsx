@@ -7,7 +7,7 @@ import {
     SceneVariableSet,
 } from '@grafana/scenes';
 import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
-import { getSeriesValue } from 'common/seriesHelpers';
+import { getAllSeries, getSeriesValue } from 'common/seriesHelpers';
 import { buildExpandedRowScene } from './DeploymentExpandedRow';
 import { createNamespaceVariable } from 'common/variableHelpers';
 import { TableRow } from './types';
@@ -52,6 +52,19 @@ const columns: Array<Column<TableRow>> = [
             local: true,
         }
     },
+    {
+        id: 'alerts',
+        header: 'ALERTS',
+        sortingConfig: {
+            enabled: true,
+            local: false,
+            type: 'value'
+        },
+        accessor: (row: TableRow) => row.alerts ? row.alerts.length : 0,
+        cellProps: {
+            // color: determineAlertsColor
+        }
+    },
     { 
         id: 'replicas',
         header: 'REPLICAS',
@@ -78,6 +91,8 @@ function asyncRowMapper(row: TableRow, asyncRowData: any) {
         total,
         ready
     }
+
+    row.alerts = getAllSeries(asyncRowData, 'alerts', serieMatcherPredicate(row))
 }
 
 function createRowId(row: TableRow) {

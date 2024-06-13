@@ -1,7 +1,8 @@
-import { SceneFlexLayout } from "@grafana/scenes";
+import { SceneFlexItem, SceneFlexLayout } from "@grafana/scenes";
 import { getPodsScene } from "../Pods/Pods";
 import { LabelFilters } from "common/queryHelpers";
 import { TableRow } from "./types";
+import { AlertsTable } from "components/AlertsTable";
 
 export function buildExpandedRowScene(row: TableRow) {
 
@@ -21,10 +22,30 @@ export function buildExpandedRowScene(row: TableRow) {
 
     return new SceneFlexLayout({
       key: `${row.namespace}/${row.deployment}`,
+      direction: 'column',
       width: '100%',
-      height: 500,
       children: [
-        getPodsScene(staticLabelFilters, false, false)
+        new SceneFlexLayout({
+          direction: 'row',
+          height: 300,
+          children: [
+            getPodsScene(staticLabelFilters, false, false)
+          ]
+        }),
+        new SceneFlexLayout({
+          direction: 'row',
+          children: [
+            new SceneFlexItem({
+              body: AlertsTable([
+                {
+                  label: 'deployment',
+                  op: '=',
+                  value: row.deployment
+                }
+              ], false, false)
+            })
+          ]
+        }),
       ],        
     });
   }

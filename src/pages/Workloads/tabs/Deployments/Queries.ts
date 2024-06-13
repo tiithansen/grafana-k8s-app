@@ -5,6 +5,20 @@ import { TableRow } from "./types";
 import { QueryBuilder, ColumnSortingConfig } from "components/AsyncTable";
 import { SortingState } from "common/sortingHelpers";
 
+function createAlertsQuery(cluster?: string, deployments?: string) {
+    return `
+        ALERTS{
+            cluster="${cluster}",
+            ${deployments ? `deployment=~"${deployments}",` : ''}
+            alertstate="firing",
+        }
+        * ignoring(alertstate) group_right(alertstate) ALERTS_FOR_STATE{
+            cluster="${cluster}",
+            ${deployments ? `deployment=~"${deployments}",` : ''}
+        }
+    `
+}
+
 function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
 
     const deployments = rows.map(row => row.deployment).join('|');
@@ -12,7 +26,10 @@ function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
 
     return [
         {
-
+            refId: 'alerts',
+            expr: createAlertsQuery(cluster?.toString(), deployments),
+            instant: true,
+            format: 'table'
         },
         {
             refId: 'replicas',
