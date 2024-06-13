@@ -8,7 +8,7 @@ import {
     VariableValueSelectors,
     SceneVariables,
 } from '@grafana/scenes';
-import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
+import { createNamespaceVariable } from 'common/variableHelpers';
 import { SortingState } from 'common/sortingHelpers';
 import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
 import { TextColor } from 'common/types';
@@ -16,8 +16,6 @@ import { TableRow } from './types';
 import { alertLabelValues } from './utils';
 import { expandedRowSceneBuilder } from './AlertExpandedRow';
 import { LabelFilters, serializeLabelFilters } from 'common/queryHelpers';
-
-const KNOWN_SEVERITIES = ['critical', 'high', 'warning', 'info'];
 
 interface SeverityColors {
     [key: string]: TextColor;
@@ -133,8 +131,6 @@ const columns: Array<Column<TableRow>> = [
         }
     }
 ]
-
-const serieMatcherPredicate = (row: TableRow) => (value: any) => value.alertname === row.alertname;
 
 function rowMapper(row: TableRow, asyncRowData: any) {
 
