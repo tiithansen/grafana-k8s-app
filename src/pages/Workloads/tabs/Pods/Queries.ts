@@ -137,6 +137,7 @@ export function createRootQuery(
                     * on (${onLabels}) group_right(${carryOverLabels})
                     count(${createAlertsQuery('$cluster')}) by (${onLabels})
                     `
+                break;
             }
             case 'restarts': {
                 sortQuery = `
