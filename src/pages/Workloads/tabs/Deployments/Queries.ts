@@ -1,14 +1,19 @@
-import { SceneVariables } from "@grafana/scenes";
+import { SceneQueryRunner, SceneVariableSet, SceneVariables } from "@grafana/scenes";
 import { resolveVariable } from "common/variableHelpers";
 import { Metrics } from "metrics/metrics";
 import { TableRow } from "./types";
+import { QueryBuilder, ColumnSortingConfig } from "components/AsyncTable";
+import { SortingState } from "common/sortingHelpers";
 
-export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
+function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
 
     const deployments = rows.map(row => row.deployment).join('|');
     const cluster = resolveVariable(sceneVariables, 'cluster');
 
     return [
+        {
+
+        },
         {
             refId: 'replicas',
             expr: `
@@ -40,4 +45,38 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
             format: 'table'
         },
     ];
+}
+
+export class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
+    rootQueryBuilder(variables: SceneVariableSet | SceneVariables, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) {
+        return new SceneQueryRunner({
+            datasource: {
+                uid: '$datasource',
+                type: 'prometheus',
+            },
+            queries: [
+                {
+                    refId: 'deployments',
+                    expr: `
+                        group(
+                            ${Metrics.kubeReplicasetOwner.name}{
+                                cluster="$cluster",
+                                ${Metrics.kubeReplicasetOwner.labels.namespace}=~"$namespace",
+                                ${Metrics.kubeReplicasetOwner.labels.ownerName}=~".*$search.*",
+                                ${Metrics.kubeReplicasetOwner.labels.ownerKind}="Deployment"
+                            }
+                        ) by (
+                            ${Metrics.kubeReplicasetOwner.labels.ownerName},
+                            ${Metrics.kubeReplicasetOwner.labels.namespace}
+                        )`,
+                    instant: true,
+                    format: 'table'
+                },
+            ], 
+        })
+    }
+
+    rowQueryBuilder(rows: TableRow[], variables: SceneVariableSet | SceneVariables) {
+        return createRowQueries(rows, variables)
+    }
 }
