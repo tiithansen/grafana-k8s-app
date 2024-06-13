@@ -6,7 +6,7 @@ import { TableRow } from "./types";
 
 function removeContainerIdPrefix(id: string): string {
     // Currently only known prefix
-    return id.replace('containerd://', '');
+    return id?.replace('containerd://', '');
 }
 
 export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilters, sceneVariables: SceneVariables) {

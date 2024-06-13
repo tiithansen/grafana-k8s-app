@@ -29,10 +29,9 @@ type LinkCellProps<TableRow> = {
 export type FormattedCellProps<TableRow> = {
     decimals?: number;
     format?: string;
-    color?: TextColor | ((row: TableRow) => TextColor)
 }
 
-export type CellProps<TableRow> = LinkCellProps<TableRow> | FormattedCellProps<TableRow>;
+export type CellProps<TableRow> = { color?: TextColor | ((row: TableRow) => TextColor) } & (LinkCellProps<TableRow> | FormattedCellProps<TableRow>);
 
 export interface ColumnSortingConfig<TableRow> {
     enabled: boolean;
@@ -92,6 +91,7 @@ function ExpandedRow<TableRow>({ table, row }: ExpandedRowProps<TableRow>) {
 function mapColumn<TableRow>(column: Column<TableRow>): ColumnDef<TableRow> {
 
     let cell = undefined;
+    const cellProps = column.cellProps || {}
     switch (column.cellType) {
         case 'link':
             const linkCellProps = column.cellProps as LinkCellProps<TableRow>;
@@ -108,16 +108,21 @@ function mapColumn<TableRow>(column: Column<TableRow>): ColumnDef<TableRow> {
                 value: props.row.getValue(column.id),
                 decimals: formattedCellProps.decimals,
                 format: formattedCellProps.format,
-                color: (formattedCellProps.color && isFunction(formattedCellProps.color)) 
-                    ? formattedCellProps.color(props.row.original)
-                    : formattedCellProps.color,
+                color: (cellProps.color && isFunction(cellProps.color)) 
+                    ? cellProps.color(props.row.original)
+                    : cellProps.color,
             })
             break;
         case 'custom':
             cell = (props: CellContext<TableRow, any>) => column.cellBuilder!(props.row.original)
             break;
         default:
-            cell = (props: CellContext<TableRow, any>) => DefaultCell(props.row.getValue(column.id))
+            cell = (props: CellContext<TableRow, any>) => DefaultCell({
+                text: props.row.getValue(column.id),
+                color: (cellProps.color && isFunction(cellProps.color)) 
+                    ? cellProps.color(props.row.original)
+                    : cellProps.color,
+            })
             break;
     }
 
@@ -193,7 +198,6 @@ export class AsyncTable<TableRow> extends SceneObjectBase<TableState<TableRow>> 
                 uid: datasourceVariable?.toString(),
                 type: 'prometheus',
             },
-            
             queries: [
                 ...this.state.queryBuilder.rowQueryBuilder(rows.map(row => row.original), sceneVariables),
             ],

@@ -116,7 +116,7 @@ function getCPUPanel(node: string) {
             ],
         }))
         .setUnit('cores')
-        .setOption('legend', { displayMode: LegendDisplayMode.Table })
+        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
         .setOverrides((builder) => {
             builder.matchFieldsByQuery('cpu_total')
                 .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [5, 5] })
@@ -170,7 +170,7 @@ function getMemoryPanel(node: string) {
             ],
         }))
         .setUnit('bytes')
-        .setOption('legend', { displayMode: LegendDisplayMode.Table })
+        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
         .setOverrides((builder) => {
             builder.matchFieldsByQuery('memory_total')
                 .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [5, 5] })

@@ -1,9 +1,15 @@
 import React from 'react';
 import { Text } from '@grafana/ui';
+import { TextColor } from 'common/types';
 
-export const DefaultCell = (text: string | number) => {
+interface DefaultCellProps {
+    text: string | number;
+    color?: TextColor;
+}
+
+export const DefaultCell = ({ text, color }: DefaultCellProps) => {
     return (
-        <Text>
+        <Text color={color}>
             {text}
         </Text>
     );

@@ -94,6 +94,20 @@ function createCpuUsageQuery(cluster?: string, pods?: string) {
     )`
 }
 
+function createAlertsQuery(cluster?: string, pods?: string) {
+    return `
+        ALERTS{
+            cluster="${cluster}",
+            ${pods ? `${Metrics.kubePodInfo.labels.pod}=~"${pods}",` : ''}
+            alertstate="firing",
+        }
+        * ignoring(alertstate) group_right(alertstate) ALERTS_FOR_STATE{
+            cluster="${cluster}",
+            ${pods ? `${Metrics.kubePodInfo.labels.pod}=~"${pods}",` : ''}
+        }
+    `
+}
+
 export function createRootQuery(
     staticLabelFilters: LabelFilters,
     variableSet: SceneVariableSet | SceneVariables,
@@ -118,6 +132,12 @@ export function createRootQuery(
     if (remoteSort) {
         sortFn = sorting.direction === 'asc' ? 'sort' : 'sort_desc'
         switch (sorting.columnId) {
+            case 'alerts': {
+                sortQuery = `
+                    * on (${onLabels}) group_right(${carryOverLabels})
+                    count(${createAlertsQuery('$cluster')}) by (${onLabels})
+                    `
+            }
             case 'restarts': {
                 sortQuery = `
                     * on (${onLabels}) group_right(${carryOverLabels})
@@ -235,6 +255,12 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
     const cluster = resolveVariable(sceneVariables, 'cluster');
 
     return [
+        {
+            refId: 'alerts',
+            expr: createAlertsQuery(cluster?.toString(), pods),
+            instant: true,
+            format: 'table'
+        },
         {
             refId: 'memory_usage',
             expr: createMemoryUsageQuery(cluster?.toString(), pods),

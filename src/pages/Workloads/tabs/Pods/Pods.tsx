@@ -8,7 +8,7 @@ import {
     VariableValueSelectors,
     SceneVariables,
 } from '@grafana/scenes';
-import { getSeriesValue } from 'common/seriesHelpers';
+import { getAllSeries, getSeriesValue } from 'common/seriesHelpers';
 import { LabelFilters } from 'common/queryHelpers';
 import { createNamespaceVariable } from 'common/variableHelpers';
 import { Metrics } from 'metrics/metrics';
@@ -93,6 +93,15 @@ function determineMemoryUsageColor(row: TableRow): TextColor {
 
     if (row.memory.usage < row.memory.requests / 2) {
         color = 'info'
+    }
+
+    return color
+}
+
+function determineAlertsColor(row: TableRow): TextColor {
+    let color: TextColor = 'primary';
+    if (row.alerts && row.alerts.length > 0) {
+        color = 'error'
     }
 
     return color
@@ -186,6 +195,19 @@ const columns: Array<Column<TableRow>> = [
         cellType: 'formatted',
         cellProps: {}
     },
+    {
+        id: 'alerts',
+        header: 'ALERTS',
+        sortingConfig: {
+            enabled: true,
+            local: false,
+            type: 'value'
+        },
+        accessor: (row: TableRow) => row.alerts ? row.alerts.length : 0,
+        cellProps: {
+            color: determineAlertsColor
+        }
+    },
     { 
       id: 'memory', 
       header: 'MEMORY',
@@ -252,7 +274,7 @@ const columns: Array<Column<TableRow>> = [
                 cellType: 'formatted',
                 cellProps: {
                     decimals: 5,
-                    color: determineCPUUsageColor
+                    color: determineCPUUsageColor,
                 },
                 sortingConfig: {
                     enabled: true,
@@ -295,6 +317,11 @@ const columns: Array<Column<TableRow>> = [
 const serieMatcherPredicate = (row: TableRow) => (value: any) => row.pod === value.pod
 
 function asyncDataRowMapper(row: TableRow, asyncRowData: any) {
+
+    const alerts = getAllSeries(asyncRowData, 'alerts', serieMatcherPredicate(row))
+
+    row.alerts = alerts;
+
     const total = getSeriesValue(asyncRowData, 'containers', serieMatcherPredicate(row))
     const ready = getSeriesValue(asyncRowData, 'containers_ready', serieMatcherPredicate(row))
 

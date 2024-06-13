@@ -1,12 +1,13 @@
 import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
-import { GraphTransform } from "@grafana/schema";
+import { GraphTransform, LegendDisplayMode } from "@grafana/schema";
 import { createResourceLabels } from "../components/ResourceLabels";
 import { getContainersScene } from "../components/ContainersTable/ContainersTable";
 import { usePluginProps } from "utils/utils.plugin";
 import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
 import { Metrics } from "metrics/metrics";
+import { AlertsTable } from "components/AlertsTable";
 
 export function getPodMemoryPanel(pod: string) {
     return PanelBuilders
@@ -79,6 +80,7 @@ export function getPodMemoryPanel(pod: string) {
                 .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [20, 5] })
                 .overrideCustomFieldConfig('fillOpacity', 10)
         })
+        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
         .build()
 }
 
@@ -157,6 +159,7 @@ export function getPodCPUPanel(pod: string) {
                 .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [20, 5] })
                 .overrideCustomFieldConfig('fillOpacity', 10)
         })
+        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
         .build()
 }
 
@@ -220,6 +223,7 @@ function getNetworkPanel(pod: string) {
                 .overrideCustomFieldConfig('transform', GraphTransform.NegativeY)
                 .overrideCustomFieldConfig('fillOpacity', 10)
         })
+        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
         .build()
 }
 
@@ -268,6 +272,7 @@ function getCPUThrottling(pod: string) {
             builder.matchFieldsByQuery('throttling')
                 .overrideCustomFieldConfig('fillOpacity', 10)
         })
+        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
         .build()
 }
 
@@ -298,6 +303,21 @@ function getScene(pod: string) {
                                 value: pod,
                             }]),
                         }),
+                        new SceneFlexItem({
+                            width: `${(2/3) * 100}%`,
+                            body: AlertsTable([
+                                {
+                                    label: 'pod',
+                                    op: '=',
+                                    value: pod,
+                                }
+                            ], false, false)
+                        }),
+                    ],
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
                         new SceneFlexItem({
                             body: getContainersScene([{
                                 label: 'pod',

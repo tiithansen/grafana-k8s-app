@@ -4,6 +4,7 @@ import { Metrics } from "metrics/metrics"
 import { createClusterVariable } from "common/variableHelpers"
 import { ResourceBreakdownTable } from "components/ResourceBreakdownTable"
 import Heading from "components/Heading"
+import { AlertsTable } from "components/AlertsTable"
 
 function getNodesPerClusterPanel() {
     return PanelBuilders.timeseries()
@@ -71,7 +72,7 @@ function getNodesMemoryPanel() {
             ],
         }))
         .setUnit('bytes')
-        .setOption('legend', { displayMode: LegendDisplayMode.Table })
+        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
         .setOverrides((builder) => {
             builder.matchFieldsByQuery('memory_total')
                 .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [5, 5] })
@@ -157,7 +158,7 @@ function getNodesCpuPanel() {
             ],
         }))
         .setUnit('cores')
-        .setOption('legend', { displayMode: LegendDisplayMode.Table })
+        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
         .setOverrides((builder) => {
             builder.matchFieldsByQuery('cpu_total')
                 .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [5, 5] })
@@ -200,6 +201,18 @@ export const getOverviewScene = () => {
                         }),
                     ]
                 }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Alerts' }),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        AlertsTable()
+                    ]
+                }),  
                 new SceneFlexLayout({
                     direction: 'row',
                     children: [
