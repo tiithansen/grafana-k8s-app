@@ -165,7 +165,7 @@ class AlertsQueryBuilder implements QueryBuilder<TableRow> {
 
         return new SceneQueryRunner({
             datasource: {
-                uid: 'prometheus',
+                uid: '$datasource',
                 type: 'prometheus',
             },
             queries: [

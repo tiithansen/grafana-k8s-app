@@ -220,7 +220,7 @@ function createRootQuery(sceneVariables: SceneVariableSet | SceneVariables, sort
 
     return new SceneQueryRunner({
         datasource: {
-            uid: 'prometheus',
+            uid: '$datasource',
             type: 'prometheus',
         },
         queries: [
