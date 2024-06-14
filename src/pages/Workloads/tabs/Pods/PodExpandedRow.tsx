@@ -39,7 +39,7 @@ export function buildExpandedRowScene(row: TableRow) {
                 op: '=',
                 value: pod
               }
-            ])
+            ], false, false)
           })
         ]
       }),
