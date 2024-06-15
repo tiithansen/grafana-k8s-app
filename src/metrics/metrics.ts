@@ -25,6 +25,21 @@ export const Metrics = {
             uid: 'uid',
         }
     },
+    kubePodStatusPhase: {
+        name: 'kube_pod_status_phase',
+        labels:{
+            namespace: 'namespace',
+            pod: 'pod',
+            phase: 'phase',
+        }
+    },
+    kubePodCreated: {
+        name: 'kube_pod_created',
+        labels:{
+            namespace: 'namespace',
+            pod: 'pod',
+        }
+    },
     kubePodContainerInfo: {
         name: 'kube_pod_container_info',
         labels:{

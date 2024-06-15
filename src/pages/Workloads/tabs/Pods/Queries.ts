@@ -108,6 +108,33 @@ function createAlertsQuery(cluster?: string, pods?: string) {
     `
 }
 
+function createCreatedQuery(cluster?: string, pods?: string) {
+    return `max(
+        ${Metrics.kubePodCreated.name}{
+            ${pods ? `${Metrics.kubePodCreated.labels.pod}=~"${pods}",` : ''}
+            cluster="${cluster}"
+        }
+    ) by (
+        ${Metrics.kubePodCreated.labels.pod},
+        ${Metrics.kubePodCreated.labels.namespace},
+        cluster
+    )`
+}
+
+function createStatusQuery(cluster?: string, pods?: string) {
+    return `max(
+        ${Metrics.kubePodStatusPhase.name}{
+            ${pods ? `${Metrics.kubePodStatusPhase.labels.pod}=~"${pods}",` : ''}
+            cluster="${cluster}"
+        } == 1
+    ) by (
+        ${Metrics.kubePodStatusPhase.labels.pod},
+        ${Metrics.kubePodStatusPhase.labels.namespace},
+        ${Metrics.kubePodStatusPhase.labels.phase},
+        cluster
+    )`
+}
+
 export function createRootQuery(
     staticLabelFilters: LabelFilters,
     variableSet: SceneVariableSet | SceneVariables,
@@ -132,6 +159,12 @@ export function createRootQuery(
     if (remoteSort) {
         sortFn = sorting.direction === 'asc' ? 'sort' : 'sort_desc'
         switch (sorting.columnId) {
+            case 'created': {
+                sortQuery = `
+                    * on (${onLabels}) group_right(${carryOverLabels})
+                    ${createCreatedQuery('$cluster')}`
+                break;
+            }
             case 'alerts': {
                 sortQuery = `
                     * on (${onLabels}) group_right(${carryOverLabels})
@@ -256,6 +289,18 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
     const cluster = resolveVariable(sceneVariables, 'cluster');
 
     return [
+        {
+            refId: 'status',
+            expr: createStatusQuery(cluster?.toString(), pods),
+            instant: true,
+            format: 'table'
+        },
+        {
+            refId: 'created',
+            expr: createCreatedQuery(cluster?.toString(), pods),
+            instant: true,
+            format: 'table'
+        },
         {
             refId: 'alerts',
             expr: createAlertsQuery(cluster?.toString(), pods),

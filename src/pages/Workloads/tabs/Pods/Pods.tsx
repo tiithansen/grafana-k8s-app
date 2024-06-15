@@ -8,7 +8,7 @@ import {
     VariableValueSelectors,
     SceneVariables,
 } from '@grafana/scenes';
-import { getAllSeries, getSeriesValue } from 'common/seriesHelpers';
+import { getAllSeries, getSeriesLabelValue, getSeriesValue } from 'common/seriesHelpers';
 import { LabelFilters } from 'common/queryHelpers';
 import { createNamespaceVariable } from 'common/variableHelpers';
 import { Metrics } from 'metrics/metrics';
@@ -208,6 +208,29 @@ const columns: Array<Column<TableRow>> = [
             color: determineAlertsColor
         }
     },
+    {
+        id: 'age',
+        header: 'AGE',
+        sortingConfig: {
+            enabled: true,
+            local: false,
+            type: 'value'
+        },
+        cellType: 'formatted',
+        cellProps: {
+            format: 'dtdurations',
+        },
+        accessor: (row: TableRow) => (Date.now() / 1000) - row.created
+    },
+    {
+        id: 'status',
+        header: 'STATUS',
+        sortingConfig: {
+            enabled: true,
+            local: false,
+            type: 'value'
+        },
+    },
     { 
       id: 'memory', 
       header: 'MEMORY',
@@ -318,6 +341,8 @@ const serieMatcherPredicate = (row: TableRow) => (value: any) => row.pod === val
 
 function asyncDataRowMapper(row: TableRow, asyncRowData: any) {
 
+    row.status = getSeriesLabelValue(asyncRowData, 'status', 'phase', serieMatcherPredicate(row))
+    row.created = getSeriesValue(asyncRowData, 'created', serieMatcherPredicate(row))
     const alerts = getAllSeries(asyncRowData, 'alerts', serieMatcherPredicate(row))
 
     row.alerts = alerts;

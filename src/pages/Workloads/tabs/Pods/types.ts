@@ -12,6 +12,8 @@ export interface TableRow {
     node: string;
     host_ip: string;
     alerts: PodAlert[];
+    created: number;
+    status: string;
     containers: {
         total: number;
         ready: number;
