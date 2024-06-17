@@ -10,6 +10,8 @@ import { Metrics } from "metrics/metrics";
 import Heading from "components/Heading";
 import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
+import { AlertsTable } from "components/AlertsTable";
+import { LegendDisplayMode } from "@grafana/schema";
 
 function getPods(daemonset: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
@@ -86,6 +88,7 @@ function getNumberPanel(daemonset: string, namespace: string) {
             builder.matchFieldsByQuery('available_replicas')
                 .overrideCustomFieldConfig('fillOpacity', 10)
         })
+        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
         .build()
 }
 
@@ -109,7 +112,7 @@ function getScene(daemonset: string, namespace = '$namespace') {
                     children: [
                         new SceneFlexItem({
                             height: 'auto',
-                            width: `${(1/3) * 100}%`,
+                            width: `25%`,
                             body: createResourceLabels('daemonset', [{
                                 label: 'daemonset',
                                 op: '=',
@@ -122,8 +125,17 @@ function getScene(daemonset: string, namespace = '$namespace') {
                         }),
                         new SceneFlexItem({
                             height: 200,
-                            width: `${(2/3) * 100}%`,
-                            body: getNumberPanel(daemonset, namespace),
+                            body: AlertsTable([
+                                {
+                                    label: 'pod',
+                                    op: '=~',
+                                    value: `${daemonset}.*`,
+                                }, {
+                                    label: 'namespace',
+                                    op: '=',
+                                    value: namespace,
+                                }
+                            ], false, false)
                         })
                     ]
                 }),
@@ -161,6 +173,13 @@ function getScene(daemonset: string, namespace = '$namespace') {
                     direction: 'row',
                     children: [
                         new Heading({ title: 'Pods'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    height: 300,
+                    children: [
+                        getNumberPanel(daemonset, namespace),
                     ]
                 }),
                 new SceneFlexLayout({
