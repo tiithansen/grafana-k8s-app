@@ -20,16 +20,16 @@ Metrics and required labels used by application can be found in [metrics.ts](src
 ### Screenshots
 
 #### Cluster
-<img src="screenshots/cluster-overview" style="width:25%"><img src="screenshots/nodes-table.png" style="width:25%"><img src="screenshots/node-view.png" style="width:25%">
+<img src="screenshots/cluster-overview.png" style="width:25%;margin: 4px;"><img src="screenshots/nodes-table.png" style="width:25%;margin: 4px;"><img src="screenshots/node-view.png" style="width:25%;margin: 4px;">
 
 #### Workloads
-<img src="screenshots/workloads-overview.png" style="width:25%"><img src="screenshots/pod-table.png" style="width:25%"><img src="screenshots/pod-which-does-not-start-table.png" style="width:25%">
+<img src="screenshots/workloads-overview.png" style="width:25%;margin: 4px;"><img src="screenshots/pod-table.png" style="width:25%;margin: 4px;"><img src="screenshots/pod-which-does-not-start-table.png" style="width:25%;margin: 4px;">
 
 #### Pod Details
-<img src="screenshots/running-pod-view" style="width:25%"><img src="screenshots/running-pod-view.png" style="width:25%"><img src="screenshots/pod-which-does-not-start.png" style="width:25%">
+<img src="screenshots/running-pod-view.png" style="width:25%;margin: 4px;"><img src="screenshots/running-pod-view.png" style="width:25%;margin: 4px;"><img src="screenshots/pod-which-does-not-start.png" style="width:25%;margin: 4px;">
 
 #### Daemonset
-<img src="screenshots/daemonset-view.png" style="width:25%"><img src="screenshots/daemonset-view-bottom.png" style="width:25%">
+<img src="screenshots/daemonset-view.png" style="width:25%;margin: 4px;"><img src="screenshots/daemonset-view-bottom.png" style="width:25%;margin: 4px;">
 
 ## Planned Features & Improvements
 
