@@ -19,6 +19,34 @@ function createAlertsQuery(cluster?: string, deployments?: string) {
     `
 }
 
+function createReplicasQuery(cluster?: string, deployments?: string) {
+    return `
+        max(
+            ${Metrics.kubeDeploymentStatusReplicas.name}{
+                ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}=~"${deployments}",
+                cluster="${cluster}"
+            }
+        ) by (
+            ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}, 
+            ${Metrics.kubeDeploymentStatusReplicas.labels.namespace}
+        )
+    `
+}
+
+function createReplicasReadyQuery(cluster?: string, deployments?: string) {
+    return `
+        max(
+            ${Metrics.kubeDeploymentStatusReplicasReady.name}{
+                ${Metrics.kubeDeploymentStatusReplicasReady.labels.deployment}=~"${deployments}",
+                cluster="${cluster}"
+            }
+        ) by (
+            ${Metrics.kubeDeploymentStatusReplicasReady.labels.deployment},
+            ${Metrics.kubeDeploymentStatusReplicasReady.labels.namespace}
+        )
+    `
+}
+
 function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
 
     const deployments = rows.map(row => row.deployment).join('|');
@@ -33,31 +61,13 @@ function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
         },
         {
             refId: 'replicas',
-            expr: `
-                max(
-                    ${Metrics.kubeDeploymentStatusReplicas.name}{
-                        ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}=~"${deployments}",
-                        cluster="${cluster}"
-                    }
-                ) by (
-                    ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}, 
-                    ${Metrics.kubeDeploymentStatusReplicas.labels.namespace}
-                )`,
+            expr: createReplicasQuery(cluster?.toString(), deployments),
             instant: true,
             format: 'table'
         },
         {
             refId: 'replicas_ready',
-            expr: `
-                max(
-                    ${Metrics.kubeDeploymentStatusReplicasReady.name}{
-                        ${Metrics.kubeDeploymentStatusReplicasReady.labels.deployment}=~"${deployments}",
-                        cluster="${cluster}"
-                    }
-                ) by (
-                    ${Metrics.kubeDeploymentStatusReplicasReady.labels.deployment},
-                    ${Metrics.kubeDeploymentStatusReplicasReady.labels.namespace}
-                )`,
+            expr: createReplicasReadyQuery(cluster?.toString(), deployments),
             instant: true,
             format: 'table'
         },
@@ -66,6 +76,20 @@ function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
 
 export class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
     rootQueryBuilder(variables: SceneVariableSet | SceneVariables, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) {
+
+        const query = 
+            `group(
+                ${Metrics.kubeReplicasetOwner.name}{
+                    cluster="$cluster",
+                    ${Metrics.kubeReplicasetOwner.labels.namespace}=~"$namespace",
+                    ${Metrics.kubeReplicasetOwner.labels.ownerName}=~".*$search.*",
+                    ${Metrics.kubeReplicasetOwner.labels.ownerKind}="Deployment"
+                }
+            ) by (
+                ${Metrics.kubeReplicasetOwner.labels.ownerName},
+                ${Metrics.kubeReplicasetOwner.labels.namespace}
+            )`
+
         return new SceneQueryRunner({
             datasource: {
                 uid: '$datasource',
@@ -74,18 +98,7 @@ export class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
             queries: [
                 {
                     refId: 'deployments',
-                    expr: `
-                        group(
-                            ${Metrics.kubeReplicasetOwner.name}{
-                                cluster="$cluster",
-                                ${Metrics.kubeReplicasetOwner.labels.namespace}=~"$namespace",
-                                ${Metrics.kubeReplicasetOwner.labels.ownerName}=~".*$search.*",
-                                ${Metrics.kubeReplicasetOwner.labels.ownerKind}="Deployment"
-                            }
-                        ) by (
-                            ${Metrics.kubeReplicasetOwner.labels.ownerName},
-                            ${Metrics.kubeReplicasetOwner.labels.namespace}
-                        )`,
+                    expr: query,
                     instant: true,
                     format: 'table'
                 },

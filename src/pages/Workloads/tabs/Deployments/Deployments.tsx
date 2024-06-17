@@ -17,14 +17,6 @@ import { prefixRoute } from 'utils/utils.routing';
 import { ROUTES } from '../../../../constants';
 import { DeploymentQueryBuilder } from './Queries';
 
-const namespaceVariable = createNamespaceVariable();
-
-const searchVariable = new TextBoxVariable({
-    name: 'search',
-    label: 'Search',
-    value: '',
-});
-
 const columns: Array<Column<TableRow>> = [
     {
         id: 'deployment',
@@ -105,8 +97,12 @@ export const getDeploymentsScene = () => {
 
     const variables = new SceneVariableSet({
         variables: [
-            namespaceVariable,
-            searchVariable,
+            createNamespaceVariable(),
+            new TextBoxVariable({
+                name: 'search',
+                label: 'Search',
+                value: '',
+            }),
         ],
     })
 
