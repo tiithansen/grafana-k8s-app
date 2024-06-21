@@ -209,7 +209,7 @@ const columns: Array<Column<TableRow>> = [
         }
     },
     {
-        id: 'age',
+        id: 'created',
         header: 'AGE',
         sortingConfig: {
             enabled: true,
