@@ -1,5 +1,4 @@
 
-
 export enum MatchOperators {
     EQUALS = '=',
     NOT_EQUALS = '!=',
@@ -15,6 +14,8 @@ export interface OperatorAndValue {
     operator: MatchOperators;
     value: string;
 }
+
+export type Labels = Record<string, OperatorAndValue>;
 
 enum MatchingModifiers {
     IGNORING = 'ignoring',
@@ -72,6 +73,26 @@ class PromQLBinaryExpression extends PromQLExpression {
     }
 }
 
+export enum ComparisonOperators {
+    EQUALS = '==',
+    NOT_EQUALS = '!=',
+    GREATER_THAN = '>',
+    LESS_THAN = '<',
+    GREATER_THAN_OR_EQUALS = '>=',
+    LESS_THAN_OR_EQUALS = '<=',
+}
+
+class PromQLComparisonExpression extends PromQLExpression {
+    
+    constructor(private operator: ComparisonOperators, private left: PromQLExpression, private right: PromQLExpression) {
+        super();
+    }
+
+    stringify() {
+        return `${this.left.stringify()} ${this.operator} ${this.right.stringify()} `;
+    }
+}
+
 enum LogicalOperators {
     AND = 'and',
     OR = 'or',
@@ -87,7 +108,8 @@ class PromQLLogicalExpression extends PromQLExpression {
     }
 }
 
-abstract class PromQLVectorExpression extends PromQLExpression {
+
+export abstract class PromQLVectorExpression extends PromQLExpression {
     
     add() {
         return new PromQLBinaryExpression(BinaryOperators.ADD, this);
@@ -120,15 +142,19 @@ abstract class PromQLVectorExpression extends PromQLExpression {
     and(vectorExpr: PromQLVectorExpression) {
         return new PromQLLogicalExpression(LogicalOperators.AND, this, vectorExpr);
     }
+
+    equals(value: number) {
+        return new PromQLComparisonExpression(ComparisonOperators.EQUALS, this, new PromQLScalarExpression(value));
+    }
 }
 
 class PromQLScalarExpression extends PromQLVectorExpression {
-    constructor(private scalar: number, private left: PromQLExpression) {
+    constructor(private scalar: number, private left?: PromQLExpression) {
         super();
     }
 
     stringify() {
-        return `${this.left.stringify()} ${this.scalar}`;
+        return this.left ? `${this.left.stringify()} ${this.scalar}` : `${this.scalar}`;
     }
 }
 
@@ -170,7 +196,23 @@ class PromQLMetric extends PromQLVectorExpression {
         return this.withLabel(label, MatchOperators.NOT_MATCHES, value);
     }
 
-    withLabels(labels: Record<string, OperatorAndValue>) {
+    withLabelEqualsIf(label: string, value: string, condition: boolean) {
+        return condition ? this.withLabelEquals(label, value) : this;
+    }
+
+    withLabelMatchesIf(label: string, value: string, condition: boolean) {
+        return condition ? this.withLabelMatches(label, value) : this;
+    }
+
+    withLabelNotEqualsIf(label: string, value: string, condition: boolean) {
+        return condition ? this.withLabelNotEquals(label, value) : this;
+    }
+
+    withLabelNotMatchesIf(label: string, value: string, condition: boolean) {
+        return condition ? this.withLabelNotMatches(label, value) : this;
+    }
+
+    withLabels(labels: Labels) {
         this.labels = { ...this.labels, ...labels };
         return this;
     }
@@ -226,8 +268,12 @@ class PromQLFunction extends PromQLVectorExpression {
 
     stringify() {
         return `${this.name}(
-            ${this.subExpression.stringify()}
+            ${this.subExpression.stringify()}${this.stringifyInner()}
         )`;
+    }
+
+    stringifyInner() {
+        return ''
     }
 }
 
@@ -235,7 +281,7 @@ class PromQLAggregationFunction extends PromQLFunction {
 
     private groupingExperssion: PromByExpression | PromQLWithoutExpression | undefined;
 
-    by(...labels: string[]) {
+    by(labels: string[]) {
         this.groupingExperssion = new PromByExpression(labels);
         return this;
     }
@@ -290,8 +336,8 @@ class PromQLRateFunction extends PromQLFunction {
         super('rate', subExpression);
     }
 
-    stringify() {
-        return `${super.stringify()}[${this.range}]`;
+    stringifyInner() {
+        return `[${this.range}]`;
     }
 }
 
@@ -308,7 +354,7 @@ export class PromQL {
         return new PromQLSortFunction(direction, subExpression);
     }
 
-    static rate(range: string, subExpression: PromQLExpression) {
+    static rate(subExpression: PromQLExpression, range: string) {
         return new PromQLRateFunction(range, subExpression);
     }
 

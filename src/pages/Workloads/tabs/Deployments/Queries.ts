@@ -28,10 +28,10 @@ function createReplicasQuery(cluster: string, additionalLabels: Record<string, O
         PromQL.metric(Metrics.kubeDeploymentStatusReplicas.name)
             .withLabels(additionalLabels)
             .withLabelEquals('cluster', cluster)
-    ).by(
+    ).by([
         Metrics.kubeDeploymentStatusReplicas.labels.deployment,
         Metrics.kubeDeploymentStatusReplicas.labels.namespace
-    )
+    ])
 }
 
 function createReplicasReadyQuery(cluster: string, deployments: string) {
@@ -40,10 +40,10 @@ function createReplicasReadyQuery(cluster: string, deployments: string) {
         PromQL.metric(Metrics.kubeDeploymentStatusReplicasReady.name)
             .withLabelMatches(Metrics.kubeDeploymentStatusReplicasReady.labels.deployment, deployments)
             .withLabelEquals('cluster', cluster)
-    ).by(
+    ).by([
         Metrics.kubeDeploymentStatusReplicasReady.labels.deployment,
         Metrics.kubeDeploymentStatusReplicasReady.labels.namespace
-    )
+    ])
 }
 
 function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
@@ -88,10 +88,10 @@ export class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
                 .withLabelEquals('cluster', '$cluster')
                 .withLabelMatches(Metrics.kubeDeploymentCreated.labels.namespace, '$namespace')
                 .withLabelMatches(Metrics.kubeDeploymentCreated.labels.deployment, '.*$search.*')
-        ).by(
+        ).by([
             Metrics.kubeDeploymentCreated.labels.deployment,
             Metrics.kubeDeploymentCreated.labels.namespace
-        )
+        ])
 
         const remoteSort = sortingConfig && sortingConfig.local === false
 
@@ -113,7 +113,7 @@ export class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
                                             value: ''
                                         }
                                     })
-                                ).by('namespace', 'deployment')
+                                ).by(['namespace', 'deployment'])
                             ).or(
                                 baseQuery.multiply().withScalar(0)
                             )

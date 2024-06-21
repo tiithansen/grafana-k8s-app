@@ -5,134 +5,149 @@ import { TableRow } from "./types";
 import { LabelFilters, serializeLabelFilters } from "common/queryHelpers";
 import { ColumnSortingConfig } from "components/AsyncTable";
 import { SortingState } from "common/sortingHelpers";
+import { Labels, MatchOperators, PromQL, PromQLExpression, PromQLVectorExpression } from "common/promql";
 
-function createRestartsQuery(cluster?: string, pods?: string) {
-    return `sum(
-        ${Metrics.kubePodContainerStatusRestartsTotal.name}{
-            ${Metrics.kubePodContainerStatusRestartsTotal.labels.container}!="",
-            ${pods ? `${Metrics.kubePodContainerStatusRestartsTotal.labels.pod}=~"${pods}",` : ''}
-            cluster="${cluster}"
-        }
-    ) by (
-        ${Metrics.kubePodContainerStatusRestartsTotal.labels.pod},
-        ${Metrics.kubePodContainerStatusRestartsTotal.labels.namespace},
-        cluster
-    )`
+function createRestartsQuery(cluster: string, additionalLabels: Labels) {
+
+    return PromQL.sum(
+        PromQL.metric(Metrics.kubePodContainerStatusRestartsTotal.name)
+            .withLabels(additionalLabels)
+            .withLabelEquals('cluster', cluster)
+    ).by([
+        Metrics.kubePodContainerStatusRestartsTotal.labels.pod,
+        Metrics.kubePodContainerStatusRestartsTotal.labels.namespace,
+        'cluster'
+    ])
 }
 
-function createContainersQuery(cluster?: string, pods?: string) {
-    return `sum(
-        ${Metrics.kubePodContainerInfo.name}{
-            ${Metrics.kubePodContainerInfo.labels.container}!="",
-            ${pods ? `${Metrics.kubePodContainerInfo.labels.pod}=~"${pods}",` : ''}
-            cluster="${cluster}"
-        }
-    ) by (
-        ${Metrics.kubePodContainerInfo.labels.pod},
-        ${Metrics.kubePodContainerInfo.labels.namespace},
-        cluster
-    )`
+function createContainersQuery(cluster: string, additionalLabels: Labels) {
+
+    return PromQL.sum(
+        PromQL.metric(Metrics.kubePodContainerInfo.name)
+            .withLabels(additionalLabels)
+            .withLabelEquals('cluster', cluster)
+    ).by([
+        Metrics.kubePodContainerInfo.labels.pod,
+        Metrics.kubePodContainerInfo.labels.namespace,
+        'cluster'
+    ])
 }
 
-function createResourceRequestsQuery(resource: string, cluster?: string, pods?: string) {
-    return `sum(
-        ${Metrics.kubePodContainerResourceRequests.name}{
-            ${Metrics.kubePodContainerResourceRequests.labels.resource}="${resource}",
-            ${pods ? `${Metrics.kubePodContainerInfo.labels.pod}=~"${pods}",` : ''}
-            ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
-            cluster="${cluster}"
-        }
-    ) by (
-        ${Metrics.kubePodContainerResourceRequests.labels.pod},
-        ${Metrics.kubePodContainerResourceRequests.labels.namespace},
-        cluster
-    )`
+function createContainersReadyQuery(cluster: string, additionalLabels: Labels) {
+    
+        return PromQL.sum(
+            PromQL.metric(Metrics.kubePodContainerStatusReady.name)
+                .withLabels(additionalLabels)
+                .withLabelEquals('cluster', cluster)
+        ).by([
+            Metrics.kubePodContainerStatusReady.labels.pod,
+            Metrics.kubePodContainerStatusReady.labels.namespace,
+            'cluster'
+        ])
+    }
+
+function createResourceRequestsQuery(resource: string, cluster: string, additionalLabels: Labels) {
+
+    return PromQL.sum(
+        PromQL.metric(Metrics.kubePodContainerResourceRequests.name)
+            .withLabelEquals(Metrics.kubePodContainerResourceRequests.labels.resource, resource)
+            .withLabelNotEquals(Metrics.kubePodContainerResourceRequests.labels.container, '')
+            .withLabelEquals('cluster', cluster)
+            .withLabels(additionalLabels)
+    ).by([
+        Metrics.kubePodContainerResourceRequests.labels.pod,
+        Metrics.kubePodContainerResourceRequests.labels.namespace,
+        'cluster'
+    ])
 }
 
-function createResourceLimitsQuery(resource: string, cluster?: string, pods?: string) {
-    return `sum(
-        ${Metrics.kubePodContainerResourceLimits.name}{
-            ${Metrics.kubePodContainerResourceLimits.labels.resource}="${resource}",
-            ${ pods ? `${Metrics.kubePodContainerResourceLimits.labels.pod}=~"${pods}",` : ''}
-            ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
-            cluster="${cluster}"
-        }
-    ) by (
-        ${Metrics.kubePodContainerResourceLimits.labels.pod},
-        ${Metrics.kubePodContainerResourceLimits.labels.namespace},
-        cluster
-    )`
+function createResourceLimitsQuery(resource: string, cluster: string, additionalLabels: Labels) {
+
+    return PromQL.sum(
+        PromQL.metric(Metrics.kubePodContainerResourceLimits.name)
+            .withLabelEquals(Metrics.kubePodContainerResourceLimits.labels.resource, resource)
+            .withLabelNotEquals(Metrics.kubePodContainerResourceLimits.labels.container, '')
+            .withLabelEquals('cluster', cluster)
+            .withLabels(additionalLabels)
+    ).by([
+        Metrics.kubePodContainerResourceLimits.labels.pod,
+        Metrics.kubePodContainerResourceLimits.labels.namespace,
+        'cluster'
+    ])
 }
 
-function createMemoryUsageQuery(cluster?: string, pods?: string) {
-    return `max(
-        ${Metrics.containerMemoryWorkingSetBytes.name}{
-            ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
-            ${pods ? `${Metrics.containerMemoryWorkingSetBytes.labels.pod}=~"${pods}",` : ''}
-            cluster="${cluster}"
-        }
-    ) by (
-        ${Metrics.containerMemoryWorkingSetBytes.labels.pod},
-        ${Metrics.containerMemoryWorkingSetBytes.labels.namespace},
-        cluster
-    )`
+function createMemoryUsageQuery(cluster: string, additionalLabels: Labels) {
+
+    return PromQL.max(
+        PromQL.metric(Metrics.containerMemoryWorkingSetBytes.name)
+            .withLabelNotEquals(Metrics.containerMemoryWorkingSetBytes.labels.container, '')
+            .withLabels(additionalLabels)
+            .withLabelEquals('cluster', cluster)
+    ).by([
+        Metrics.containerMemoryWorkingSetBytes.labels.pod,
+        Metrics.containerMemoryWorkingSetBytes.labels.namespace,
+        'cluster'
+    ])
 }
 
-function createCpuUsageQuery(cluster?: string, pods?: string) {
-    return `sum(
-        rate(
-            ${Metrics.containerCpuUsageSecondsTotal.name}{
-                cluster="${cluster}",
-                ${Metrics.containerCpuUsageSecondsTotal.labels.container}!="",
-                ${pods ? `${Metrics.containerCpuUsageSecondsTotal.labels.pod}=~"${pods}",` : ''}
-            }[$__rate_interval]
+function createCpuUsageQuery(cluster: string, additionalLabels: Labels) {
+
+    return PromQL.sum(
+        PromQL.rate(
+            PromQL.metric(Metrics.containerCpuUsageSecondsTotal.name)
+                .withLabelNotEquals(Metrics.containerCpuUsageSecondsTotal.labels.container, '')
+                .withLabels(additionalLabels)
+                .withLabelEquals('cluster', cluster),
+        '$__rate_interval')
+    ).by([
+        Metrics.containerCpuUsageSecondsTotal.labels.pod,
+        Metrics.containerCpuUsageSecondsTotal.labels.namespace,
+        'cluster'
+    ])
+}
+
+function createAlertsQuery(cluster: string, additionalLabels: Labels) {
+
+    return PromQL.metric('ALERTS')
+        .withLabelEquals('alertstate', 'firing')
+        .withLabels(additionalLabels)
+        .withLabelEquals('cluster', cluster)
+        .multiply()
+        .ignoring(['alertstate'])
+        .groupRight(
+            ['alertstate'],
+            PromQL.metric('ALERTS_FOR_STATE')
+                .withLabels(additionalLabels)
+                .withLabelEquals('cluster', cluster)
         )
-    ) by (
-        ${Metrics.containerCpuUsageSecondsTotal.labels.pod},
-        ${Metrics.containerCpuUsageSecondsTotal.labels.namespace},
-        cluster
-    )`
 }
 
-function createAlertsQuery(cluster?: string, pods?: string) {
-    return `
-        ALERTS{
-            cluster="${cluster}",
-            ${pods ? `${Metrics.kubePodInfo.labels.pod}=~"${pods}",` : ''}
-            alertstate="firing",
-        }
-        * ignoring(alertstate) group_right(alertstate) ALERTS_FOR_STATE{
-            cluster="${cluster}",
-            ${pods ? `${Metrics.kubePodInfo.labels.pod}=~"${pods}",` : ''}
-        }
-    `
+function createCreatedQuery(cluster: string, additionalLabels: Labels) {
+
+    return PromQL.max(
+        PromQL.metric(Metrics.kubePodCreated.name)
+            .withLabels(additionalLabels)
+            .withLabelEquals('cluster', cluster)
+    ).by([
+        Metrics.kubePodCreated.labels.pod,
+        Metrics.kubePodCreated.labels.namespace,
+        'cluster'
+    ])
 }
 
-function createCreatedQuery(cluster?: string, pods?: string) {
-    return `max(
-        ${Metrics.kubePodCreated.name}{
-            ${pods ? `${Metrics.kubePodCreated.labels.pod}=~"${pods}",` : ''}
-            cluster="${cluster}"
-        }
-    ) by (
-        ${Metrics.kubePodCreated.labels.pod},
-        ${Metrics.kubePodCreated.labels.namespace},
-        cluster
-    )`
-}
+function createStatusQuery(cluster: string, additionalLabels: Labels) {
 
-function createStatusQuery(cluster?: string, pods?: string) {
-    return `max(
-        ${Metrics.kubePodStatusPhase.name}{
-            ${pods ? `${Metrics.kubePodStatusPhase.labels.pod}=~"${pods}",` : ''}
-            cluster="${cluster}"
-        } == 1
-    ) by (
-        ${Metrics.kubePodStatusPhase.labels.pod},
-        ${Metrics.kubePodStatusPhase.labels.namespace},
-        ${Metrics.kubePodStatusPhase.labels.phase},
-        cluster
-    )`
+    return PromQL.max(
+        PromQL.metric(Metrics.kubePodStatusPhase.name)
+            .withLabels(additionalLabels)
+            .withLabelEquals('cluster', cluster)
+        .equals(1)
+    ).by([
+        Metrics.kubePodStatusPhase.labels.pod,
+        Metrics.kubePodStatusPhase.labels.namespace,
+        Metrics.kubePodStatusPhase.labels.phase,
+        'cluster'
+    ])
 }
 
 export function createRootQuery(
@@ -149,120 +164,118 @@ export function createRootQuery(
 
     const staticFilters = serializeLabelFilters(staticLabelFilters)
 
-    let sortFn = ''
-    let sortQuery = ''
+    let sortQuery: PromQLVectorExpression | undefined = undefined
     const remoteSort = sortingConfig && sortingConfig.local === false
 
-    const carryOverLabels = `uid, ${Metrics.kubePodInfo.labels.hostIP}, ${Metrics.kubePodInfo.labels.node}, ${Metrics.kubePodInfo.labels.createdByKind}, ${Metrics.kubePodInfo.labels.createdByName}`
-    const onLabels = `${Metrics.kubePodInfo.labels.pod}, ${Metrics.kubePodInfo.labels.namespace}`
+    const carryOverLabels = [
+        'uid',
+        Metrics.kubePodInfo.labels.hostIP,
+        Metrics.kubePodInfo.labels.node,
+        Metrics.kubePodInfo.labels.createdByKind,
+        Metrics.kubePodInfo.labels.createdByName
+    ]
+
+    const onLabels = [
+        Metrics.kubePodInfo.labels.pod,
+        Metrics.kubePodInfo.labels.namespace
+    ]
 
     if (remoteSort) {
-        sortFn = sorting.direction === 'asc' ? 'sort' : 'sort_desc'
+
         switch (sorting.columnId) {
             case 'created': {
-                sortQuery = `
-                    * on (${onLabels}) group_right(${carryOverLabels})
-                    ${createCreatedQuery('$cluster')}`
+                sortQuery = createCreatedQuery('$cluster', {})
                 break;
             }
             case 'alerts': {
-                sortQuery = `
-                    * on (${onLabels}) group_right(${carryOverLabels})
-                    count(${createAlertsQuery('$cluster')}) by (${onLabels})
-                    `
+                sortQuery = PromQL.count(
+                    createAlertsQuery('$cluster', {})
+                ).by(onLabels)
                 break;
             }
             case 'restarts': {
-                sortQuery = `
-                    * on (${onLabels}) group_right(${carryOverLabels})
-                    ${createRestartsQuery('$cluster')}
-                    `
+                sortQuery = createRestartsQuery('$cluster', {})
                 break;
             }
             case 'containers': {
-                sortQuery = `
-                    * on (${onLabels}) group_right(${carryOverLabels})
-                    ${createContainersQuery('$cluster')}`
+                sortQuery = createContainersQuery('$cluster', {})
                 break;
             }
             case 'memory_usage': {
-                sortQuery = `
-                    * on (${onLabels}) group_right(${carryOverLabels})
-                    ${createMemoryUsageQuery('$cluster')}`
+                sortQuery = createMemoryUsageQuery('$cluster', {})
                 break
             }
             case 'memory_requests': {
-                sortQuery = `
-                    * on (${onLabels}) group_right(${carryOverLabels})
-                    ${createResourceRequestsQuery('memory', '$cluster')}`
+                sortQuery = createResourceRequestsQuery('memory', '$cluster', {})
                 break;
             }
             case 'memory_limits': {
-                sortQuery = `
-                    * on (${onLabels}) group_right(${carryOverLabels})
-                    ${createResourceLimitsQuery('memory', '$cluster')}`
+                sortQuery = createResourceLimitsQuery('memory', '$cluster', {})
                 break;
             }
             case 'cpu_usage': {
-                sortQuery = `
-                    * on (${onLabels}) group_right(${carryOverLabels})
-                    ${createCpuUsageQuery('$cluster')}`
+                sortQuery = createCpuUsageQuery('$cluster', {})
                 break;
             }
             case 'cpu_requests': {
-                sortQuery = `
-                    * on (${onLabels}) group_right(${carryOverLabels})
-                    ${createResourceRequestsQuery('cpu', '$cluster')}`
+                sortQuery = createResourceRequestsQuery('cpu', '$cluster', {})
                 break;
             }
             case 'cpu_limits': {
-                sortQuery = `
-                    * on (${onLabels}) group_right(${carryOverLabels})
-                    ${createResourceLimitsQuery('cpu', '$cluster')}`
+                sortQuery = createResourceLimitsQuery('cpu', '$cluster', {})
                 break;
             }
         }
     }
 
-    const baseQuery = `
-        group(${Metrics.kubePodInfo.name}{
-            cluster="$cluster",
-            ${ hasNamespaceVariable ? `${Metrics.kubePodInfo.labels.namespace}=~"$namespace",` : '' }
-            ${ hasNodeVariable ? `${Metrics.kubePodInfo.labels.node}=~"$node",`: ``}
-            ${ hasOwnerKindVariable ? `${Metrics.kubePodInfo.labels.createdByKind}=~"$ownerKind",` : ''}
-            ${ hasOwnerNameVariable ? `${Metrics.kubePodInfo.labels.createdByName}=~"$ownerName",` : ''}
-            ${ hasSearchVariable ? `${Metrics.kubePodInfo.labels.pod}=~".*$search.*",` : ''}
-            ${ staticFilters }
-        }) by (
-            cluster,
-            ${Metrics.kubePodInfo.labels.namespace},
-            ${Metrics.kubePodInfo.labels.node},
-            ${Metrics.kubePodInfo.labels.hostIP},
-            ${Metrics.kubePodInfo.labels.pod},
-            ${Metrics.kubePodInfo.labels.createdByKind},
-            ${Metrics.kubePodInfo.labels.createdByName},
-            ${Metrics.kubePodInfo.labels.uid}
-        )
-    `
+    // Map staticFilters to additionalLabels
+    const additionalLabels: Labels = {}
+    for (const key in Object.keys(staticLabelFilters)) {
+        const filter = staticLabelFilters[key]
+        additionalLabels[key] = {
+            // @ts-ignore
+            operator: filter.op,
+            value: staticFilters[key]
+        }
+    }
+
+    const baseQuery = PromQL.group(
+        PromQL.metric(Metrics.kubePodInfo.name)
+            .withLabelEquals('cluster', '$cluster')
+            .withLabelMatchesIf(Metrics.kubePodInfo.labels.namespace, '$namespace', hasNamespaceVariable)
+            .withLabelMatchesIf(Metrics.kubePodInfo.labels.node, '$node', hasNodeVariable)
+            .withLabelMatchesIf(Metrics.kubePodInfo.labels.createdByKind, '$ownerKind', hasOwnerKindVariable)
+            .withLabelMatchesIf(Metrics.kubePodInfo.labels.createdByName, '$ownerName', hasOwnerNameVariable)
+            .withLabelMatchesIf(Metrics.kubePodInfo.labels.pod, '.*$search.*', hasSearchVariable)
+            .withLabels(additionalLabels)
+    ).by([
+        'cluster',
+        Metrics.kubePodInfo.labels.namespace,
+        Metrics.kubePodInfo.labels.node,
+        Metrics.kubePodInfo.labels.hostIP,
+        Metrics.kubePodInfo.labels.pod,
+        Metrics.kubePodInfo.labels.createdByKind,
+        Metrics.kubePodInfo.labels.createdByName,
+        Metrics.kubePodInfo.labels.uid
+    ])
     
-    let finalQuery: string
-    if (sortQuery.length > 0) {
-        finalQuery = `
-            (
-                ${baseQuery}
-                ${sortQuery}
-            )
-            or
-            (
-                ${baseQuery}
-                *
-                0
-            )
-        `
+    let finalQuery: PromQLExpression
+    if (sortQuery) {
+        finalQuery = PromQL.sort(
+            sorting.direction,
+            baseQuery
+                .multiply()
+                .on(onLabels)
+                .groupRight(
+                    carryOverLabels,
+                    sortQuery
+                ).or(
+                    baseQuery.multiply().withScalar(0)
+                )
+        )
     } else {
         finalQuery = baseQuery
     }
-
 
     return new SceneQueryRunner({
         datasource: {
@@ -272,10 +285,7 @@ export function createRootQuery(
         queries: [
             {
                 refId: 'pods',
-                expr: `
-                    ${sortFn}(
-                        ${finalQuery}
-                    )`,
+                expr: finalQuery.stringify(),
                 instant: true,
                 format: 'table'
             },
@@ -288,83 +298,85 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
     const pods = rows.map(row => row.pod).join('|');
     const cluster = resolveVariable(sceneVariables, 'cluster');
 
+    const additionalLabels = {
+        pod: {
+            operator: MatchOperators.MATCHES,
+            value: pods
+        }
+    }
+
+    const clusterValue = cluster?.toString()!
+
     return [
         {
             refId: 'status',
-            expr: createStatusQuery(cluster?.toString(), pods),
+            expr: createStatusQuery(clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'created',
-            expr: createCreatedQuery(cluster?.toString(), pods),
+            expr: createCreatedQuery(clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'alerts',
-            expr: createAlertsQuery(cluster?.toString(), pods),
+            expr: createAlertsQuery(clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'memory_usage',
-            expr: createMemoryUsageQuery(cluster?.toString(), pods),
+            expr: createMemoryUsageQuery(clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'memory_requests',
-            expr: createResourceRequestsQuery('memory', cluster?.toString(), pods),
+            expr: createResourceRequestsQuery('memory', clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'memory_limit',
-            expr: createResourceLimitsQuery('memory', cluster?.toString(), pods),
+            expr: createResourceLimitsQuery('memory', clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'containers',
-            expr: createContainersQuery(cluster?.toString(), pods),
+            expr: createContainersQuery(clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'containers_ready',
-            expr: `
-                sum(
-                    ${Metrics.kubePodContainerStatusReady.name}{
-                        ${Metrics.kubePodContainerStatusReady.labels.pod}=~"${pods}",
-                        ${Metrics.kubePodContainerStatusReady.labels.container}!="",
-                        cluster="${cluster}"
-                    }
-                ) by (${Metrics.kubePodContainerStatusReady.labels.pod})`,
+            expr: createContainersReadyQuery(clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'cpu_usage',
-            expr: createCpuUsageQuery(cluster?.toString(), pods),
+            expr: createCpuUsageQuery(clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'cpu_requests',
-            expr: createResourceRequestsQuery('cpu', cluster?.toString(), pods),
+            expr: createResourceRequestsQuery('cpu', clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'cpu_limit',
-            expr: createResourceLimitsQuery('cpu', cluster?.toString(), pods),
+            expr: createResourceLimitsQuery('cpu', clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'restarts',
-            expr: createRestartsQuery(cluster?.toString(), pods),
+            expr: createRestartsQuery(clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         }
