@@ -29,6 +29,7 @@ const columns: Array<Column<TableRow>> = [
             enabled: true,
             type: 'label',
             local: true,
+            compare: (a: TableRow, b: TableRow, direction) => direction === 'asc' ? a.deployment.localeCompare(b.deployment) : b.deployment.localeCompare(a.deployment)
         }
     },
     { 
@@ -42,6 +43,7 @@ const columns: Array<Column<TableRow>> = [
             enabled: true,
             type: 'label',
             local: true,
+            compare: (a: TableRow, b: TableRow, direction) => direction === 'asc' ? a.namespace.localeCompare(b.namespace) : b.namespace.localeCompare(a.namespace)
         }
     },
     {
@@ -65,7 +67,7 @@ const columns: Array<Column<TableRow>> = [
         sortingConfig: {
             enabled: true,
             type: 'value',
-            local: true,
+            local: false,
         }
     }
 ]
@@ -74,8 +76,6 @@ const serieMatcherPredicate = (row: TableRow) => (value: any) => value.deploymen
 
 function asyncRowMapper(row: TableRow, asyncRowData: any) {
     
-    row.deployment = row.owner_name
-
     const total = getSeriesValue(asyncRowData, 'replicas', serieMatcherPredicate(row))
     const ready = getSeriesValue(asyncRowData, 'replicas_ready', serieMatcherPredicate(row))
 

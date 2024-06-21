@@ -207,6 +207,13 @@ export const Metrics = {
         }
     },
     // Deployments
+    kubeDeploymentCreated: {
+        name: 'kube_deployment_created',
+        labels:{
+            namespace: 'namespace',
+            deployment: 'deployment',
+        }
+    },
     kubeDeploymentStatusReplicas: {
         name: 'kube_deployment_status_replicas',
         labels:{

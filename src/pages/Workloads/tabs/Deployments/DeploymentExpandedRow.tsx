@@ -27,7 +27,6 @@ export function buildExpandedRowScene(row: TableRow) {
       children: [
         new SceneFlexLayout({
           direction: 'row',
-          height: 300,
           children: [
             getPodsScene(staticLabelFilters, false, false)
           ]
