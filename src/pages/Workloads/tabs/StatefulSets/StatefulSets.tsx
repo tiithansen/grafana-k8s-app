@@ -146,6 +146,7 @@ export const getStatefulSetsScene = () => {
                         createRowId: (row) => `${row.namespace}/${row.statefulset}`,
                         expandedRowBuilder: buildExpandedRowScene,
                         queryBuilder,
+                        sorting: defaultSorting,
                     }),
                 }),
             ],

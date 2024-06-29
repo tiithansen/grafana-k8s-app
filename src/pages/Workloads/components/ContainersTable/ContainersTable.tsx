@@ -250,5 +250,6 @@ export const getContainersScene = (staticLabelFilters: LabelFilters, showVariabl
         asyncDataRowMapper: asyncDataRowMapper,
         createRowId: (row: TableRow) => row.container,
         queryBuilder,
+        sorting: defaultSorting,
     })
 }

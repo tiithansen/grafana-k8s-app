@@ -218,7 +218,8 @@ export function AlertsTable(labelFilters?: LabelFilters, showVariableControls = 
                         asyncDataRowMapper: rowMapper,
                         $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
                         queryBuilder: queryBuilder,
-                        expandedRowBuilder: expandedRowSceneBuilder(createRowId)
+                        expandedRowBuilder: expandedRowSceneBuilder(createRowId),
+                        sorting: defaultSorting,
                     }),
                 }),
             ],

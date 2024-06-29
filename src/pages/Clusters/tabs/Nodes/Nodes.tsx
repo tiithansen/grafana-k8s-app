@@ -293,6 +293,7 @@ export const getNodesScene = () => {
                         queryBuilder,
                         createRowId: (row) => row.internal_ip,
                         expandedRowBuilder: buildExpandedRowScene,
+                        sorting: defaultSorting,
                     }),
                 }),
             ],

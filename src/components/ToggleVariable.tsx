@@ -40,9 +40,8 @@ export class ToggleVariable extends SceneObjectBase<ToggleVariableState> impleme
         this.setValue(event.target.checked);
     }
 
-    public setValue(newValue: boolean) {
-        console.log(newValue, this.state.value)
-        if (newValue !== this.state.value) {
+    public setValue(newValue: boolean, forceUpdate = false) {
+        if (newValue !== this.state.value || forceUpdate) {
             this.setState({ value: newValue });
             this.publishEvent(new SceneVariableValueChangedEvent(this), true);
         }
@@ -60,7 +59,6 @@ export class ToggleVariable extends SceneObjectBase<ToggleVariableState> impleme
         const update: Partial<ToggleVariableState> = {};
         const val = values[this.getKey()];
         update.value = val === 'true';
-        
         this.setState(update);
     }
 
@@ -70,7 +68,7 @@ export class ToggleVariable extends SceneObjectBase<ToggleVariableState> impleme
 
         return (
             <span className={cx(styles.switchWrap)}>
-                <Switch value={value} onChange={model.onChangeFn} />;
+                <Switch value={value} onChange={model.onChangeFn} />
             </span>
         );
     };

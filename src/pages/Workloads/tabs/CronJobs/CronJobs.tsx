@@ -160,6 +160,7 @@ export const getCronJobsScene = () => {
                         createRowId: (row: TableRow) => `${row.namespace}/${row.cronjob}`,
                         queryBuilder: queryBuilder,
                         asyncDataRowMapper: asyncDataRowMapper,
+                        sorting: defaultSorting,
                     }),
                 }),
             ],

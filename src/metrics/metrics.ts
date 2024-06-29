@@ -38,6 +38,7 @@ export const Metrics = {
         labels:{
             namespace: 'namespace',
             pod: 'pod',
+            uid: 'uid'
         }
     },
     kubePodContainerInfo: {

@@ -128,6 +128,7 @@ export const getDeploymentsScene = () => {
                         asyncDataRowMapper: asyncRowMapper,
                         queryBuilder: queryBuilder,
                         expandedRowBuilder: buildExpandedRowScene,
+                        sorting: defaultSorting,
                     }),
                 }),
             ],

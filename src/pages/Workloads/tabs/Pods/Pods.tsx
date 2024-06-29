@@ -7,6 +7,7 @@ import {
     SceneVariableSet,
     VariableValueSelectors,
     SceneVariables,
+    behaviors,
 } from '@grafana/scenes';
 import { getAllSeries, getSeriesLabelValue, getSeriesValue } from 'common/seriesHelpers';
 import { LabelFilters } from 'common/queryHelpers';
@@ -21,6 +22,7 @@ import { TextColor } from 'common/types';
 import { TableRow } from './types';
 import { createRootQuery, createRowQueries } from './Queries';
 import { buildExpandedRowScene } from './PodExpandedRow';
+import { ToggleVariable } from 'components/ToggleVariable';
 
 function createVariables() {
     return [
@@ -77,6 +79,11 @@ function createVariables() {
             name: 'search',
             label: 'Search',
             value: '',
+        }),
+        new ToggleVariable({
+            name: 'showStoppedPods',
+            label: 'Show stopped pods',
+            value: false
         })
     ]
 }
@@ -220,7 +227,7 @@ const columns: Array<Column<TableRow>> = [
         cellProps: {
             format: 'dtdurations',
         },
-        accessor: (row: TableRow) => (Date.now() / 1000) - row.created
+        accessor: (row: TableRow) => row.created > 0 ? (Date.now() / 1000) - row.created : 0
     },
     {
         id: 'status',
@@ -341,6 +348,7 @@ const serieMatcherPredicate = (row: TableRow) => (value: any) => row.pod === val
 
 function asyncDataRowMapper(row: TableRow, asyncRowData: any) {
 
+    row.host_ip = getSeriesLabelValue(asyncRowData, 'node', 'host_ip', serieMatcherPredicate(row)) 
     row.status = getSeriesLabelValue(asyncRowData, 'status', 'phase', serieMatcherPredicate(row))
     row.created = getSeriesValue(asyncRowData, 'created', serieMatcherPredicate(row))
     const alerts = getAllSeries(asyncRowData, 'alerts', serieMatcherPredicate(row))
@@ -388,7 +396,7 @@ class PodsQueryBuilder implements QueryBuilder<TableRow> {
         this.staticLabelFilters = staticLabelFilters
     }
 
-    rootQueryBuilder (variables: SceneVariableSet | SceneVariables, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) {
+    rootQueryBuilder(variables: SceneVariableSet | SceneVariables, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) {
         return createRootQuery(this.staticLabelFilters, variables, sorting, sortingConfig)
     }
 
@@ -422,22 +430,32 @@ export const getPodsScene = (staticLabelFilters: LabelFilters, showVariableContr
 
     const queryBuilder = new PodsQueryBuilder(staticLabelFilters);
 
+    const podsTable = new AsyncTable<TableRow>({
+        columns: columns,
+        asyncDataRowMapper: asyncDataRowMapper,
+        queryBuilder: queryBuilder,
+        createRowId: (row: TableRow) => row.pod,
+        expandedRowBuilder: buildExpandedRowScene,
+        sorting: defaultSorting,
+    })
+
+    const onShowStoppedPodsChanged = new behaviors.ActWhenVariableChanged({
+        variableName: 'showStoppedPods',
+        onChange: () => {
+            podsTable.rebuildQuery()
+        }
+    })
+
     return new EmbeddedScene({
         $variables: variableSet,
+        $behaviors: [onShowStoppedPodsChanged],
         controls: controls,
         body: new SceneFlexLayout({
             children: [
                 new SceneFlexItem({
                     width: '100%',
                     height: '100%',
-                    body: new AsyncTable<TableRow>({
-                        $data: queryBuilder.rootQueryBuilder(variableSet, defaultSorting),
-                        columns: columns,
-                        asyncDataRowMapper: asyncDataRowMapper,
-                        queryBuilder: queryBuilder,
-                        createRowId: (row: TableRow) => row.pod,
-                        expandedRowBuilder: buildExpandedRowScene
-                    }),
+                    body: podsTable,
                 }),
             ],
         }),

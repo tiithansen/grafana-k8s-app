@@ -153,6 +153,7 @@ export const getDaemonSetsScene = () => {
                         asyncDataRowMapper,
                         createRowId: (row: TableRow) => `${row.namespace}/${row.daemonset}`,
                         expandedRowBuilder: buildExpandedRowScene,
+                        sorting: deaultSorting,
                     }),
                 }),
             ],

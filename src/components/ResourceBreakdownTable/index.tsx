@@ -388,7 +388,8 @@ export const ResourceBreakdownTable = () => {
                         queryBuilder: {
                             rowQueryBuilder: createRowQueries,
                             rootQueryBuilder: createRootQuery,
-                        }
+                        },
+                        sorting: defaultSorting,
                     }),
                 }),
             ],

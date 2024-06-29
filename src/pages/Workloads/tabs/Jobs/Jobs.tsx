@@ -149,6 +149,7 @@ export const getJobsScene = () => {
                         asyncDataRowMapper: asyncRowMapper,
                         queryBuilder: queryBuilder,
                         createRowId: (row) => row.job_name,
+                        sorting: defaultSorting,
                     }),
                 }),
             ],

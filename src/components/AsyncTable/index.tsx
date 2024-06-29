@@ -60,7 +60,7 @@ interface TableState<TableRow> extends SceneObjectState {
     expandedRows?: SceneObject[];
     asyncRowData?: Map<string, number[]>;
     visibleRowIds?: string;
-    sorting?: SortingState;
+    sorting: SortingState;
     columns: Array<Column<TableRow>>;
     createRowId: (row: TableRow) => string;
     asyncDataRowMapper: (row: TableRow, asyncRowData: any) => void;
@@ -231,7 +231,20 @@ export class AsyncTable<TableRow> extends SceneObjectBase<TableState<TableRow>> 
         }
     }
 
+    public rebuildQuery() {
+        const sortingConfig = this.getColumnById(this.state.sorting!.columnId)?.sortingConfig;
+        this.setState({
+            ...this.state,
+            $data: this.state.queryBuilder.rootQueryBuilder(sceneGraph.getVariables(this), this.state.sorting!, sortingConfig)
+        });
+    }
+
     static Component = (props: SceneComponentProps<AsyncTable<any>>) => {
+
+        useEffect(() => {
+            props.model.rebuildQuery();
+        }, [props.model]);
+
         const { data } = sceneGraph.getData(props.model).useState();
         const { asyncRowData, sorting, columns, asyncDataRowMapper } = props.model.useState();
         const sortingConfig = sorting ? props.model.getColumnById(sorting.columnId)?.sortingConfig : undefined;

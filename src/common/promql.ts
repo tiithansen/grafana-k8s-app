@@ -73,41 +73,6 @@ class PromQLBinaryExpression extends PromQLExpression {
     }
 }
 
-export enum ComparisonOperators {
-    EQUALS = '==',
-    NOT_EQUALS = '!=',
-    GREATER_THAN = '>',
-    LESS_THAN = '<',
-    GREATER_THAN_OR_EQUALS = '>=',
-    LESS_THAN_OR_EQUALS = '<=',
-}
-
-class PromQLComparisonExpression extends PromQLExpression {
-    
-    constructor(private operator: ComparisonOperators, private left: PromQLExpression, private right: PromQLExpression) {
-        super();
-    }
-
-    stringify() {
-        return `${this.left.stringify()} ${this.operator} ${this.right.stringify()} `;
-    }
-}
-
-enum LogicalOperators {
-    AND = 'and',
-    OR = 'or',
-}
-
-class PromQLLogicalExpression extends PromQLExpression {
-    constructor(private operator: LogicalOperators, private left: PromQLExpression, private right: PromQLExpression) {
-        super();
-    }
-
-    stringify() {
-        return `${this.left.stringify()} ${this.operator} (${this.right.stringify()}) `;
-    }
-}
-
 
 export abstract class PromQLVectorExpression extends PromQLExpression {
     
@@ -145,6 +110,41 @@ export abstract class PromQLVectorExpression extends PromQLExpression {
 
     equals(value: number) {
         return new PromQLComparisonExpression(ComparisonOperators.EQUALS, this, new PromQLScalarExpression(value));
+    }
+}
+
+enum LogicalOperators {
+    AND = 'and',
+    OR = 'or',
+}
+
+class PromQLLogicalExpression extends PromQLVectorExpression {
+    constructor(private operator: LogicalOperators, private left: PromQLExpression, private right: PromQLExpression) {
+        super();
+    }
+
+    stringify() {
+        return `${this.left.stringify()} ${this.operator} (${this.right.stringify()}) `;
+    }
+}
+
+export enum ComparisonOperators {
+    EQUALS = '==',
+    NOT_EQUALS = '!=',
+    GREATER_THAN = '>',
+    LESS_THAN = '<',
+    GREATER_THAN_OR_EQUALS = '>=',
+    LESS_THAN_OR_EQUALS = '<=',
+}
+
+class PromQLComparisonExpression extends PromQLVectorExpression {
+    
+    constructor(private operator: ComparisonOperators, private left: PromQLExpression, private right: PromQLExpression) {
+        super();
+    }
+
+    stringify() {
+        return `${this.left.stringify()} ${this.operator} ${this.right.stringify()} `;
     }
 }
 
@@ -260,20 +260,58 @@ class PromQLWithoutExpression extends PromQLExpression {
     }
 }
 
+class PromQLRangeVectorExpression extends PromQLVectorExpression {
+
+    constructor(private vectorExpression: PromQLVectorExpression, private range: string) {
+        super()
+    }
+
+    stringify(): string {
+        return `${this.vectorExpression.stringify()}[${this.range}]`
+    }
+}
+
+abstract class PromQLFunctionArg {
+    abstract stringify(): string
+}
+
+class PromQLVectorExpressionFunctionArg extends PromQLFunctionArg {
+    constructor(private arg: PromQLVectorExpression) {
+        super()
+    }
+
+    stringify(): string {
+        return this.arg.stringify()
+    }
+}
+
+class PromQLStringFunctionArg extends PromQLFunctionArg {
+    constructor(private arg: string) {
+        super()
+    }
+
+    stringify(): string {
+        return `"${this.arg}"`
+    }
+}
+
 class PromQLFunction extends PromQLVectorExpression {
     
-    constructor(private name: string, private subExpression: PromQLExpression) {
+    constructor(private name: string, private args: PromQLFunctionArg[]) {
         super();
     }
 
     stringify() {
         return `${this.name}(
-            ${this.subExpression.stringify()}${this.stringifyInner()}
+            ${this.serializeArgs()}
         )`;
     }
 
-    stringifyInner() {
-        return ''
+    private serializeArgs() {
+        return this.args.map(
+            arg => arg.stringify()
+        )
+        .join(', ')
     }
 }
 
@@ -298,46 +336,75 @@ class PromQLAggregationFunction extends PromQLFunction {
 
 class PromQLSumFunction extends PromQLAggregationFunction {
 
-    constructor(subExpression: PromQLExpression) {
-        super('sum', subExpression);
+    constructor(subExpression: PromQLVectorExpression) {
+        super('sum', [
+            new PromQLVectorExpressionFunctionArg(subExpression)
+        ]);
     }
 }
 
 class PromQLMaxFunction extends PromQLAggregationFunction {
     
-    constructor(subExpression: PromQLExpression) {
-        super('max', subExpression);
+    constructor(subExpression: PromQLVectorExpression) {
+        super('max', [
+            new PromQLVectorExpressionFunctionArg(subExpression)
+        ]);
     }
 }
 
 class PromQLGroupFunction extends PromQLAggregationFunction {
         
-    constructor(subExpression: PromQLExpression) {
-        super('group', subExpression);
+    constructor(subExpression: PromQLVectorExpression) {
+        super('group', [
+            new PromQLVectorExpressionFunctionArg(subExpression)
+        ])
     }
 }
 
 class PromQLCountFunction extends PromQLAggregationFunction {
         
-    constructor(subExpression: PromQLExpression) {
-        super('count', subExpression);
+    constructor(subExpression: PromQLVectorExpression) {
+        super('count', [
+            new PromQLVectorExpressionFunctionArg(subExpression)
+        ])
     }
 }
 
 class PromQLSortFunction extends PromQLFunction {
     
-    constructor(direction: 'asc' | 'desc', subExpression: PromQLExpression) {
-        super(`sort${direction === 'desc' ? '_desc' : ''}`, subExpression);
+    constructor(direction: 'asc' | 'desc', subExpression: PromQLVectorExpression) {
+        super(`sort${direction === 'desc' ? '_desc' : ''}`, [
+            new PromQLVectorExpressionFunctionArg(subExpression)
+        ])
     }
 }
 
 class PromQLRateFunction extends PromQLFunction {       
-    constructor(private range: string, subExpression: PromQLExpression) {
-        super('rate', subExpression);
+    constructor(subExpression: PromQLRangeVectorExpression) {
+        super('rate', [
+            new PromQLVectorExpressionFunctionArg(subExpression)
+        ])
     }
+}
 
-    stringifyInner() {
-        return `[${this.range}]`;
+class PromQLPresentOverTimeFunction extends PromQLFunction {
+        
+    constructor(subExpression: PromQLRangeVectorExpression) {
+        super('present_over_time', [
+            new PromQLVectorExpressionFunctionArg(subExpression)
+        ])
+    }
+}
+
+class PromQLLabelReplaceFunction extends PromQLFunction {
+    constructor(exp: PromQLVectorExpression, dest: string, sourceLabel: string, replacement: string, regex: string) {
+        super('label_replace', [
+            new PromQLVectorExpressionFunctionArg(exp),
+            new PromQLStringFunctionArg(dest),
+            new PromQLStringFunctionArg(sourceLabel),
+            new PromQLStringFunctionArg(replacement),
+            new PromQLStringFunctionArg(regex),
+        ])
     }
 }
 
@@ -346,27 +413,39 @@ export class PromQL {
         return new PromQLMetric(name);
     }
 
-    static sum(subExpression: PromQLExpression) {
+    static withRange(subExpression: PromQLVectorExpression, range: string) {
+        return new PromQLRangeVectorExpression(subExpression, range)
+    }
+
+    static sum(subExpression: PromQLVectorExpression) {
         return new PromQLSumFunction(subExpression);
     }
 
-    static sort(direction: 'asc' | 'desc', subExpression: PromQLExpression) {
+    static sort(direction: 'asc' | 'desc', subExpression: PromQLVectorExpression) {
         return new PromQLSortFunction(direction, subExpression);
     }
 
-    static rate(subExpression: PromQLExpression, range: string) {
-        return new PromQLRateFunction(range, subExpression);
+    static rate(subExpression: PromQLRangeVectorExpression) {
+        return new PromQLRateFunction(subExpression);
     }
 
-    static max(subExpression: PromQLExpression) {
+    static max(subExpression: PromQLVectorExpression) {
         return new PromQLMaxFunction(subExpression);
     }
 
-    static group(subExpression: PromQLExpression) {
+    static group(subExpression: PromQLVectorExpression) {
         return new PromQLGroupFunction(subExpression);
     }
 
-    static count(subExpression: PromQLExpression) {
+    static count(subExpression: PromQLVectorExpression) {
         return new PromQLCountFunction(subExpression);
+    }
+
+    static presentOverTime(subExpression: PromQLRangeVectorExpression) {
+        return new PromQLPresentOverTimeFunction(subExpression);
+    }
+
+    static labelReplace(exp: PromQLVectorExpression, dest: string, sourceLabel: string, replacement: string, regex: string) {
+        return new PromQLLabelReplaceFunction(exp, dest, sourceLabel, replacement, regex);
     }
 }
