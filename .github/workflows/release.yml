@@ -119,9 +119,8 @@ jobs:
           retention-days: 5
 
       - name: Sign plugin
-        if: steps.release.outputs.release_created
         run: npm run sign
-        if: ${{ env.GRAFANA_ACCESS_POLICY_TOKEN != '' }} && steps.release.outputs.release_created
+        if: env.GRAFANA_ACCESS_POLICY_TOKEN != '' && steps.release.outputs.release_created
 
       - name: Get plugin metadata
         if: steps.release.outputs.release_created
