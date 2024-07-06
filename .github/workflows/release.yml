@@ -8,6 +8,10 @@ permissions:
   pull-requests: write
   packages: write
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 name: Release
 jobs:
   release-please:
