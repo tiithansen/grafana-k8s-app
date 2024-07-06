@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.1...v0.1.2) (2024-07-06)
+
+
+### Bug Fixes
+
+* Outer Layout needs to be column and pods scene must not have height set ([2ff0239](https://github.com/tiithansen/grafana-k8s-app/commit/2ff0239e5330847f7ae89d3be601f0d25706019b))
+
 ## [0.1.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.0...v0.1.1) (2024-07-06)
 
 
