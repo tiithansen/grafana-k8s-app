@@ -10,7 +10,7 @@ import {
 } from '@grafana/scenes';
 import { buildExpandedRowScene } from './ExpandedRow';
 import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
-import { getSeriesValue } from 'common/seriesHelpers';
+import { getAllSeries, getSeriesValue } from 'common/seriesHelpers';
 import { createNamespaceVariable } from 'common/variableHelpers';
 import { createRowQueries } from './Queries';
 import { Metrics } from 'metrics/metrics';
@@ -19,6 +19,7 @@ import { SortingState } from 'common/sortingHelpers';
 import { prefixRoute } from 'utils/utils.routing';
 import { ROUTES } from '../../../../constants';
 import { TableRow } from "./types";
+import { TextColor } from 'common/types';
 
 const namespaceVariable = createNamespaceVariable();
 
@@ -30,7 +31,18 @@ const searchVariable = new TextBoxVariable({
 
 const serieMatcherPredicate = (row: TableRow) => (value: any) => value.daemonset === row.daemonset;
 
+function determineAlertsColor(row: TableRow): TextColor {
+    let color: TextColor = 'primary';
+    if (row.alerts && row.alerts.length > 0) {
+        color = 'error'
+    }
+
+    return color
+}
+
 function asyncDataRowMapper(row: TableRow, asyncRowData: Map<string, number[]>) {
+
+    row.alerts = getAllSeries(asyncRowData, 'alerts', serieMatcherPredicate(row))
     
     const total = getSeriesValue(asyncRowData, 'replicas', serieMatcherPredicate(row))
     const ready = getSeriesValue(asyncRowData, 'replicas_ready', serieMatcherPredicate(row))
@@ -72,6 +84,19 @@ const columns: Array<Column<TableRow>> = [
             compare(a, b, direction) {
                 return direction === 'asc' ? a.namespace.localeCompare(b.namespace) : b.namespace.localeCompare(a.namespace)
             },
+        }
+    },
+    {
+        id: 'alerts',
+        header: 'ALERTS',
+        sortingConfig: {
+            enabled: true,
+            local: false,
+            type: 'value'
+        },
+        accessor: (row: TableRow) => row.alerts ? row.alerts.length : 0,
+        cellProps: {
+            color: determineAlertsColor
         }
     },
     { 
