@@ -314,7 +314,8 @@ export function createRootQuery(
         Metrics.kubePodInfo.labels.pod,
         Metrics.kubePodInfo.labels.createdByKind,
         Metrics.kubePodInfo.labels.createdByName,
-        Metrics.kubePodInfo.labels.uid
+        Metrics.kubePodInfo.labels.uid,
+        Metrics.kubePodInfo.labels.node,
     ])
     
     let finalQuery: PromQLExpression
@@ -353,7 +354,15 @@ export function createRootQuery(
 
 export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
 
-    const pods = rows.map(row => row.pod).join('|');
+    const pods = rows
+        .filter(row => row.pod)
+        .map(row => row.pod)
+        .join('|');
+
+    if (pods.length === 0) {
+        return [];
+    }
+
     const cluster = resolveVariable(sceneVariables, 'cluster');
 
     const additionalLabels = {
