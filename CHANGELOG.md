@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.0...v0.1.1) (2024-07-06)
+
+
+### Bug Fixes
+
+* Add missing daemonset alerts in expanded row ([ac1bd53](https://github.com/tiithansen/grafana-k8s-app/commit/ac1bd53896cde9cf3152573e6b192f9c71440f03))
+
 ## 0.1.0 (2024-07-06)
 
 
