@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneQueryRunner, sceneGraph } from "@grafana/scenes";
 import { LabelFilters, serializeLabelFilters } from '../../../common/queryHelpers';
 import { DataFrameView, GrafanaTheme2, LoadingState } from '@grafana/data';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
 interface Label {
@@ -25,14 +25,13 @@ const getStyles = (theme: GrafanaTheme2) => {
         borderRadius: theme.shape.radius.default,
         width: '100%',
         backgroundColor: theme.colors.background.secondary,
-  
         td: {
           padding: theme.spacing(1),
         },
-  
         'td, th': {
           minWidth: theme.spacing(3),
         },
+        marginTop: '16px',
       }),
       disableGrow: css({
         width: 0,
@@ -66,11 +65,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       row: css({
         label: 'row',
         borderBottom: `1px solid ${theme.colors.border.weak}`,
-  
         '&:hover': {
           backgroundColor: rowHoverBg,
         },
-  
         '&:last-child': {
           borderBottom: 0,
         },
@@ -117,7 +114,7 @@ class ResourceLabels extends SceneObjectBase<ResourceLabelsState> {
         }, [data]);
 
         return (
-            <div className={styles.container}>
+            <div className={cx(styles.container)}>
                 <table className={styles.table}>
                     <thead>
                         <tr>
