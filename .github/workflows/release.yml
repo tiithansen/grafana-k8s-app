@@ -18,6 +18,7 @@ jobs:
         id: release
         with:
           release-type: node
+          bump-minor-pre-major: true
       - uses: actions/checkout@v4
       - name: Tag major and minor versions
         if: ${{ steps.release.outputs.release_created }}
