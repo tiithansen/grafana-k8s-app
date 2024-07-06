@@ -21,14 +21,6 @@ import { prefixRoute } from 'utils/utils.routing';
 import { TableRow } from "./types";
 import { TextColor } from 'common/types';
 
-const namespaceVariable = createNamespaceVariable();
-
-const searchVariable = new TextBoxVariable({
-    name: 'search',
-    label: 'Search',
-    value: '',
-});
-
 const serieMatcherPredicate = (row: TableRow) => (value: any) => value.statefulset === row.statefulset;
 
 function asyncDataRowMapper(row: TableRow, asyncRowData: Map<string, number[]>) {
@@ -144,8 +136,12 @@ export const getStatefulSetsScene = () => {
 
     const variables = new SceneVariableSet({
         variables: [
-            namespaceVariable,
-            searchVariable,
+            createNamespaceVariable(),
+            new TextBoxVariable({
+                name: 'search',
+                label: 'Search',
+                value: '',
+            }),
         ],
     });
 
