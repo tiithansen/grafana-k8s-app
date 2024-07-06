@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.3...v0.1.4) (2024-07-06)
+
+
+### Bug Fixes
+
+* Creating variables on global scope can have side effects and odd errors ([2087ef3](https://github.com/tiithansen/grafana-k8s-app/commit/2087ef3bd89cd4601d62be255142b9eed1570823))
+
 ## [0.1.3](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.2...v0.1.3) (2024-07-06)
 
 
