@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.2...v0.1.3) (2024-07-06)
+
+
+### Bug Fixes
+
+* Do not set height for wrapping layouts when there are dynamically sized layouts embedded, it will mess up displaying of them. ([5d0b294](https://github.com/tiithansen/grafana-k8s-app/commit/5d0b29429c715a80184b24b74725b773ea3240c8))
+
 ## [0.1.2](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.1...v0.1.2) (2024-07-06)
 
 
