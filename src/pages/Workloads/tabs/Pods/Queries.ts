@@ -315,7 +315,6 @@ export function createRootQuery(
         Metrics.kubePodInfo.labels.createdByKind,
         Metrics.kubePodInfo.labels.createdByName,
         Metrics.kubePodInfo.labels.uid,
-        Metrics.kubePodInfo.labels.node,
     ])
     
     let finalQuery: PromQLExpression
