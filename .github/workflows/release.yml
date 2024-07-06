@@ -17,7 +17,7 @@ jobs:
       - uses: google-github-actions/release-please-action@v4
         id: release
         with:
-          release-type: simple
+          release-type: node
       - uses: actions/checkout@v4
       - name: Tag major and minor versions
         if: ${{ steps.release.outputs.release_created }}
