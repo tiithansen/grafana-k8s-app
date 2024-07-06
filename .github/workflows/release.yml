@@ -3,6 +3,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+
 name: Release
 jobs:
   release-please:
