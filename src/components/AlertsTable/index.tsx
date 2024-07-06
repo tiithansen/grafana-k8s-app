@@ -204,24 +204,30 @@ export function AlertsTable(labelFilters?: LabelFilters, showVariableControls = 
 
     const queryBuilder = new AlertsQueryBuilder(labelFilters);
 
-    return new EmbeddedScene({
-        $variables: variables,
-        controls: controls,
-        body: new SceneFlexLayout({
-            children: [
-                new SceneFlexItem({
-                    width: '100%',
-                    body: new AsyncTable<TableRow>({
-                        columns: columns,
-                        createRowId: createRowId,
-                        asyncDataRowMapper: rowMapper,
-                        $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
-                        queryBuilder: queryBuilder,
-                        expandedRowBuilder: expandedRowSceneBuilder(createRowId),
-                        sorting: defaultSorting,
-                    }),
-                }),
-            ],
-        }),
+    const table = new AsyncTable<TableRow>({
+        columns: columns,
+        createRowId: createRowId,
+        asyncDataRowMapper: rowMapper,
+        $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
+        queryBuilder: queryBuilder,
+        expandedRowBuilder: expandedRowSceneBuilder(createRowId),
+        sorting: defaultSorting,
     })
+
+    if (showVariableControls || shouldCreateVariables) {
+        return new EmbeddedScene({
+            $variables: variables,
+            controls: controls,
+            body: new SceneFlexLayout({
+                children: [
+                    new SceneFlexItem({
+                        width: '100%',
+                        body: table,
+                    }),
+                ],
+            }),
+        })
+    } else {
+        return table;
+    }
 }

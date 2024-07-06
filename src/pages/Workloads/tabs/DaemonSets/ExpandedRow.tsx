@@ -23,7 +23,6 @@ export function buildExpandedRowScene(row: TableRow) {
       key: `${row.namespace}/${row.daemonset}`,
       direction: 'column',
       width: '100%',
-      height: 500,
       children: [
         new SceneFlexLayout({
           direction: 'row',
