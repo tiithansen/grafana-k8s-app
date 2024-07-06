@@ -1,26 +1,147 @@
-# This GitHub Action automates the process of building Grafana plugins.
-# (For more information, see https://github.com/grafana/plugin-actions/blob/main/build-plugin/README.md)
-name: Release
-
 on:
   push:
-    tags:
-      - 'v*' # Run workflow on version tags, e.g. v1.0.0.
+    branches:
+      - main
 
-permissions: read-all
-
+name: Release
 jobs:
-  release:
-    permissions:
-      contents: write
+  release-please:
     runs-on: ubuntu-latest
+    env:
+      GRAFANA_ACCESS_POLICY_TOKEN: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
     steps:
+      - uses: google-github-actions/release-please-action@v4
+        id: release
+        with:
+          release-type: simple
       - uses: actions/checkout@v4
-      - uses: grafana/plugin-actions/build-plugin@release
-        # Uncomment to enable plugin signing
-        # (For more info on how to generate the access policy token see https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin#generate-an-access-policy-token)
-        #with:
-        # Make sure to save the token in your repository secrets
-        #policy_token: $
-        # Usage of GRAFANA_API_KEY is deprecated, prefer `policy_token` option above
-        #grafana_token: $
+      - name: Tag major and minor versions
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git tag -d v${{ steps.release.outputs.major }} || true
+          git tag -d v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }} || true
+          git push origin :v${{ steps.release.outputs.major }} || true
+          git push origin :v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }} || true
+          git tag -a v${{ steps.release.outputs.major }} -m "Release v${{ steps.release.outputs.major }}"
+          git tag -a v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }} -m "Release v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}"
+          git push origin v${{ steps.release.outputs.major }}
+          git push origin v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}
+
+      - name: Setup Node.js environment
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: ${{ steps.release.outputs.release_created }}
+        run: npm ci
+
+      - name: Check types
+        if: ${{ steps.release.outputs.release_created }}
+        run: npm run typecheck
+
+      - name: Lint
+        if: ${{ steps.release.outputs.release_created }}
+        run: npm run lint
+
+      - name: Unit tests
+        if: ${{ steps.release.outputs.release_created }}
+        run: npm run test:ci
+
+      - name: Build frontend
+        if: ${{ steps.release.outputs.release_created }}
+        run: npm run build
+
+      - name: Check for backend
+        if: ${{ steps.release.outputs.release_created }}
+        id: check-for-backend
+        run: |
+          if [ -f "Magefile.go" ]
+          then
+            echo "has-backend=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Go environment
+        if: steps.check-for-backend.outputs.has-backend == 'true' && steps.release.outputs.release_created
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Test backend
+        if: steps.check-for-backend.outputs.has-backend == 'true' && steps.release.outputs.release_created
+        uses: magefile/mage-action@v3
+        with:
+          version: latest
+          args: coverage
+
+      - name: Build backend
+        if: steps.check-for-backend.outputs.has-backend == 'true' && steps.release.outputs.release_created
+        uses: magefile/mage-action@v3
+        with:
+          version: latest
+          args: buildAll
+
+      - name: Check for E2E
+        id: check-for-e2e
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          if [ -d "cypress" ]
+          then
+            echo "has-e2e=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Start grafana docker
+        if: steps.check-for-e2e.outputs.has-e2e == 'true' && steps.release.outputs.release_created
+        run: docker-compose up -d
+
+      - name: Run e2e tests
+        if: steps.check-for-e2e.outputs.has-e2e == 'true' && steps.release.outputs.release_created
+        run: npm run e2e
+
+      - name: Stop grafana docker
+        if: steps.check-for-e2e.outputs.has-e2e == 'true' && steps.release.outputs.release_created
+        run: docker-compose down
+
+      - name: Archive E2E output
+        uses: actions/upload-artifact@v4
+        if: steps.check-for-e2e.outputs.has-e2e == 'true' && steps.run-e2e-tests.outcome != 'success' && steps.release.outputs.release_created
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          retention-days: 5
+
+      - name: Sign plugin
+        run: npm run sign
+        if: ${{ env.GRAFANA_ACCESS_POLICY_TOKEN != '' }} && steps.release.outputs.release_created
+
+      - name: Get plugin metadata
+        if: steps.release.outputs.release_created
+        id: metadata
+        run: |
+          sudo apt-get install jq
+
+          export GRAFANA_PLUGIN_ID=$(cat dist/plugin.json | jq -r .id)
+          export GRAFANA_PLUGIN_VERSION=$(cat dist/plugin.json | jq -r .info.version)
+          export GRAFANA_PLUGIN_ARTIFACT=${GRAFANA_PLUGIN_ID}-${GRAFANA_PLUGIN_VERSION}.zip
+
+          echo "plugin-id=${GRAFANA_PLUGIN_ID}" >> $GITHUB_OUTPUT
+          echo "plugin-version=${GRAFANA_PLUGIN_VERSION}" >> $GITHUB_OUTPUT
+          echo "archive=${GRAFANA_PLUGIN_ARTIFACT}" >> $GITHUB_OUTPUT
+
+      - name: Log in to the Container registry
+        if: steps.release.outputs.release_created
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        if: steps.release.outputs.release_created
+        run: |
+          docker build -f .config/Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }} .
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}}
