@@ -153,4 +153,4 @@ jobs:
         if: steps.release.outputs.release_created
         run: |
           docker build -f .config/Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }} .
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}
