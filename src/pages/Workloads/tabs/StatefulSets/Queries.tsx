@@ -26,6 +26,22 @@ export function createReplicasReadyQuery(cluster: string, additionalLabels: Labe
     ])
 }
 
+function createAlertsQuery(cluster: string, additionalLabels: Labels) {
+
+    return PromQL.metric('ALERTS')
+        .withLabelEquals('alertstate', 'firing')
+        .withLabels(additionalLabels)
+        .withLabelEquals('cluster', cluster)
+        .multiply()
+        .ignoring(['alertstate'])
+        .groupRight(
+            ['alertstate'],
+            PromQL.metric('ALERTS_FOR_STATE')
+                .withLabels(additionalLabels)
+                .withLabelEquals('cluster', cluster)
+        )
+}
+
 export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
 
     const statefulSets = rows.map(row => row.statefulset).join('|');
@@ -51,5 +67,11 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
             instant: true,
             format: 'table'
         },
+        {
+            refId: 'alerts',
+            expr: createAlertsQuery(cluster?.toString()!, additionalLabels).stringify(),
+            instant: true,
+            format: 'table'
+        }
     ];
 }

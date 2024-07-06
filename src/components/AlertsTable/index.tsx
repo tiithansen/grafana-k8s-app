@@ -211,7 +211,6 @@ export function AlertsTable(labelFilters?: LabelFilters, showVariableControls = 
             children: [
                 new SceneFlexItem({
                     width: '100%',
-                    height: '100%',
                     body: new AsyncTable<TableRow>({
                         columns: columns,
                         createRowId: createRowId,

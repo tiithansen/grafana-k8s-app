@@ -10,7 +10,7 @@ import {
 } from '@grafana/scenes';
 import { buildExpandedRowScene } from './ExpandedRow';
 import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
-import { getSeriesValue } from 'common/seriesHelpers';
+import { getAllSeries, getSeriesValue } from 'common/seriesHelpers';
 import { createNamespaceVariable } from 'common/variableHelpers';
 import { createRowQueries } from './Queries';
 import { Metrics } from 'metrics/metrics';
@@ -19,6 +19,7 @@ import { SortingState } from 'common/sortingHelpers';
 import { ROUTES } from '../../../../constants';
 import { prefixRoute } from 'utils/utils.routing';
 import { TableRow } from "./types";
+import { TextColor } from 'common/types';
 
 const namespaceVariable = createNamespaceVariable();
 
@@ -32,6 +33,8 @@ const serieMatcherPredicate = (row: TableRow) => (value: any) => value.statefuls
 
 function asyncDataRowMapper(row: TableRow, asyncRowData: Map<string, number[]>) {
     
+    row.alerts = getAllSeries(asyncRowData, 'alerts', serieMatcherPredicate(row))
+
     const total = getSeriesValue(asyncRowData, 'replicas', serieMatcherPredicate(row))
     const ready = getSeriesValue(asyncRowData, 'replicas_ready', serieMatcherPredicate(row))
 
@@ -39,6 +42,15 @@ function asyncDataRowMapper(row: TableRow, asyncRowData: Map<string, number[]>) 
         total,
         ready
     }       
+}
+
+function determineAlertsColor(row: TableRow): TextColor {
+    let color: TextColor = 'primary';
+    if (row.alerts && row.alerts.length > 0) {
+        color = 'error'
+    }
+
+    return color
 }
 
 const columns: Array<Column<TableRow>> = [
@@ -66,6 +78,19 @@ const columns: Array<Column<TableRow>> = [
             enabled: true,
             type: 'label',
             local: true,
+        }
+    },
+    {
+        id: 'alerts',
+        header: 'ALERTS',
+        sortingConfig: {
+            enabled: true,
+            local: false,
+            type: 'value'
+        },
+        accessor: (row: TableRow) => row.alerts ? row.alerts.length : 0,
+        cellProps: {
+            color: determineAlertsColor
         }
     },
     { 
