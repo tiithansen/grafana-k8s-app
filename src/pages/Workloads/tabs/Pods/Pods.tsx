@@ -144,10 +144,11 @@ const columns: Array<Column<TableRow>> = [
             local: true,
             type: 'label',
             compare: (a, b, direction) => {
-                if (a.pod && b.pod)
+                if (a.pod && b.pod) {
                     return direction === 'asc' ? a.pod.localeCompare(b.pod) : b.pod.localeCompare(a.pod)
-                else
+                } else {
                     return 0
+                }
             }
         },
     },
