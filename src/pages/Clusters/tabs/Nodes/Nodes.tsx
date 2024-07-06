@@ -81,7 +81,7 @@ const columns: Array<Column<TableRow>> = [
         },
         columns: [
             {
-                id: 'free',
+                id: 'memory_free',
                 header: 'FREE',
                 accessor: (row: TableRow) => row.memory.free,
                 cellType: 'formatted',
@@ -96,7 +96,7 @@ const columns: Array<Column<TableRow>> = [
                 }
             },
             {
-                id: 'total',
+                id: 'memory_total',
                 header: 'TOTAL',
                 accessor: (row: TableRow) => row.memory.total,
                 cellType: 'formatted',
@@ -111,7 +111,7 @@ const columns: Array<Column<TableRow>> = [
                 }
             },
             {
-                id: 'requests',
+                id: 'memory_requests',
                 header: 'REQUESTS',
                 accessor: (row: TableRow) => row.memory.requests,
                 cellType: 'formatted',
@@ -126,7 +126,7 @@ const columns: Array<Column<TableRow>> = [
                 }
             },
             {
-                id: 'usage',
+                id: 'memory_usage',
                 header: 'USAGE',
                 accessor: (row: TableRow) => row.memory.usage,
                 cellType: 'formatted',
@@ -151,7 +151,7 @@ const columns: Array<Column<TableRow>> = [
         },
         columns: [
             {
-                id: 'requests',
+                id: 'cpu_requests',
                 header: 'REQUESTS',
                 accessor: (row: TableRow) => row.cpu.requests,
                 cellType: 'formatted',
@@ -165,7 +165,7 @@ const columns: Array<Column<TableRow>> = [
                 }
             },
             {
-                id: 'cores',
+                id: 'cpu_cores',
                 header: 'CORES',
                 accessor: (row: TableRow) => row.cpu.cores,
                 cellType: 'formatted',
@@ -179,7 +179,7 @@ const columns: Array<Column<TableRow>> = [
                 }
             },
             {
-                id: 'usage',
+                id: 'cpu_usage',
                 header: 'USAGE',
                 accessor: (row: TableRow) => row.cpu.usage,
                 cellType: 'formatted',
