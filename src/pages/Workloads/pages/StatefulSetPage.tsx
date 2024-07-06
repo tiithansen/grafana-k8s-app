@@ -10,6 +10,7 @@ import { Metrics } from "metrics/metrics";
 import Heading from "components/Heading";
 import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
+import { AlertsTable } from "components/AlertsTable";
 
 function getPods(statefulset: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
@@ -122,10 +123,24 @@ function getScene(statefulset: string, namespace = '$namespace') {
                             }]),
                         }),
                         new SceneFlexItem({
-                            height: 200,
                             width: `${(2/3) * 100}%`,
-                            body: getReplicasPanel(statefulset, namespace),
-                        })
+                            body: AlertsTable([
+                                {
+                                    label: 'statefulset',
+                                    op: '=',
+                                    value: statefulset,
+                                }
+                            ], false, false)
+                        }),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new SceneFlexItem({
+                            height: 200, 
+                            body: getReplicasPanel(statefulset, namespace)
+                        }),
                     ]
                 }),
                 new SceneFlexLayout({
