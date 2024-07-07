@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.5](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.4...v0.1.5) (2024-07-07)
+
+
+### Bug Fixes
+
+* Add Clusters link to left drawer menu for easier access more understandable access ([3ea2514](https://github.com/tiithansen/grafana-k8s-app/commit/3ea2514b4bce9cabaaf157860e88a2ed14edced3))
+* Remove height from expanded node rows ([e50f6db](https://github.com/tiithansen/grafana-k8s-app/commit/e50f6dbd35169a07288fc3ccaf9adf505bcac40f))
+
 ## [0.1.4](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.3...v0.1.4) (2024-07-06)
 
 
