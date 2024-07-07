@@ -28,6 +28,14 @@
     },
     {
       "type": "page",
+      "name": "Clusters",
+      "path": "/a/%PLUGIN_ID%/clusters/overview",
+      "role": "Viewer",
+      "addToNav": true,
+      "defaultNav": true
+    },
+    {
+      "type": "page",
       "name": "Workloads",
       "path": "/a/%PLUGIN_ID%/workloads",
       "role": "Viewer",
