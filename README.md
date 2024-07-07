@@ -36,14 +36,32 @@ Metrics and required labels used by application can be found in [metrics.ts](src
 Following list is not in any particular order.
 
 * Create page to view Node details.
+  * Basic node details page is implemented.
 * Create page to view Deployment, StatefulSet, DaemonSet, CronJob and Job details.
+  * Basic detailed pages for different resources is implemented.
 * Create page for Cluster overview.
+  * Basic cluster overview page is implemented.
 * Implement sorting by columns.
   * Initial sorting for Pods is implemented. 
 * Display alerts on the resources.
+  * Alerts are displayed for Pods, DaemonSets and StatefulSets
+    For alerts to be displayed alert needs to have `cluster` and kind label `pod|daemonset|statefulset` with name as the value.
 * Integrate OpenCost metrics to visualize cost of the resources.
 * Feature to show stopped resources.
   Because a lot of the queries are `instant` then the stopped resources are not shown even if time range is set to show them.
+  * Partially implemented for pods, its possible to toggle to view which are not running anymore. It lookup pods using `present_over_time` with timerange
+    specified in the UI time picker.
+* Add support for Karpenter metrics.
+  Optional displaying of Karpenter metrics.
+  Which could be toggled from the plugin settings.
+* Add support for resource relations.
+  Depends on Kube-State-Metrics to expose relations between resources [Related feature request](https://github.com/kubernetes/kube-state-metrics/issues/2424).
+* Add support to see Kubernetes event logs
+  Display events which have been exported by [kubernetes-event-exporter](https://github.com/resmoio/kubernetes-event-exporter) into Loki.
+* Display networking resources and metrics
+  * Display Ingress metrics
+    * Display Nginx Ingress Controller metrics (need to figure out how to make the connection between `kube_ingress_info` and if its nginx controlled)
+
 
 If you have any feature requests, improvements or suggestions, please create an issue.
 
