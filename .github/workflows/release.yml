@@ -152,5 +152,11 @@ jobs:
       - name: Build and push Docker image
         if: steps.release.outputs.release_created
         run: |
-          docker build -f .config/Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }} .
+          docker build -f .config/Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
+          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}
+          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}
+          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}
