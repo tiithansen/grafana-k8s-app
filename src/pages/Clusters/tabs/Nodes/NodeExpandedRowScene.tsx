@@ -18,7 +18,6 @@ export function buildExpandedRowScene(row: TableRow) {
   return new SceneFlexLayout({
     key: row.internal_ip,
     width: '100%',
-    height: 500,
     children: [
       getPodsScene(staticLabelFilters, false, false)
     ],        
