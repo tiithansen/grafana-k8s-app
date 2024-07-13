@@ -113,6 +113,16 @@ export abstract class PromQLVectorExpression extends PromQLExpression {
     }
 }
 
+class PromQLParenthesisExpression extends PromQLVectorExpression {
+    constructor(private expr: PromQLExpression) {
+        super();
+    }
+
+    stringify() {
+        return `(${this.expr.stringify()})`;
+    }
+}
+
 enum LogicalOperators {
     AND = 'and',
     OR = 'or',
@@ -447,5 +457,9 @@ export class PromQL {
 
     static labelReplace(exp: PromQLVectorExpression, dest: string, sourceLabel: string, replacement: string, regex: string) {
         return new PromQLLabelReplaceFunction(exp, dest, sourceLabel, replacement, regex);
+    }
+
+    static parenthesis(expr: PromQLVectorExpression) {
+        return new PromQLParenthesisExpression(expr)
     }
 }

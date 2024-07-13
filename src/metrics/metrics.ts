@@ -338,4 +338,38 @@ export const Metrics = {
             instance: 'instance',
         }
     },
+    // Ingress
+    kubeIngressPath: {
+        name: 'kube_ingress_path',
+        labels:{
+            cluster: 'cluster',
+        }
+    },
+    kubeIngressInfo: {
+        name: 'kube_ingress_info',
+        labels:{
+            cluster: 'cluster',
+            ingressClass: 'ingressclass',
+        }
+    },
+    kubeIngressClassInfo: {
+        name: 'kube_ingressclass_info',
+        labels:{
+            cluster: 'cluster',
+        }
+    },
+    // Services
+    kubeServiceInfo: {
+        name: 'kube_service_info',
+        labels:{
+            cluster: 'cluster',
+        }
+    },
+    kubeServiceSpecType: {
+        name: 'kube_service_spec_type',
+        labels:{
+            cluster: 'cluster',
+            type: 'type',
+        }
+    },
 }

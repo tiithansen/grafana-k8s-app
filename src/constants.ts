@@ -7,6 +7,7 @@ export enum ROUTES {
   Namespaces = 'namespaces',
   Nodes = 'nodes',
   Workloads = 'workloads',
+  Network = 'network',
 }
 
 export const DATASOURCE_REF = {

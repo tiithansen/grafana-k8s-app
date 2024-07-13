@@ -41,6 +41,14 @@
       "role": "Viewer",
       "addToNav": true,
       "defaultNav": false
+    },
+    {
+      "type": "page",
+      "name": "Network",
+      "path": "/a/%PLUGIN_ID%/network",
+      "role": "Viewer",
+      "addToNav": true,
+      "defaultNav": false
     }
   ],
   "dependencies": {
