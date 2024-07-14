@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.5...v0.2.0) (2024-07-14)
+
+
+### Features
+
+* Basic table views for ingresses and services ([62e5a98](https://github.com/tiithansen/grafana-k8s-app/commit/62e5a98a762cc79d071ea264cbcbf486d09eb658))
+
+
+### Bug Fixes
+
+* Display node name instead of IP ([5f15a69](https://github.com/tiithansen/grafana-k8s-app/commit/5f15a69c7a7ae4329405b481c9f3db783629eeff))
+
 ## [0.1.5](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.4...v0.1.5) (2024-07-07)
 
 
