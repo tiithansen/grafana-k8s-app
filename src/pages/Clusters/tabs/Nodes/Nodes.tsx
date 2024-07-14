@@ -43,12 +43,21 @@ function determineMemoryUsageColor(row: TableRow) {
 
 const columns: Array<Column<TableRow>> = [
     {
-        id: 'internal_ip',
+        id: 'node',
         header: 'NODE',
         cellType: 'link',
         cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.cluster}/${row.internal_ip}`)
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.cluster}/${row.node}`)
         },
+        sortingConfig: {
+            enabled: true,
+            type: 'label',
+            local: true
+        }
+    },
+    {
+        id: 'internal_ip',
+        header: 'IP',
         sortingConfig: {
             enabled: true,
             type: 'label',
@@ -198,7 +207,7 @@ const columns: Array<Column<TableRow>> = [
     },
 ]
 
-const serieMatcherPredicate = (row: TableRow) => (value: any) => {
+const serieMatcherByIPPredicate = (row: TableRow) => (value: any) => {
     return value.instance.startsWith(row.internal_ip);
 }
 
@@ -208,8 +217,8 @@ const serieMatcherByNodeNamePredicate = (row: TableRow) => (value: any) => {
 
 function asyncDataRowMapper(row: TableRow, asyncRowData: Record<string, number[]>) {
     
-    const free = getSeriesValue(asyncRowData, 'memory_free', serieMatcherPredicate(row))
-    const total = getSeriesValue(asyncRowData, 'memory_total', serieMatcherPredicate(row))
+    const free = getSeriesValue(asyncRowData, 'memory_free', serieMatcherByIPPredicate(row))
+    const total = getSeriesValue(asyncRowData, 'memory_total', serieMatcherByIPPredicate(row))
     const requests = getSeriesValue(asyncRowData, 'memory_requests', serieMatcherByNodeNamePredicate(row))
 
     row.memory = {
@@ -220,7 +229,7 @@ function asyncDataRowMapper(row: TableRow, asyncRowData: Record<string, number[]
     }
 
     row.cpu = {
-        usage: getSeriesValue(asyncRowData, 'cpu_usage', serieMatcherPredicate(row)),
+        usage: getSeriesValue(asyncRowData, 'cpu_usage', serieMatcherByIPPredicate(row)),
         requests: getSeriesValue(asyncRowData, 'cpu_requests', serieMatcherByNodeNamePredicate(row)),
         cores: getSeriesValue(asyncRowData, 'cores', serieMatcherByNodeNamePredicate(row))
     }
@@ -272,7 +281,7 @@ export const getNodesScene = () => {
     const queryBuilder = new NodesQueryBuilder()
 
     const defaultSorting: SortingState = {
-        columnId: 'internal_ip',
+        columnId: 'node',
         direction: 'asc'
     }
 
@@ -291,7 +300,7 @@ export const getNodesScene = () => {
                         $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
                         asyncDataRowMapper,
                         queryBuilder,
-                        createRowId: (row) => row.internal_ip,
+                        createRowId: (row) => row.node,
                         expandedRowBuilder: buildExpandedRowScene,
                         sorting: defaultSorting,
                     }),
