@@ -153,18 +153,18 @@ const columns: Array<Column<TableRow>> = [
         },
     },
     {
-        id: 'host_ip',
+        id: 'node',
         header: 'NODE',
         cellType: 'link',
         cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.cluster}/${row.host_ip}`)
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.cluster}/${row.node}`)
         },
         sortingConfig: {
             enabled: true,
             local: true,
             type: 'label',
             compare: (a, b, direction) => {
-                return direction === 'asc' ? a.host_ip.localeCompare(b.host_ip) : b.host_ip.localeCompare(a.host_ip)
+                return direction === 'asc' ? a.node.localeCompare(b.node) : b.node.localeCompare(a.node)
             }
         },
     },
@@ -352,7 +352,7 @@ const serieMatcherPredicate = (row: TableRow) => (value: any) => row.pod === val
 
 function asyncDataRowMapper(row: TableRow, asyncRowData: any) {
 
-    row.host_ip = getSeriesLabelValue(asyncRowData, 'node', 'host_ip', serieMatcherPredicate(row)) 
+    row.node = getSeriesLabelValue(asyncRowData, 'node', 'node', serieMatcherPredicate(row)) 
     row.status = getSeriesLabelValue(asyncRowData, 'status', 'phase', serieMatcherPredicate(row))
     row.created = getSeriesValue(asyncRowData, 'created', serieMatcherPredicate(row))
     const alerts = getAllSeries(asyncRowData, 'alerts', serieMatcherPredicate(row))

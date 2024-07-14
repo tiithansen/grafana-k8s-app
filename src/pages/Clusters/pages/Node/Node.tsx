@@ -1,4 +1,17 @@
-import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
+import {
+    EmbeddedScene,
+    PanelBuilders,
+    SceneAppPage,
+    SceneAppPageLike,
+    SceneControlsSpacer,
+    SceneFlexItem,
+    SceneFlexLayout,
+    SceneQueryRunner,
+    SceneRefreshPicker,
+    SceneRouteMatch,
+    SceneTimePicker,
+    VariableValueSelectors
+} from "@grafana/scenes";
 import { ROUTES } from "../../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { usePluginProps } from "utils/utils.plugin";
@@ -59,45 +72,51 @@ function getCPUPanel(node: string) {
                 {
                     refId: 'cpu_total',
                     expr: `
-                        sum(
-                            ${Metrics.machineCpuCores.name}{cluster=~"$cluster",instance=~"${node}.*"}
+                        max(
+                            kube_node_status_capacity{
+                                resource="cpu",
+                                cluster=~"$cluster",
+                                node="${node}"
+                            }
                         ) by (cluster)`,
                     legendFormat: 'Total'
                 },
                 {
                     refId: 'cpu_usage',
-                    // Calculate CPU usage in cores per node and sum it up to get the total usage across all nodes
                     expr: `
+                            node_uname_info{
+                                cluster=~"$cluster",
+                                nodename="${node}"
+                            } * on (cluster, instance)
                             (
-                                sum (
-                                    rate(
-                                        ${Metrics.nodeCpuSecondsTotal.name}{
-                                            ${Metrics.nodeCpuSecondsTotal.labels.mode}!="idle",
-                                            instance=~"${node}.*",
-                                            cluster="$cluster"
-                                        }[$__rate_interval]
-                                    )
-                                ) by(${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster)
-                                /
-                                on (${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster) group_left sum (
-                                    (
+                                (
+                                    sum (
                                         rate(
                                             ${Metrics.nodeCpuSecondsTotal.name}{
-                                                cluster="$cluster",
-                                                instance=~"${node}.*",
+                                                ${Metrics.nodeCpuSecondsTotal.labels.mode}!="idle",
+                                                cluster="$cluster"
                                             }[$__rate_interval]
                                         )
-                                    )
-                                ) by (${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster)
+                                    ) by(${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster)
+                                    /
+                                    on (${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster) group_left sum (
+                                        (
+                                            rate(
+                                                ${Metrics.nodeCpuSecondsTotal.name}{
+                                                    cluster="$cluster",
+                                                }[$__rate_interval]
+                                            )
+                                        )
+                                    ) by (${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster)
+                                )
+                                * count(
+                                    count(
+                                        node_cpu_seconds_total{
+                                            cluster="$cluster",
+                                        }
+                                    ) by (cpu, cluster, instance)
+                                )  by (cluster, instance)
                             )
-                            * count(
-                                count(
-                                    node_cpu_seconds_total{
-                                        cluster="$cluster",
-                                        instance=~"${node}.*",
-                                    }
-                                ) by (cpu, cluster, instance)
-                            )  by (cluster, instance)
                         `,
                     legendFormat: 'Usage'
                 },
@@ -105,10 +124,10 @@ function getCPUPanel(node: string) {
                     refId: 'cpu_requested',
                     expr: `
                         sum(
-                            kube_node_info{cluster=~"$cluster",internal_ip=~"${node}.*"} * on(node) group_right()
                             ${Metrics.kubePodContainerResourceRequests.name}{
                                 resource="cpu",
                                 cluster=~"$cluster",
+                                node="${node}"
                             }
                         ) by (cluster)`,
                     legendFormat: 'Requested'
@@ -140,29 +159,34 @@ function getMemoryPanel(node: string) {
                 {
                     refId: 'memory_total',
                     expr: `
-                        sum(
-                            ${Metrics.nodeMemoryMemTotalBytes.name}{cluster=~"$cluster", instance=~"${node}.*"}
+                        max(
+                            kube_node_status_capacity{
+                                resource="memory",
+                                cluster=~"$cluster",
+                                node="${node}"
+                            }
                         ) by (cluster)`,
                     legendFormat: 'Total [{{cluster}}]'
                 },
                 {
                     refId: 'memory_usage',
                     expr: `
+                        node_uname_info{cluster=~"$cluster", nodename="${node}"} * on (cluster, instance)
                         sum(
-                            ${Metrics.nodeMemoryMemTotalBytes.name}{cluster=~"$cluster", instance=~"${node}.*"}
+                            ${Metrics.nodeMemoryMemTotalBytes.name}{cluster=~"$cluster"}
                             -
-                            ${Metrics.nodeMemoryMemAvailableBytes.name}{cluster=~"$cluster", instance=~"${node}.*"}
-                        ) by (cluster)`,
+                            ${Metrics.nodeMemoryMemAvailableBytes.name}{cluster=~"$cluster"}
+                        ) by (cluster, instance)`,
                     legendFormat: 'Used [{{cluster}}]'
                 },
                 {
                     refId: 'memory_requested',
                     expr: `
                         sum(
-                            kube_node_info{cluster=~"$cluster",internal_ip=~"${node}.*"} * on(node) group_right()
                             ${Metrics.kubePodContainerResourceRequests.name}{
                                 resource="memory",
                                 cluster=~"$cluster",
+                                node="${node}"
                             }
                         ) by (cluster)`,
                     legendFormat: 'Requested [{{cluster}}]'
@@ -185,9 +209,9 @@ function getMemoryPanel(node: string) {
 function getPods(node: string) {
     const staticLabelFilters: LabelFilters = [
         {
-            label: 'host_ip',
-            op: '=~',
-            value: `${node}.*`
+            label: 'node',
+            op: '=',
+            value: `${node}`
         },
     ]
 
