@@ -69,7 +69,7 @@
     "@tanstack/react-table": "^8.17.3",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-router-dom": "^5.2.0",
+    "react-router-dom": "^6.25.1",
     "react-table": "^7.8.0",
     "rxjs": "7.8.1",
     "tslib": "2.5.3"
