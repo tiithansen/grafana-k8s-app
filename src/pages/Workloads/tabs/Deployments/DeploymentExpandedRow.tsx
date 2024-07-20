@@ -7,17 +7,22 @@ import { AlertsTable } from "components/AlertsTable";
 export function buildExpandedRowScene(row: TableRow) {
 
     const staticLabelFilters: LabelFilters = [
-        {
-            label: 'created_by_name',
-            op: '=~',
-            value: `${row.deployment}.*`
-        },
-        // ReplicaSet creates pods for Deployments
-        {
-            label: 'created_by_kind',
-            op: '=',
-            value: 'ReplicaSet' 
-        }
+      {
+        label: 'namespace',
+        op: '=',
+        value: row.namespace
+      },
+      {
+        label: 'created_by_name',
+        op: '=~',
+        value: `${row.deployment}.*`
+      },
+      // ReplicaSet creates pods for Deployments
+      {
+        label: 'created_by_kind',
+        op: '=',
+        value: 'ReplicaSet' 
+      }
     ]
 
     return new SceneFlexLayout({
