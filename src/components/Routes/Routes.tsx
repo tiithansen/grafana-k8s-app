@@ -4,14 +4,9 @@ import { Clusters } from '../../pages/Clusters';
 import { Workloads } from '../../pages/Workloads';
 import { prefixRoute } from '../../utils/utils.routing';
 import { ROUTES } from '../../constants';
-import { usePluginProps } from 'utils/utils.plugin';
 import { Network } from 'pages/Network';
 
-export const Routes = () => {
-
-  const props = usePluginProps();
-  console.log(props);
-  
+export const Routes = () => {  
   return (
     <Switch>
       <Route path={prefixRoute(`${ROUTES.Clusters}`)} component={Clusters} />

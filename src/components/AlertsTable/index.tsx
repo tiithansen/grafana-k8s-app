@@ -28,14 +28,6 @@ const KNOWN_SEVERITY_COLORS: SeverityColors  = {
     'info': 'primary',
 }
 
-const namespaceVariable = createNamespaceVariable();
-
-const searchVariable = new TextBoxVariable({
-    name: 'search',
-    label: 'Search',
-    value: '',
-});
-
 const columns: Array<Column<TableRow>> = [
     {
         id: 'alertname',
@@ -188,8 +180,12 @@ export function AlertsTable(labelFilters?: LabelFilters, showVariableControls = 
 
     const variables = new SceneVariableSet({
         variables: shouldCreateVariables ? [
-            namespaceVariable,
-            searchVariable,
+            createNamespaceVariable(),
+            new TextBoxVariable({
+                name: 'alertSearch',
+                label: 'Search',
+                value: '',
+            }),
         ]: []
     })
 

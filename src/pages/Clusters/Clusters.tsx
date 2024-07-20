@@ -17,18 +17,16 @@ import { getNodesScene } from './tabs/Nodes/Nodes';
 import { usePluginProps } from 'utils/utils.plugin';
 import { NodePage } from './pages/Node/Node';
 
-const timeRange = new SceneTimeRange({
-    from: 'now-1h',
-    to: 'now',
-});
-
 function getScene({ datasource }: { datasource: string }) {
     return new SceneApp({
         pages: [
             new SceneAppPage({
                 title: 'Clusters',
                 url: prefixRoute(`${ROUTES.Clusters}`),
-                $timeRange: timeRange,
+                $timeRange: new SceneTimeRange({
+                    from: 'now-1h',
+                    to: 'now',
+                }),
                 $variables: new SceneVariableSet({
                     variables: [
                         new DataSourceVariable({
@@ -60,7 +58,6 @@ function getScene({ datasource }: { datasource: string }) {
                         getScene: () => getNodesScene(),
                     }),
                 ],
-                getScene: getOverviewScene,
                 drilldowns: [
                     {
                         routePath: prefixRoute(`${ROUTES.Clusters}/nodes/:cluster/:name`),

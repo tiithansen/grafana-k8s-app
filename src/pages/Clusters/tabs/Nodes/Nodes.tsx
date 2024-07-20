@@ -20,14 +20,6 @@ import { SortingState } from 'common/sortingHelpers';
 import { prefixRoute } from 'utils/utils.routing';
 import { ROUTES } from '../../../../constants';
 
-const clusterVariable = createClusterVariable();
-
-const searchVariable = new TextBoxVariable({
-    name: 'search',
-    label: 'Search',
-    value: '',
-});
-
 function determineMemoryUsageColor(row: TableRow) {
     let usageColor: TextColor = 'primary'
     if (row.memory.usage < 50) {
@@ -273,8 +265,12 @@ export const getNodesScene = () => {
 
     const variables = new SceneVariableSet({
         variables: [
-            clusterVariable,
-            searchVariable
+            createClusterVariable(),
+            new TextBoxVariable({
+                name: 'search',
+                label: 'Search',
+                value: '',
+            }),
         ]
     })
 
