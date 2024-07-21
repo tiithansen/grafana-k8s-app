@@ -13,6 +13,7 @@ import { AsyncTable, Column } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
 import { ROUTES } from '../../../../constants';
 import { prefixRoute } from 'utils/utils.routing';
+import { buildExpandedRowScene } from './ExpandedRow';
 
 const columns: Array<Column<TableRow>> = [
     {
@@ -104,6 +105,7 @@ export function getIngressesScene() {
                         queryBuilder: queryBuilder,
                         asyncDataRowMapper: asyncDataRowMapper,
                         sorting: defaultSorting,
+                        expandedRowBuilder: buildExpandedRowScene,
                     }),
                 }),
             ],
