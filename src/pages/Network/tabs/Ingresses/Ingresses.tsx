@@ -13,6 +13,7 @@ import { AsyncTable, Column } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
 import { ROUTES } from '../../../../constants';
 import { prefixRoute } from 'utils/utils.routing';
+import { buildExpandedRowScene } from './ExpandedRow';
 
 const columns: Array<Column<TableRow>> = [
     {
@@ -20,7 +21,7 @@ const columns: Array<Column<TableRow>> = [
         header: 'INGRESS',
         cellType: 'link',
         cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Network}/ingress/${row.namespace}/${row.ingress}`),
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Network}/ingresses/${row.namespace}/${row.ingress}`),
         },
         sortingConfig: {
             enabled: true,
@@ -31,10 +32,6 @@ const columns: Array<Column<TableRow>> = [
     {
         id: 'namespace',
         header: 'NAMESPACE',
-        cellType: 'link',
-        cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/namespaces/${row.namespace}`),
-        },
         sortingConfig: {
             enabled: true,
             type: 'label',
@@ -96,7 +93,6 @@ export function getIngressesScene() {
             children: [
                 new SceneFlexItem({
                     width: '100%',
-                    height: '100%',
                     body: new AsyncTable<TableRow>({
                         columns: columns,
                         $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
@@ -104,6 +100,7 @@ export function getIngressesScene() {
                         queryBuilder: queryBuilder,
                         asyncDataRowMapper: asyncDataRowMapper,
                         sorting: defaultSorting,
+                        expandedRowBuilder: buildExpandedRowScene,
                     }),
                 }),
             ],

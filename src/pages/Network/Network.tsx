@@ -13,6 +13,7 @@ import { usePluginProps } from 'utils/utils.plugin';
 import { createTimeRange, createTopLevelVariables } from '../../common/variableHelpers';
 import { getIngressesScene } from './tabs/Ingresses/Ingresses';
 import { getServicesScene } from './tabs/Services/Services';
+import { IngressPage } from './pages/ingresses';
 
 function getScene({ datasource }: { datasource: string }) {
 
@@ -48,6 +49,12 @@ function getScene({ datasource }: { datasource: string }) {
                 }),
             ],
             getScene: getIngressesScene,
+            drilldowns: [
+                {
+                    routePath: prefixRoute(`${ROUTES.Network}/ingresses/:namespace/:name`),
+                    getPage: IngressPage
+                },
+            ],
         }),
         ]
     })

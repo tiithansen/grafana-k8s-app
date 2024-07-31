@@ -14,14 +14,6 @@ import { Metrics } from 'metrics/metrics';
 import { SortingState } from 'common/sortingHelpers';
 import { AsyncTable, Column, ColumnSortingConfig } from 'components/AsyncTable';
 
-const namespaceVariable = createNamespaceVariable();
-
-const searchVariable = new TextBoxVariable({
-    name: 'search',
-    label: 'Search',
-    value: '',
-});
-
 interface TableRow {
     cluster: string;
     namespace: string;
@@ -360,8 +352,12 @@ export const ResourceBreakdownTable = () => {
 
     const variables = new SceneVariableSet({
         variables: [
-            namespaceVariable,
-            searchVariable,
+            createNamespaceVariable(),
+            new TextBoxVariable({
+                name: 'namespaceSearch',
+                label: 'Search',
+                value: '',
+            }),
         ]
     });
 

@@ -21,17 +21,9 @@
     {
       "type": "page",
       "name": "Clusters",
-      "path": "/a/%PLUGIN_ID%/clusters",
-      "role": "Viewer",
-      "addToNav": true,
-      "defaultNav": true
-    },
-    {
-      "type": "page",
-      "name": "Clusters",
       "path": "/a/%PLUGIN_ID%/clusters/overview",
       "role": "Viewer",
-      "addToNav": true,
+      "addToNav": false,
       "defaultNav": true
     },
     {
