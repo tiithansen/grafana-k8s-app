@@ -265,7 +265,6 @@ export const getNodesScene = () => {
 
     const variables = new SceneVariableSet({
         variables: [
-            createClusterVariable(),
             new TextBoxVariable({
                 name: 'search',
                 label: 'Search',

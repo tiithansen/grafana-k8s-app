@@ -176,9 +176,7 @@ function getNodesCpuPanel() {
 export const getOverviewScene = () => {
     return new EmbeddedScene({
         $variables: new SceneVariableSet({
-            variables: [
-                createClusterVariable(),
-            ]
+            variables: []
         }),
         controls: [
             new VariableValueSelectors({}),

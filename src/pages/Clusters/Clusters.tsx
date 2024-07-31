@@ -16,6 +16,7 @@ import { getOverviewScene } from './tabs/Overview/Overview';
 import { getNodesScene } from './tabs/Nodes/Nodes';
 import { usePluginProps } from 'utils/utils.plugin';
 import { NodePage } from './pages/Node/Node';
+import { createClusterVariable } from 'common/variableHelpers';
 
 function getScene({ datasource }: { datasource: string }) {
     return new SceneApp({
@@ -35,6 +36,7 @@ function getScene({ datasource }: { datasource: string }) {
                             pluginId: 'prometheus',
                             regex: datasource,
                         }),
+                        createClusterVariable(),
                     ],
                 }),
                 controls: [
