@@ -353,11 +353,6 @@ export const ResourceBreakdownTable = () => {
     const variables = new SceneVariableSet({
         variables: [
             createNamespaceVariable(),
-            new TextBoxVariable({
-                name: 'namespaceSearch',
-                label: 'Search',
-                value: '',
-            }),
         ]
     });
 
