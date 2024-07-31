@@ -13,6 +13,7 @@ export class IngressesQueryBuilder implements QueryBuilder<TableRow> {
                 PromQL.metric(Metrics.kubeIngressPath.name)
                     .withLabelEquals('cluster', '$cluster')
                     .withLabelMatches('namespace', '$namespace')
+                    .withLabelMatches('ingress', '$search.*')
                     // Get ingress class from kube_ingress_info based on ingress and namespace
                     .multiply()
                     .on([

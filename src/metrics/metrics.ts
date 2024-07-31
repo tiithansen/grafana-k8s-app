@@ -356,6 +356,8 @@ export const Metrics = {
         name: 'kube_ingressclass_info',
         labels:{
             cluster: 'cluster',
+            ingressClass: 'ingressclass',
+            controller: 'controller',
         }
     },
     // Services

@@ -1,85 +1,22 @@
-import { SceneFlexLayout, SceneFlexItem, PanelBuilders, SceneQueryRunner } from "@grafana/scenes";
+import { SceneFlexLayout, SceneFlexItem } from "@grafana/scenes";
 import { AlertsTable } from "components/AlertsTable";
 import { TableRow } from "./types";
+import { getNginxLatencyPanel, getNginxRequestRatePanel } from "pages/Network/components/nginx/NginxPanels";
 
 const NGINX_CONTROLLER = 'k8s.io/ingress-nginx';
 
-function getNginxLatencyPanel(row: TableRow) {
-    return PanelBuilders.timeseries()
-        .setTitle('Latency P95 [5m]')
-        .setData(
-            new SceneQueryRunner({
-                datasource: {
-                    uid: '$datasource',
-                    type: 'prometheus',
-                },
-                queries: [
-                    {
-                        refId: 'latency',
-                        expr: `
-                            histogram_quantile(
-                                0.95,
-                                sum(
-                                    rate(
-                                        nginx_ingress_controller_request_duration_seconds_bucket{
-                                            cluster="$cluster",
-                                            ingress="${row.ingress}",
-                                            exported_namespace="${row.namespace}",
-                                        }[5m]
-                                    )
-                                ) by (host, path, le)
-                            )
-                        `,
-                        legendFormat: '{{host}} - {{path}}',
-                    },
-                ],
-            })
-        )
-        .build()
-}
-
-function getNginxRequestRatePanel(row: TableRow) {
-    return PanelBuilders.timeseries()
-        .setTitle('Request Rate [5m]')
-        .setData(
-            new SceneQueryRunner({
-                datasource: {
-                    uid: '$datasource',
-                    type: 'prometheus',
-                },
-                queries: [
-                    {
-                        refId: 'rate',
-                        expr: `
-                            sum(
-                                rate(
-                                    nginx_ingress_controller_requests{
-                                        cluster="$cluster",
-                                        ingress="${row.ingress}",
-                                        exported_namespace="${row.namespace}",
-                                    }[5m]
-                                )
-                            ) by (host, path, status)
-                        `,
-                        legendFormat: '[{{status}}] {{host}} - {{path}}',
-                    },
-                ],
-            })
-        )
-        .build()
-}
 
 function displayBasicNginxMetrics(row: TableRow) {
     return [
         new SceneFlexItem({
             width: '50%',
             height: 300,
-            body: getNginxLatencyPanel(row)
+            body: getNginxLatencyPanel(row.ingress, row.namespace)
         }),
         new SceneFlexItem({
             width: '50%',
             height: 300,
-            body: getNginxRequestRatePanel(row)
+            body: getNginxRequestRatePanel(row.ingress, row.namespace)
         }),
     ];
 }
@@ -94,10 +31,10 @@ function displayBasicMetrics(row: TableRow) {
 
 export function buildExpandedRowScene(row: TableRow) {
 
-    const ingress = row.ingress;
+    const { ingress, namespace } = row;
   
     return new SceneFlexLayout({
-      key: `${row.namespace}/${row.ingress}`,
+      key: `${namespace}/${ingress}`,
       direction: 'column',
       width: '100%',
       children: [
@@ -114,7 +51,7 @@ export function buildExpandedRowScene(row: TableRow) {
                 {
                     label: 'namespace',
                     op: '=',
-                    value: row.namespace
+                    value: namespace
                 },
                 {
                   label: 'ingress',
