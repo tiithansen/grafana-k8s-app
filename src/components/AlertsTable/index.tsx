@@ -144,6 +144,7 @@ class AlertsQueryBuilder implements QueryBuilder<TableRow> {
         const finalQuery = `
             ALERTS{
                 cluster="$cluster",
+                alertname=~"$alertSearch.*",
                 ${ hasNamespaceVariable ? `namespace=~"$namespace",` : '' }
                 alertstate="firing",
                 ${serializedFilters}
