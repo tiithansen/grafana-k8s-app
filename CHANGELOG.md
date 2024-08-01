@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.2.0...v0.3.0) (2024-08-01)
+
+
+### Features
+
+* Add expanded row to ingresses to display nginx p95 latency and request rate ([ab9b306](https://github.com/tiithansen/grafana-k8s-app/commit/ab9b3064b960cd5573ce91973bb084411193f510))
+* Add ingress detailed page with latency 95 and request rate ([644c7db](https://github.com/tiithansen/grafana-k8s-app/commit/644c7dbd4c978199327ca1994c6ae8681cabe03e))
+* Add new configuration options ([e6b40f0](https://github.com/tiithansen/grafana-k8s-app/commit/e6b40f0bc8253fe52a87a1fe92ceb77c1ff47505))
+
+
+### Bug Fixes
+
+* Deployment expanded row should show only pods for that specific deployment ([8e945f2](https://github.com/tiithansen/grafana-k8s-app/commit/8e945f2cd6540e4a9253f4600bb713b21535fcf6))
+* Fix navigation errors ([7c12556](https://github.com/tiithansen/grafana-k8s-app/commit/7c1255612ca1372d4b139fa1e91a894d5401f3ba))
+* Fix search alerts by name ([f906513](https://github.com/tiithansen/grafana-k8s-app/commit/f906513e7e15683519f153c4a57edcf22ac41553))
+* Move cluster variable to top level ([412c1fe](https://github.com/tiithansen/grafana-k8s-app/commit/412c1feea14656d11b666d4b6ba3b5c1d69952ee))
+* Remove links which lead to pages which do not exist yet ([4cfe494](https://github.com/tiithansen/grafana-k8s-app/commit/4cfe494d60e562efb2390c84201c548124641532))
+* Remove useless search field ([6fdaa09](https://github.com/tiithansen/grafana-k8s-app/commit/6fdaa09456e2754db6865a4e1958110b21869209))
+
 ## [0.2.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.1.5...v0.2.0) (2024-07-14)
 
 
