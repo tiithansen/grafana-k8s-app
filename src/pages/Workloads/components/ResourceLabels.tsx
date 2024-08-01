@@ -31,7 +31,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         'td, th': {
           minWidth: theme.spacing(3),
         },
-        marginTop: '16px',
       }),
       disableGrow: css({
         width: 0,
