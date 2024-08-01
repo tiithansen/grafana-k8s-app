@@ -83,20 +83,29 @@ function createResourceLimitsQuery(resource: string, cluster: string, additional
 
 function createMemoryUsageQuery(cluster: string, additionalLabels: Labels) {
 
-    return PromQL.max(
-        // Label replace is used to extract pod uid from container id path
-        // This might be slow, but cAdvisor does not export clean uid at the moment
-        // Other alternatives could be to add this label during scrape or by using recording rule
-        PromQL.labelReplace(
-            PromQL.metric(Metrics.containerMemoryWorkingSetBytes.name)
-                .withLabelNotEquals(Metrics.containerMemoryWorkingSetBytes.labels.container, '')
-                .withLabels(additionalLabels)
-                .withLabelEquals('cluster', cluster),
-            "uid",
-            "$1-$2-$3-$4-$5",
-            "id",
-            ".*pod([a-f0-9]{8})_([a-f0-9]{4})_([a-f0-9]{4})_([a-f0-9]{4})_([a-f0-9]{12}).*"
-        )
+    return PromQL.sum(
+        // First take max of memory usage per container this is required if container is restarted
+        PromQL.max(
+            // Label replace is used to extract pod uid from container id path
+            // This might be slow, but cAdvisor does not export clean uid at the moment
+            // Other alternatives could be to add this label during scrape or by using recording rule
+            PromQL.labelReplace(
+                PromQL.metric(Metrics.containerMemoryWorkingSetBytes.name)
+                    .withLabelNotEquals(Metrics.containerMemoryWorkingSetBytes.labels.container, '')
+                    .withLabels(additionalLabels)
+                    .withLabelEquals('cluster', cluster),
+                "uid",
+                "$1-$2-$3-$4-$5",
+                "id",
+                ".*pod([a-f0-9]{8})_([a-f0-9]{4})_([a-f0-9]{4})_([a-f0-9]{4})_([a-f0-9]{12}).*"
+            )
+        ).by([
+            Metrics.containerMemoryWorkingSetBytes.labels.pod,
+            Metrics.containerMemoryWorkingSetBytes.labels.namespace,
+            Metrics.containerMemoryWorkingSetBytes.labels.container,
+            'uid',
+            'cluster'
+        ])
     ).by([
         Metrics.containerMemoryWorkingSetBytes.labels.pod,
         Metrics.containerMemoryWorkingSetBytes.labels.namespace,
