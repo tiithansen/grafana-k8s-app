@@ -62,10 +62,6 @@ const columns: Array<Column<TableRow>> = [
     { 
         id: 'namespace',
         header: 'NAMESPACE',
-        cellType: 'link',
-        cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Workloads}/namespaces/${row.namespace}`),
-        },
         sortingConfig: {
             enabled: true,
             type: 'label',

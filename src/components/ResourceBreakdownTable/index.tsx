@@ -33,8 +33,6 @@ const columns: Array<Column<TableRow>> = [
         id: 'namespace',
         header: 'NAMESPACE',
         accessor: (row: TableRow) => row.namespace,
-        cellType: 'link',
-        cellProps: {},
         sortingConfig: {
             enabled: true,
             type: 'label',

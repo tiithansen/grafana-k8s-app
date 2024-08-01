@@ -15,8 +15,6 @@ import { Metrics } from 'metrics/metrics';
 import { TableRow } from './types';
 import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
-import { ROUTES } from '../../../../constants';
-import { prefixRoute } from 'utils/utils.routing';
 
 const namespaceVariable = createNamespaceVariable();
 
@@ -30,10 +28,6 @@ const columns: Array<Column<TableRow>> = [
     {
         id: 'cronjob',
         header: 'CRONJOB',
-        cellType: 'link',
-        cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Workloads}/cronjobs/${row.namespace}/${row.cronjob}`),
-        },
         sortingConfig: {
             enabled: true,
             type: 'label',
@@ -43,10 +37,6 @@ const columns: Array<Column<TableRow>> = [
     {
         id: 'namespace',
         header: 'NAMESPACE',
-        cellType: 'link',
-        cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/namespaces/${row.namespace}`),
-        },
         sortingConfig: {
             enabled: true,
             type: 'label',

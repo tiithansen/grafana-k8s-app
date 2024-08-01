@@ -63,8 +63,6 @@ const columns: Array<Column<TableRow>> = [
         id: 'namespace',
         header: 'NAMESPACE',
         accessor: (row: TableRow) => row.namespace,
-        cellType: 'link',
-        cellProps: {},
         sortingConfig: {
             enabled: true,
             type: 'label',
@@ -78,8 +76,6 @@ const columns: Array<Column<TableRow>> = [
         id: 'cluster',
         header: 'CLUSTER',
         accessor: (row: TableRow) => row.cluster,
-        cellType: 'link',
-        cellProps: {},
         sortingConfig: {
             enabled: true,
             type: 'label',

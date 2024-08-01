@@ -15,8 +15,6 @@ import { Metrics } from 'metrics/metrics';
 import { TableRow } from './types';
 import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
-import { prefixRoute } from 'utils/utils.routing';
-import { ROUTES } from '../../../../constants';
 
 const namespaceVariable = createNamespaceVariable();
 
@@ -30,10 +28,6 @@ const columns: Array<Column<TableRow>> = [
     {
         id: 'job_name',
         header: 'JOB',
-        cellType: 'link',
-        cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Workloads}/jobs/${row.namespace}/${row.job_name}`),
-        },
         sortingConfig: {
             enabled: true,
             type: 'label',
@@ -43,10 +37,6 @@ const columns: Array<Column<TableRow>> = [
     {
         id: 'namespace',
         header: 'NAMESPACE',
-        cellType: 'link',
-        cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/namespaces/${row.namespace}`),
-        },
         sortingConfig: {
             enabled: true,
             type: 'label',
@@ -57,10 +47,6 @@ const columns: Array<Column<TableRow>> = [
         id: 'owner',
         header: 'OWNER',
         accessor: (row: TableRow) => `${row.owner.kind}/${row.owner.name}`,
-        cellType: 'link',
-        cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Workloads}/${row.owner.kind}/${row.namespace}/${row.owner.name}`),
-        },
         sortingConfig: {
             enabled: true,
             type: 'label',
