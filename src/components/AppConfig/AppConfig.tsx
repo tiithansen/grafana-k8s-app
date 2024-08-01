@@ -8,11 +8,17 @@ import { lastValueFrom } from 'rxjs';
 
 export type JsonData = {
   datasource?: string;
+  defaultDatasource?: string;
+  defaultCluster?: string;
+  clusterFilter?: string;
 };
 
 type State = {
   // The regex pattern to match datasource
   datasource: string;
+  defaultDatasource?: string;
+  defaultCluster?: string;
+  clusterFilter?: string;
   matchingDatasources?: string[];
 };
 
@@ -23,6 +29,9 @@ export const AppConfig = ({ plugin }: Props) => {
   const { enabled, pinned, jsonData } = plugin.meta;
   const [state, setState] = useState<State>({
     datasource: jsonData?.datasource || 'prometheus',
+    defaultDatasource: jsonData?.defaultDatasource || '',
+    defaultCluster: jsonData?.defaultCluster || '',
+    clusterFilter: jsonData?.clusterFilter || '',
   });
 
   const onChangeDatasource = (event: ChangeEvent<HTMLInputElement>) => {
@@ -31,6 +40,27 @@ export const AppConfig = ({ plugin }: Props) => {
       datasource: event.target.value,
     });
   };
+
+  const onChangeDefaultDatasource = (event: ChangeEvent<HTMLInputElement>) => {
+    setState({
+      ...state,
+      defaultDatasource: event.target.value,
+    });
+  }
+
+  const onChangeDefaultCluster = (event: ChangeEvent<HTMLInputElement>) => {
+    setState({
+      ...state,
+      defaultCluster: event.target.value,
+    });
+  }
+
+  const onChangeClusterFilter = (event: ChangeEvent<HTMLInputElement>) => {
+    setState({
+      ...state,
+      clusterFilter: event.target.value,
+    });
+  }
 
   const onDiscoverDatasources = () => {
     const datasources = getDataSourceSrv()
@@ -114,6 +144,39 @@ export const AppConfig = ({ plugin }: Props) => {
         </Field>
         <TagList className={s.justifyStart} getColorIndex={() => 9} tags={state.matchingDatasources || []} />
 
+        <Field label="Default datasource" description="" className={s.marginTop}>
+          <Input
+            width={60}
+            id="defaultDatasource"
+            label={`Name of the default datasource`}
+            value={state?.defaultDatasource}
+            placeholder={`E.g.: Prometheus`}
+            onChange={onChangeDefaultDatasource}
+          />
+        </Field>
+
+        <Field label="Default cluster" description="" className={s.marginTop}>
+          <Input
+            width={60}
+            id="defaultCluster"
+            label={`Name of the default cluster`}
+            value={state?.defaultCluster}
+            placeholder={`E.g.: Production`}
+            onChange={onChangeDefaultCluster}
+          />
+        </Field>
+
+        <Field label="Cluster filter" description="Expression to filter clusters" className={s.marginTop}>
+          <Input
+            width={60}
+            id="defaultCluster"
+            label={`Cluster filter`}
+            value={state?.clusterFilter}
+            placeholder={`E.g.: kube_namespace_labels{cluster!="private", cluster=~"prod.*"}`}
+            onChange={onChangeClusterFilter}
+          />
+        </Field>
+
         <div className={s.marginTop}>
           <Button
             type="submit"
@@ -124,6 +187,9 @@ export const AppConfig = ({ plugin }: Props) => {
                 pinned,
                 jsonData: {
                   datasource: state.datasource,
+                  defaultDatasource: state.defaultDatasource,
+                  defaultCluster: state.defaultCluster,
+                  clusterFilter: state.clusterFilter,
                 },
               })
             }
@@ -154,6 +220,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 const updatePluginAndReload = async (pluginId: string, data: Partial<PluginMeta<JsonData>>) => {
   try {
+    console.log(data)
     await updatePlugin(pluginId, data);
 
     // Reloading the page as the changes made here wouldn't be propagated to the actual plugin otherwise.

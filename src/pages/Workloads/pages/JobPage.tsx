@@ -1,8 +1,8 @@
 import { EmbeddedScene, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexLayout, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
-import { usePluginProps } from "utils/utils.plugin";
 import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
+import { usePluginJsonData } from "utils/utils.plugin";
 
 function getScene(job: string) {
     return new EmbeddedScene({
@@ -24,11 +24,8 @@ function getScene(job: string) {
 
 export function JobPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
 
-    const props = usePluginProps();
-
-    const variables = createTopLevelVariables({
-        datasource: props?.meta.jsonData?.datasource || 'prometheus'
-    })
+    const jsonData = usePluginJsonData();
+    const variables = createTopLevelVariables(jsonData);
 
     const timeRange = createTimeRange()
 

@@ -18,7 +18,7 @@ import {
 } from "@grafana/scenes";
 import { ROUTES } from "../../../../constants";
 import { prefixRoute } from "utils/utils.routing";
-import { usePluginProps } from "utils/utils.plugin";
+import { usePluginJsonData } from "utils/utils.plugin";
 import { createTimeRange, createTopLevelVariables } from "common/variableHelpers";
 import { AlertsTable } from "components/AlertsTable";
 import { createResourceLabels } from "pages/Workloads/components/ResourceLabels";
@@ -217,11 +217,8 @@ function getScene(namespace: string, ingress: string) {
 
 export function IngressPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
 
-    const props = usePluginProps();
-
-    const variables = createTopLevelVariables({
-        datasource: props?.meta.jsonData?.datasource || 'prometheus'
-    })
+    const jsonData = usePluginJsonData();
+    const variables = createTopLevelVariables(jsonData);
 
     const timeRange = createTimeRange()
 

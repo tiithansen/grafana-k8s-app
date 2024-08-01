@@ -14,7 +14,7 @@ import {
 } from "@grafana/scenes";
 import { ROUTES } from "../../../../constants";
 import { prefixRoute } from "utils/utils.routing";
-import { usePluginProps } from "utils/utils.plugin";
+import { usePluginJsonData } from "utils/utils.plugin";
 import { createTopLevelVariables, createTimeRange } from "../../../../common/variableHelpers";
 import { LabelFilters } from "common/queryHelpers";
 import { getPodsScene } from "pages/Workloads/tabs/Pods/Pods";
@@ -220,14 +220,12 @@ function getPods(node: string) {
 
 export function NodePage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
 
-    const props = usePluginProps();
+    const jsonData = usePluginJsonData();
 
     return new SceneAppPage({
         title: `Node - ${routeMatch.params.name}`,
         titleIcon: 'dashboard',
-        $variables: createTopLevelVariables({
-            datasource: props?.meta.jsonData?.datasource || 'prometheus'
-        }),
+        $variables: createTopLevelVariables(jsonData),
         $timeRange: createTimeRange(),
         url: prefixRoute(`${ROUTES.Clusters}/nodes/${routeMatch.params.cluster}/${routeMatch.params.name}`),
         getScene: () => getScene(routeMatch.params.name),

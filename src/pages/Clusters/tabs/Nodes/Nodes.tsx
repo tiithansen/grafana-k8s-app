@@ -11,7 +11,6 @@ import {
 import { createRowQueries } from './Queries';
 import { buildExpandedRowScene } from './NodeExpandedRowScene';
 import { getSeriesValue } from 'common/seriesHelpers';
-import { createClusterVariable } from 'common/variableHelpers';
 import { Metrics } from 'metrics/metrics';
 import { TextColor } from 'common/types';
 import { TableRow } from './types';

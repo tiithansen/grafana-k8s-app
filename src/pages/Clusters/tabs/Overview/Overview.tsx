@@ -1,7 +1,6 @@
 import { EmbeddedScene, PanelBuilders, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneVariableSet, VariableValueSelectors} from "@grafana/scenes"
 import { LegendDisplayMode } from "@grafana/schema"
 import { Metrics } from "metrics/metrics"
-import { createClusterVariable } from "common/variableHelpers"
 import { ResourceBreakdownTable } from "components/ResourceBreakdownTable"
 import Heading from "components/Heading"
 import { AlertsTable } from "components/AlertsTable"

@@ -3,7 +3,6 @@ import {
     SceneFlexLayout, 
     SceneFlexItem, 
     SceneQueryRunner,
-    TextBoxVariable,
     SceneVariableSet,
     VariableValueSelectors,
     SceneVariables,

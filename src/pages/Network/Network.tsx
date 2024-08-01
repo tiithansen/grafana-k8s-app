@@ -9,15 +9,16 @@ import {
 import { ROUTES } from '../../constants';
 import React, { useMemo } from 'react';
 import { prefixRoute } from 'utils/utils.routing';
-import { usePluginProps } from 'utils/utils.plugin';
+import { usePluginJsonData } from 'utils/utils.plugin';
 import { createTimeRange, createTopLevelVariables } from '../../common/variableHelpers';
 import { getIngressesScene } from './tabs/Ingresses/Ingresses';
 import { getServicesScene } from './tabs/Services/Services';
 import { IngressPage } from './pages/ingresses';
+import { JsonData } from 'components/AppConfig';
 
-function getScene({ datasource }: { datasource: string }) {
+function getScene(props: JsonData) {
 
-    const variables = createTopLevelVariables({ datasource })
+    const variables = createTopLevelVariables(props)
     const timeRange = createTimeRange()
 
     return new SceneApp({
@@ -61,10 +62,8 @@ function getScene({ datasource }: { datasource: string }) {
 }
 
 export const Network = () => {
-    const props = usePluginProps();
-    const scene = useMemo(() => getScene({
-        datasource: props?.meta.jsonData?.datasource || 'prometheus',
-    }), [props?.meta.jsonData?.datasource]);
+    const jsonData = usePluginJsonData();
+    const scene = useMemo(() => getScene(jsonData), [jsonData]);
 
     return <scene.Component model={scene} />;
 };

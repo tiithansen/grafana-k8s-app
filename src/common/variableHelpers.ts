@@ -1,4 +1,5 @@
 import { DataSourceVariable, QueryVariable, SceneTimeRange, SceneVariableSet, SceneVariables, sceneGraph } from "@grafana/scenes";
+import { JsonData } from "components/AppConfig";
 import { Metrics } from "metrics/metrics";
 
 export function resolveVariable(sceneVariables: SceneVariables, name: string) {
@@ -18,21 +19,37 @@ export function resolveVariable(sceneVariables: SceneVariables, name: string) {
     return variable.getValue();
 }
 
-export function createTopLevelVariables({ datasource }: { datasource: string }) {
+export interface TopLevelVariableSettings {
+    datasource: string;
+    defaultDatasource: string;
+    defaultCluster?: string;
+    clusterFilter?: string;
+}
+
+export function createTopLevelVariables(props: JsonData) {
+
+    const settings: TopLevelVariableSettings = {
+        datasource: props.datasource || 'prometheus',
+        defaultDatasource: props.defaultDatasource || 'prometheus',
+        defaultCluster: props.defaultCluster,
+        clusterFilter: props.clusterFilter,
+    }
+
     return new SceneVariableSet({
         variables: [
             new DataSourceVariable({
                 name: 'datasource',
                 label: 'Datasource',
                 pluginId: 'prometheus',
-                regex: datasource,
+                regex: settings.datasource,
+                value: settings.defaultDatasource,
             }),
-            createClusterVariable(),
+            createClusterVariable(settings.defaultCluster, settings.clusterFilter),
         ],
     })
 }
 
-export function createClusterVariable() {
+export function createClusterVariable(defaultCluster?: string, clusterFilter?: string) {
     return new QueryVariable({
         name: 'cluster',
         label: 'Cluster',
@@ -42,8 +59,9 @@ export function createClusterVariable() {
         },
         query: {
           refId: 'cluster',
-          query: 'label_values(cluster)',
+          query: clusterFilter ? `label_values(${clusterFilter}, cluster)` : 'label_values(kube_namespace_status_phase, cluster)',
         },
+        value: defaultCluster,
     })
 }
 

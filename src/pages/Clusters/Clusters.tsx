@@ -5,8 +5,6 @@ import {
     SceneControlsSpacer,
     SceneTimePicker,
     SceneRefreshPicker,
-    SceneVariableSet,
-    DataSourceVariable,
     VariableValueSelectors,
 } from '@grafana/scenes';
 import { ROUTES } from '../../constants';
@@ -14,11 +12,12 @@ import React, { useMemo } from 'react';
 import { prefixRoute } from 'utils/utils.routing';
 import { getOverviewScene } from './tabs/Overview/Overview';
 import { getNodesScene } from './tabs/Nodes/Nodes';
-import { usePluginProps } from 'utils/utils.plugin';
+import { usePluginJsonData } from 'utils/utils.plugin';
 import { NodePage } from './pages/Node/Node';
-import { createClusterVariable } from 'common/variableHelpers';
+import { createTopLevelVariables } from 'common/variableHelpers';
+import { JsonData } from 'components/AppConfig';
 
-function getScene({ datasource }: { datasource: string }) {
+function getScene(props: JsonData) {
     return new SceneApp({
         pages: [
             new SceneAppPage({
@@ -28,17 +27,7 @@ function getScene({ datasource }: { datasource: string }) {
                     from: 'now-1h',
                     to: 'now',
                 }),
-                $variables: new SceneVariableSet({
-                    variables: [
-                        new DataSourceVariable({
-                            name: 'datasource',
-                            label: 'Datasource',
-                            pluginId: 'prometheus',
-                            regex: datasource,
-                        }),
-                        createClusterVariable(),
-                    ],
-                }),
+                $variables: createTopLevelVariables(props),
                 controls: [
                     new VariableValueSelectors({}),
                     new SceneControlsSpacer(),
@@ -72,10 +61,8 @@ function getScene({ datasource }: { datasource: string }) {
 }
 
 export const Clusters = () => {
-    const props = usePluginProps();
-    const scene = useMemo(() => getScene({
-        datasource: props?.meta.jsonData?.datasource || 'prometheus',
-    }), [props?.meta.jsonData?.datasource]);
+    const jsonData = usePluginJsonData();
+    const scene = useMemo(() => getScene(jsonData), [jsonData]);
 
     return <scene.Component model={scene} />;
 };

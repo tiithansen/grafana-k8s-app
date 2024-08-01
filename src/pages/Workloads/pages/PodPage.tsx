@@ -4,7 +4,7 @@ import { prefixRoute } from "utils/utils.routing";
 import { GraphTransform, LegendDisplayMode } from "@grafana/schema";
 import { createResourceLabels } from "../components/ResourceLabels";
 import { getContainersScene } from "../components/ContainersTable/ContainersTable";
-import { usePluginProps } from "utils/utils.plugin";
+import { usePluginJsonData } from "utils/utils.plugin";
 import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
 import { Metrics } from "metrics/metrics";
 import { AlertsTable } from "components/AlertsTable";
@@ -358,11 +358,8 @@ function getScene(pod: string) {
 
 export function PodPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
 
-    const props = usePluginProps();
-
-    const variables = createTopLevelVariables({
-        datasource: props?.meta.jsonData?.datasource || 'prometheus'
-    })
+    const jsonData = usePluginJsonData();
+    const variables = createTopLevelVariables(jsonData);
 
     const timeRange = createTimeRange()
 

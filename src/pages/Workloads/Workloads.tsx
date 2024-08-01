@@ -17,17 +17,18 @@ import { PodPage } from './pages/PodPage';
 import { getCronJobsScene } from './tabs/CronJobs/CronJobs';
 import { getJobsScene } from './tabs/Jobs/Jobs';
 import { getOverviewScene } from './tabs/Overview/Overview';
-import { usePluginProps } from 'utils/utils.plugin';
+import { usePluginJsonData } from 'utils/utils.plugin';
 import { DeploymentPage } from './pages/DeploymentPage';
 import { StatefulSetPage } from './pages/StatefulSetPage';
 import { createTimeRange, createTopLevelVariables } from '../../common/variableHelpers';
 import { DaemonSetPage } from './pages/DaemonSetPage';
 import { CronJobPage } from './pages/CronJobPage';
 import { JobPage } from './pages/JobPage';
+import { JsonData } from 'components/AppConfig';
 
-function getScene({ datasource }: { datasource: string }) {
+function getScene(props: JsonData) {
 
-    const variables = createTopLevelVariables({ datasource })
+    const variables = createTopLevelVariables(props)
     const timeRange = createTimeRange()
 
     return new SceneApp({
@@ -116,10 +117,8 @@ function getScene({ datasource }: { datasource: string }) {
 }
 
 export const Workloads = () => {
-    const props = usePluginProps();
-    const scene = useMemo(() => getScene({
-        datasource: props?.meta.jsonData?.datasource || 'prometheus',
-    }), [props?.meta.jsonData?.datasource]);
+    const jsonData = usePluginJsonData();
+    const scene = useMemo(() => getScene(jsonData), [jsonData]);
 
     return <scene.Component model={scene} />;
 };

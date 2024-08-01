@@ -1,7 +1,7 @@
 import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
-import { usePluginProps } from "utils/utils.plugin";
+import { usePluginJsonData } from "utils/utils.plugin";
 import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
 import { createResourceLabels } from "../components/ResourceLabels";
 import { getPodsScene } from "../tabs/Pods/Pods";
@@ -198,11 +198,8 @@ function getScene(daemonset: string, namespace = '$namespace') {
 
 export function DaemonSetPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
 
-    const props = usePluginProps();
-
-    const variables = createTopLevelVariables({
-        datasource: props?.meta.jsonData?.datasource || 'prometheus'
-    })
+    const jsonData = usePluginJsonData();
+    const variables = createTopLevelVariables(jsonData);
 
     const timeRange = createTimeRange()
 
