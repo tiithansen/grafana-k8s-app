@@ -136,11 +136,12 @@ class AlertsQueryBuilder implements QueryBuilder<TableRow> {
 
         const serializedFilters = this.labelFilters ? serializeLabelFilters(this.labelFilters) : '';
         const hasNamespaceVariable = variables.getByName('namespace') !== undefined;
+        const hasSearchVariable = variables.getByName('alertSearch') !== undefined;
 
         const finalQuery = `
             ALERTS{
                 cluster="$cluster",
-                alertname=~"$alertSearch.*",
+                ${ hasSearchVariable ? `alertname=~"$alertSearch.*",`: '' }
                 ${ hasNamespaceVariable ? `namespace=~"$namespace",` : '' }
                 alertstate="firing",
                 ${serializedFilters}
