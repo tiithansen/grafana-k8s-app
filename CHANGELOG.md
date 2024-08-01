@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.3.0...v0.3.1) (2024-08-01)
+
+
+### Bug Fixes
+
+* Alerts were not shown embedded tables because alertSearch var was not present ([1b259f7](https://github.com/tiithansen/grafana-k8s-app/commit/1b259f73e31d7bc00585582f1f5fa67e2febde25))
+
 ## [0.3.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.2.0...v0.3.0) (2024-08-01)
 
 
