@@ -12,12 +12,15 @@ import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { AlertsTable } from "components/AlertsTable";
 
+const REPLICASET_HASH_PATTERN='[a-z0-9]{10}'
+const DEPLOYMENT_HASH_PATTERN=`${REPLICASET_HASH_PATTERN}-[a-z0-9]{5}`
+
 function getPods(deployment: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
         {
             label: 'created_by_name',
             op: '=~',
-            value: `${deployment}.*`
+            value: `${deployment}-${REPLICASET_HASH_PATTERN}`
         },
         {
             label: 'created_by_kind',
@@ -48,7 +51,7 @@ function getReplicasPanel(deployment: string, namespace: string) {
                     expr: `
                         max(
                             ${Metrics.kubeDeploymentStatusReplicasUnavailable.name}{
-                                ${Metrics.kubeDeploymentStatusReplicasUnavailable.labels.deployment}=~"${deployment}",
+                                ${Metrics.kubeDeploymentStatusReplicasUnavailable.labels.deployment}="${deployment}",
                                 ${Metrics.kubeDeploymentStatusReplicasUnavailable.labels.namespace}="${namespace}",
                                 cluster="$cluster"
                             }
@@ -60,7 +63,7 @@ function getReplicasPanel(deployment: string, namespace: string) {
                     expr: `
                         max(
                             ${Metrics.kubeDeploymentStatusReplicasAvailable.name}{
-                                ${Metrics.kubeDeploymentStatusReplicasAvailable.labels.deployment}=~"${deployment}",
+                                ${Metrics.kubeDeploymentStatusReplicasAvailable.labels.deployment}="${deployment}",
                                 ${Metrics.kubeDeploymentStatusReplicasAvailable.labels.namespace}="${namespace}",
                                 cluster="$cluster"
                             }
@@ -72,7 +75,7 @@ function getReplicasPanel(deployment: string, namespace: string) {
                     expr: `
                         max(
                             ${Metrics.kubeDeploymentStatusReplicas.name}{
-                                ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}=~"${deployment}",
+                                ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}="${deployment}",
                                 ${Metrics.kubeDeploymentStatusReplicas.labels.namespace}="${namespace}",
                                 cluster="$cluster"
                             }
@@ -155,7 +158,7 @@ function getScene(deployment: string, namespace = '$namespace') {
                         CPUUsagePanel([{
                             label: 'pod',
                             op: '=~',
-                            value: `${deployment}.*`
+                            value: `${deployment}-${DEPLOYMENT_HASH_PATTERN}`
                         }, {
                             label: 'namespace',
                             op: '=',
@@ -164,7 +167,7 @@ function getScene(deployment: string, namespace = '$namespace') {
                         MemoryUsagePanel([{
                             label: 'pod',
                             op: '=~',
-                            value: `${deployment}.*`
+                            value: `${deployment}-${DEPLOYMENT_HASH_PATTERN}`
                         }, {
                             label: 'namespace',
                             op: '=',
