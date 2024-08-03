@@ -16,14 +16,6 @@ import { TableRow } from './types';
 import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
 
-const namespaceVariable = createNamespaceVariable();
-
-const searchVariable = new TextBoxVariable({
-    name: 'search',
-    label: 'Search',
-    value: '',
-});
-
 const columns: Array<Column<TableRow>> = [
     {
         id: 'cronjob',
@@ -124,7 +116,14 @@ class CronJobsQueryBuilder implements QueryBuilder<TableRow> {
 export const getCronJobsScene = () => {
 
     const variables = new SceneVariableSet({
-        variables: [namespaceVariable, searchVariable],
+        variables: [
+            createNamespaceVariable(),
+            new TextBoxVariable({
+                name: 'search',
+                label: 'Search',
+                value: '',
+            }),
+        ],
     });
 
     const defaultSorting: SortingState = {

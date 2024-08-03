@@ -16,14 +16,6 @@ import { TableRow } from './types';
 import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
 
-const namespaceVariable = createNamespaceVariable();
-
-const searchVariable = new TextBoxVariable({
-    name: 'search',
-    label: 'Search',
-    value: '',
-});
-
 const columns: Array<Column<TableRow>> = [
     {
         id: 'job_name',
@@ -109,7 +101,14 @@ class JobsQueryBuilder implements QueryBuilder<TableRow> {
 export const getJobsScene = () => {
 
     const variables = new SceneVariableSet({
-        variables: [namespaceVariable, searchVariable],
+        variables: [
+            createNamespaceVariable(),
+            new TextBoxVariable({
+                name: 'search',
+                label: 'Search',
+                value: '',
+            }),
+        ]
     });
 
     const queryBuilder = new JobsQueryBuilder();
