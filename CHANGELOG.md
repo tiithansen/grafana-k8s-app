@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.2](https://github.com/tiithansen/grafana-k8s-app/compare/v0.3.1...v0.3.2) (2024-08-03)
+
+
+### Bug Fixes
+
+* Incorrect total memory usage per pod is multiple containers were running in pod ([7836f5b](https://github.com/tiithansen/grafana-k8s-app/commit/7836f5bc75bb2660c6b55374e32c29280384cd88))
+* Properly filter pods for deployments by adding hash pattern matching to regex ([6fa2356](https://github.com/tiithansen/grafana-k8s-app/commit/6fa2356717de397558a136d26592b785948f9417))
+* Remove margin to level with other tables ([f6b4860](https://github.com/tiithansen/grafana-k8s-app/commit/f6b4860bce7e47c39be94f90a5c6e7ddcb179b09))
+
 ## [0.3.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.3.0...v0.3.1) (2024-08-01)
 
 
