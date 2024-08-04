@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/tiithansen/grafana-k8s-app/compare/v0.4.1...v0.4.2) (2024-08-04)
+
+
+### Bug Fixes
+
+* Fix lint errors ([67192d7](https://github.com/tiithansen/grafana-k8s-app/commit/67192d7370d0bcb9f8c14c1b110e350a6559ab0b))
+
 ## [0.4.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.4.0...v0.4.1) (2024-08-04)
 
 
