@@ -131,6 +131,11 @@ function getScene(deployment: string, namespace = '$namespace') {
                                     label: 'deployment',
                                     op: '=',
                                     value: deployment,
+                                },
+                                {
+                                    label: 'namespace',
+                                    op: '=',
+                                    value: namespace,
                                 }
                             ], false, false)
                         }),
