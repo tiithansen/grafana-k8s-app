@@ -21,14 +21,6 @@ import { ROUTES } from '../../../../constants';
 import { TableRow } from "./types";
 import { TextColor } from 'common/types';
 
-const namespaceVariable = createNamespaceVariable();
-
-const searchVariable = new TextBoxVariable({
-    name: 'search',
-    label: 'Search',
-    value: '',
-});
-
 const serieMatcherPredicate = (row: TableRow) => (value: any) => value.daemonset === row.daemonset;
 
 function determineAlertsColor(row: TableRow): TextColor {
@@ -147,9 +139,13 @@ export const getDaemonSetsScene = () => {
 
     const variables = new SceneVariableSet({
         variables: [
-            namespaceVariable,
-            searchVariable,
-        ]
+            createNamespaceVariable(),
+            new TextBoxVariable({
+                name: 'search',
+                label: 'Search',
+                value: '',
+            }),
+        ],
     })
 
     const deaultSorting: SortingState = {
