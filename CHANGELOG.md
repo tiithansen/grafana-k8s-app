@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.3.2...v0.4.0) (2024-08-04)
+
+
+### Features
+
+* Implement daemonset table sorting ([c20c0a0](https://github.com/tiithansen/grafana-k8s-app/commit/c20c0a0f0c608d75b9f5f9fa91176a7bebdd434a))
+* Implement statefulset table sorting ([ce7049e](https://github.com/tiithansen/grafana-k8s-app/commit/ce7049eb48d1342268718e2e1fea39a380dec771))
+
+
+### Bug Fixes
+
+* Add missing cronjob search functionality ([342b083](https://github.com/tiithansen/grafana-k8s-app/commit/342b083742aee25e310ed374dec5470dc587b73a))
+* Alerts in deployment expanded row showed alerts from wrong namespace if deployment names matched ([255d657](https://github.com/tiithansen/grafana-k8s-app/commit/255d6579208b508e88bc77daeefd5c8ae5f81364))
+* Deployments showed alerts from wrong namespace if deployment names matched ([4727b99](https://github.com/tiithansen/grafana-k8s-app/commit/4727b99487924fa24bccb159b40b1e21e8236529))
+
 ## [0.3.2](https://github.com/tiithansen/grafana-k8s-app/compare/v0.3.1...v0.3.2) (2024-08-03)
 
 
