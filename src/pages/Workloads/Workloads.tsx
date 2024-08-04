@@ -12,7 +12,7 @@ import { prefixRoute } from 'utils/utils.routing';
 import { getPodsScene } from './tabs/Pods/Pods';
 import { getDeploymentsScene } from './tabs/Deployments/Deployments';
 import { getStatefulSetsScene } from './tabs/StatefulSets/StatefulSets';
-import { getDaemonSetsScene } from './tabs/DaemonSets/DaemonSets';
+import { getDaemonSetsScene } from './tabs/DaemonSets';
 import { PodPage } from './pages/PodPage';
 import { getCronJobsScene } from './tabs/CronJobs/CronJobs';
 import { getJobsScene } from './tabs/Jobs/Jobs';
