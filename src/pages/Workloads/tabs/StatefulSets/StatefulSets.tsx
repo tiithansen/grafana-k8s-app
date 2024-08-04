@@ -1,20 +1,17 @@
 import { 
     EmbeddedScene,
     SceneFlexLayout, 
-    SceneFlexItem, 
-    SceneQueryRunner,
+    SceneFlexItem,
     TextBoxVariable,
     SceneVariableSet,
     VariableValueSelectors,
-    SceneVariables,
 } from '@grafana/scenes';
 import { buildExpandedRowScene } from './ExpandedRow';
 import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
 import { getAllSeries, getSeriesValue } from 'common/seriesHelpers';
 import { createNamespaceVariable } from 'common/variableHelpers';
-import { createRowQueries } from './Queries';
-import { Metrics } from 'metrics/metrics';
-import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
+import { StatefulSetQueryBuilder } from './Queries';
+import { AsyncTable, Column } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
 import { ROUTES } from '../../../../constants';
 import { prefixRoute } from 'utils/utils.routing';
@@ -94,37 +91,6 @@ const columns: Array<Column<TableRow>> = [
     }
 ]
 
-class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
-    rootQueryBuilder(variables: SceneVariableSet | SceneVariables, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) {
-        return new SceneQueryRunner({
-            datasource: {
-                uid: '$datasource',
-                type: 'prometheus',
-            },
-            queries: [
-                {
-                    refId: 'statefulsets',
-                    expr: `
-                        group(
-                            ${Metrics.kubeStatefulSetCreated.name}{
-                                cluster="$cluster",
-                                ${Metrics.kubeStatefulSetCreated.labels.namespace}=~"$namespace",
-                                ${Metrics.kubeStatefulSetCreated.labels.statefulset}=~".*$search.*"
-                            }
-                        ) by (
-                            ${Metrics.kubeStatefulSetCreated.labels.statefulset},
-                            ${Metrics.kubeStatefulSetCreated.labels.namespace}
-                        )`,
-                    instant: true,
-                    format: 'table'
-                },
-            ], 
-        })
-    }
-    rowQueryBuilder(rows: TableRow[], variables: SceneVariableSet | SceneVariables) {
-        return createRowQueries(rows, variables);
-    }
-}
 
 export const getStatefulSetsScene = () => {
 
