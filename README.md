@@ -75,12 +75,17 @@ Add packaged docker image as init container to Grafana deployment.
 # Init container
 extraInitContainers:
   - name: grafana-scenes-k8s-app
-    image: ghcr.io/tiithansen/grafana-k8s-app:<tag> # or any other version
-    command: ["cp", "-r", "/package/*", "/var/lib/grafana/plugins/grafana-k8s-app"]
+    image: ghcr.io/tiithansen/grafana-k8s-app:latest # or any other version
+    command:
+      - sh
+      - '-c'
+      - |
+        mkdir -p /var/lib/grafana/plugins/grafana-k8s-app
+        cp -rv /package/* /var/lib/grafana/plugins/grafana-k8s-app
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - name: storage
-        mountPath: /var/lib/grafana/plugins/grafana-k8s-app
+        mountPath: /var/lib/grafana
 grafana.ini:
   plugins:
     # Allow this plugin to be loaded even if it's unsigned
