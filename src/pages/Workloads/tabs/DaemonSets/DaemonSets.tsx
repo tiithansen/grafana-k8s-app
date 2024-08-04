@@ -1,20 +1,17 @@
 import { 
     EmbeddedScene,
     SceneFlexLayout, 
-    SceneFlexItem, 
-    SceneQueryRunner,
+    SceneFlexItem,
     TextBoxVariable,
     SceneVariableSet,
     VariableValueSelectors,
-    SceneVariables,
 } from '@grafana/scenes';
 import { buildExpandedRowScene } from './ExpandedRow';
 import { ReplicasCell } from 'pages/Workloads/components/ReplicasCell';
 import { getAllSeries, getSeriesValue } from 'common/seriesHelpers';
 import { createNamespaceVariable } from 'common/variableHelpers';
-import { createRowQueries } from './Queries';
-import { Metrics } from 'metrics/metrics';
-import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
+import { DaemonSetsQueryBuilder } from './Queries';
+import { AsyncTable, Column } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
 import { prefixRoute } from 'utils/utils.routing';
 import { ROUTES } from '../../../../constants';
@@ -99,39 +96,6 @@ const columns: Array<Column<TableRow>> = [
         }
     }
 ]
-
-class DaemonSetsQueryBuilder implements QueryBuilder<TableRow> {
-    rootQueryBuilder(variables: SceneVariableSet | SceneVariables, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) {
-        return new SceneQueryRunner({
-            datasource: {
-                uid: '$datasource',
-                type: 'prometheus',
-            },
-            queries: [
-                {
-                    refId: 'daemonsets',
-                    expr: `
-                        group(
-                            ${Metrics.kubeDaemonSetCreated.name}{
-                                ${Metrics.kubeDaemonSetCreated.labels.namespace}=~"$namespace",
-                                ${Metrics.kubeDaemonSetCreated.labels.daemonset}=~".*$search.*",
-                                cluster="$cluster",
-                            }
-                        ) by (
-                            ${Metrics.kubeDaemonSetCreated.labels.daemonset},
-                            ${Metrics.kubeDaemonSetCreated.labels.namespace}
-                        )`,
-                    instant: true,
-                    format: 'table'
-                },
-            ], 
-        })
-    }
-
-    rowQueryBuilder(rows: TableRow[], variables: SceneVariableSet | SceneVariables) {
-        return createRowQueries(rows, variables);
-    }
-}
 
 export const getDaemonSetsScene = () => {
 

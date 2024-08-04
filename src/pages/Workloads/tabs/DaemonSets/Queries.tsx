@@ -1,8 +1,10 @@
-import { SceneVariables } from "@grafana/scenes";
+import { SceneQueryRunner, SceneVariableSet, SceneVariables } from "@grafana/scenes";
 import { resolveVariable } from "common/variableHelpers";
 import { Metrics } from "metrics/metrics";
 import { TableRow } from "./types";
 import { Labels, MatchOperators, PromQL } from "common/promql";
+import { SortingState } from "common/sortingHelpers";
+import { ColumnSortingConfig, QueryBuilder } from "components/AsyncTable";
 
 function createReplicasQuery(cluster: string, additionalLabels: Labels) {
     
@@ -42,36 +44,64 @@ function createAlertsQuery(cluster: string, additionalLabels: Labels) {
         )
 }
 
-export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
-
-    const daemonSets = rows.map(row => row.daemonset).join('|');
-    const cluster = resolveVariable(sceneVariables, 'cluster');
-
-    const additionalLabels: Labels = {
-        daemonset: {
-            operator: MatchOperators.MATCHES,
-            value: daemonSets
-        }
+export class DaemonSetsQueryBuilder implements QueryBuilder<TableRow> {
+    rootQueryBuilder(variables: SceneVariableSet | SceneVariables, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) {
+        return new SceneQueryRunner({
+            datasource: {
+                uid: '$datasource',
+                type: 'prometheus',
+            },
+            queries: [
+                {
+                    refId: 'daemonsets',
+                    expr: `
+                        group(
+                            ${Metrics.kubeDaemonSetCreated.name}{
+                                ${Metrics.kubeDaemonSetCreated.labels.namespace}=~"$namespace",
+                                ${Metrics.kubeDaemonSetCreated.labels.daemonset}=~".*$search.*",
+                                cluster="$cluster",
+                            }
+                        ) by (
+                            ${Metrics.kubeDaemonSetCreated.labels.daemonset},
+                            ${Metrics.kubeDaemonSetCreated.labels.namespace}
+                        )`,
+                    instant: true,
+                    format: 'table'
+                },
+            ], 
+        })
     }
 
-    return [
-        {
-            refId: 'replicas',
-            expr: createReplicasQuery(cluster?.toString()!, additionalLabels).stringify(),
-            instant: true,
-            format: 'table'
-        },
-        {
-            refId: 'replicas_ready',
-            expr: createReplicasReadyQuery(cluster?.toString()!, additionalLabels).stringify(),
-            instant: true,
-            format: 'table'
-        },
-        {
-            refId: 'alerts',
-            expr: createAlertsQuery(cluster?.toString()!, additionalLabels).stringify(),
-            instant: true,
-            format: 'table'
+    rowQueryBuilder(rows: TableRow[], variables: SceneVariableSet | SceneVariables) {
+        const daemonSets = rows.map(row => row.daemonset).join('|');
+        const cluster = resolveVariable(variables, 'cluster');
+
+        const additionalLabels: Labels = {
+            daemonset: {
+                operator: MatchOperators.MATCHES,
+                value: daemonSets
+            }
         }
-    ];
+
+        return [
+            {
+                refId: 'replicas',
+                expr: createReplicasQuery(cluster?.toString()!, additionalLabels).stringify(),
+                instant: true,
+                format: 'table'
+            },
+            {
+                refId: 'replicas_ready',
+                expr: createReplicasReadyQuery(cluster?.toString()!, additionalLabels).stringify(),
+                instant: true,
+                format: 'table'
+            },
+            {
+                refId: 'alerts',
+                expr: createAlertsQuery(cluster?.toString()!, additionalLabels).stringify(),
+                instant: true,
+                format: 'table'
+            }
+        ];
+    }
 }
