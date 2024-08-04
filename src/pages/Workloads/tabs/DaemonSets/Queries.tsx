@@ -46,6 +46,17 @@ function createAlertsQuery(cluster: string, additionalLabels: Labels) {
 
 export class DaemonSetsQueryBuilder implements QueryBuilder<TableRow> {
     rootQueryBuilder(variables: SceneVariableSet | SceneVariables, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) {
+
+        const baseQuery = PromQL.group(
+            PromQL.metric(Metrics.kubeDaemonSetCreated.name)
+                .withLabelEquals('cluster', '$cluster')
+                .withLabelMatches(Metrics.kubeDaemonSetCreated.labels.namespace, '$namespace')
+                .withLabelMatches(Metrics.kubeDaemonSetCreated.labels.daemonset, '.*$search.*')
+        ).by([
+            Metrics.kubeDaemonSetCreated.labels.daemonset,
+            Metrics.kubeDaemonSetCreated.labels.namespace,
+        ]);
+
         return new SceneQueryRunner({
             datasource: {
                 uid: '$datasource',
@@ -54,17 +65,7 @@ export class DaemonSetsQueryBuilder implements QueryBuilder<TableRow> {
             queries: [
                 {
                     refId: 'daemonsets',
-                    expr: `
-                        group(
-                            ${Metrics.kubeDaemonSetCreated.name}{
-                                ${Metrics.kubeDaemonSetCreated.labels.namespace}=~"$namespace",
-                                ${Metrics.kubeDaemonSetCreated.labels.daemonset}=~".*$search.*",
-                                cluster="$cluster",
-                            }
-                        ) by (
-                            ${Metrics.kubeDaemonSetCreated.labels.daemonset},
-                            ${Metrics.kubeDaemonSetCreated.labels.namespace}
-                        )`,
+                    expr: baseQuery.stringify(),
                     instant: true,
                     format: 'table'
                 },
