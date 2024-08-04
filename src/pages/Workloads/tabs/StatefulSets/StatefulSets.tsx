@@ -54,6 +54,7 @@ const columns: Array<Column<TableRow>> = [
             enabled: true,
             type: 'label',
             local: true,
+            compare: (a: TableRow, b: TableRow, direction) => direction === 'asc' ? a.statefulset.localeCompare(b.statefulset) : b.statefulset.localeCompare(a.statefulset)
         }
     },
     { 
@@ -63,6 +64,7 @@ const columns: Array<Column<TableRow>> = [
             enabled: true,
             type: 'label',
             local: true,
+            compare: (a: TableRow, b: TableRow, direction) => direction === 'asc' ? a.namespace.localeCompare(b.namespace) : b.namespace.localeCompare(a.namespace)
         }
     },
     {
@@ -86,7 +88,7 @@ const columns: Array<Column<TableRow>> = [
         sortingConfig: {
             enabled: true,
             type: 'value',
-            local: true,
+            local: false,
         }
     }
 ]

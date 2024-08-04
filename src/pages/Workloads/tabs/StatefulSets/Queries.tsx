@@ -2,7 +2,7 @@ import { SceneQueryRunner, SceneVariableSet, SceneVariables } from "@grafana/sce
 import { Metrics } from "metrics/metrics";
 import { resolveVariable } from "common/variableHelpers";
 import { TableRow } from "./types";
-import { Labels, MatchOperators, PromQL } from "common/promql";
+import { Labels, MatchOperators, PromQL, PromQLExpression } from "common/promql";
 import { ColumnSortingConfig, QueryBuilder } from "components/AsyncTable";
 import { SortingState } from "common/sortingHelpers";
 
@@ -13,7 +13,8 @@ export function createReplicasQuery(cluster: string, additionalLabels: Labels) {
             .withLabels(additionalLabels)
             .withLabelEquals('cluster', cluster)
     ).by([
-        Metrics.kubeStatefulsetStatusReplicas.labels.statefulset
+        Metrics.kubeStatefulsetStatusReplicas.labels.statefulset,
+        Metrics.kubeStatefulsetStatusReplicas.labels.namespace,
     ])
 }
 
@@ -24,7 +25,8 @@ export function createReplicasReadyQuery(cluster: string, additionalLabels: Labe
             .withLabels(additionalLabels)
             .withLabelEquals('cluster', cluster)
     ).by([
-        Metrics.kubeStatefulsetStatusReplicasReady.labels.statefulset
+        Metrics.kubeStatefulsetStatusReplicasReady.labels.statefulset,
+        Metrics.kubeStatefulsetStatusReplicas.labels.namespace,
     ])
 }
 
@@ -57,6 +59,49 @@ export class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
             Metrics.kubeStatefulSetCreated.labels.namespace
         ]);
 
+        const remoteSort = sortingConfig && sortingConfig.local === false
+
+        let finalQuery: PromQLExpression = baseQuery;
+        if (remoteSort) {
+            switch (sorting.columnId) {
+                case 'alerts':
+                    finalQuery = PromQL.sort(
+                        sorting.direction,
+                        baseQuery
+                            .multiply()
+                            .on(['namespace', 'statefulset'])
+                            .groupRight(
+                                [],
+                                PromQL.count(
+                                    createAlertsQuery('$cluster', {
+                                        'statefulset': {
+                                            operator: MatchOperators.NOT_EQUALS,
+                                            value: ''
+                                        }
+                                    })
+                                ).by(['namespace', 'statefulset'])
+                            ).or(
+                                baseQuery.multiply().withScalar(0)
+                            )
+                        )
+                    break;
+                case 'replicas':
+                    finalQuery = PromQL.sort(
+                        sorting.direction,
+                        baseQuery
+                            .multiply()
+                            .on(['namespace', 'statefulset'])
+                            .groupRight(
+                                [],
+                                createReplicasQuery('$cluster', {})
+                            ).or(
+                                baseQuery.multiply().withScalar(0)
+                            )
+                        )
+                    break;
+            }
+        }
+
         return new SceneQueryRunner({
             datasource: {
                 uid: '$datasource',
@@ -65,7 +110,7 @@ export class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
             queries: [
                 {
                     refId: 'statefulsets',
-                    expr: baseQuery.stringify(),
+                    expr: finalQuery.stringify(),
                     instant: true,
                     format: 'table'
                 },
