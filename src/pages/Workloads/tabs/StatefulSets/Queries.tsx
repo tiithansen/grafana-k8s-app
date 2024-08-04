@@ -46,6 +46,17 @@ function createAlertsQuery(cluster: string, additionalLabels: Labels) {
 
 export class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
     rootQueryBuilder(variables: SceneVariables | SceneVariableSet, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow>) {
+
+        const baseQuery = PromQL.group(
+            PromQL.metric(Metrics.kubeStatefulSetCreated.name)
+                .withLabelEquals('cluster', '$cluster')
+                .withLabelMatches(Metrics.kubeStatefulSetCreated.labels.namespace, '$namespace')
+                .withLabelMatches(Metrics.kubeStatefulSetCreated.labels.statefulset, '.*$search.*')
+        ).by([
+            Metrics.kubeStatefulSetCreated.labels.statefulset,
+            Metrics.kubeStatefulSetCreated.labels.namespace
+        ]);
+
         return new SceneQueryRunner({
             datasource: {
                 uid: '$datasource',
@@ -54,17 +65,7 @@ export class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
             queries: [
                 {
                     refId: 'statefulsets',
-                    expr: `
-                        group(
-                            ${Metrics.kubeStatefulSetCreated.name}{
-                                cluster="$cluster",
-                                ${Metrics.kubeStatefulSetCreated.labels.namespace}=~"$namespace",
-                                ${Metrics.kubeStatefulSetCreated.labels.statefulset}=~".*$search.*"
-                            }
-                        ) by (
-                            ${Metrics.kubeStatefulSetCreated.labels.statefulset},
-                            ${Metrics.kubeStatefulSetCreated.labels.namespace}
-                        )`,
+                    expr: baseQuery.stringify(),
                     instant: true,
                     format: 'table'
                 },
