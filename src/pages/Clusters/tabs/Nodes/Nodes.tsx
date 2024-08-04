@@ -127,7 +127,7 @@ const columns: Array<Column<TableRow>> = [
             },
             {
                 id: 'memory_usage',
-                header: 'USAGE',
+                header: 'UTILIZATION',
                 accessor: (row: TableRow) => row.memory.usage,
                 cellType: 'formatted',
                 cellProps: {
@@ -180,7 +180,7 @@ const columns: Array<Column<TableRow>> = [
             },
             {
                 id: 'cpu_usage',
-                header: 'USAGE',
+                header: 'UTILIZATION',
                 accessor: (row: TableRow) => row.cpu.usage,
                 cellType: 'formatted',
                 cellProps: {
