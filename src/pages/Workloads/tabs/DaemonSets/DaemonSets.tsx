@@ -92,7 +92,7 @@ const columns: Array<Column<TableRow>> = [
         sortingConfig: {
             enabled: true,
             type: 'value',
-            local: true,
+            local: false,
         }
     }
 ]

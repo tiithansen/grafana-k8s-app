@@ -2,7 +2,7 @@ import { SceneQueryRunner, SceneVariableSet, SceneVariables } from "@grafana/sce
 import { resolveVariable } from "common/variableHelpers";
 import { Metrics } from "metrics/metrics";
 import { TableRow } from "./types";
-import { Labels, MatchOperators, PromQL } from "common/promql";
+import { Labels, MatchOperators, PromQL, PromQLExpression } from "common/promql";
 import { SortingState } from "common/sortingHelpers";
 import { ColumnSortingConfig, QueryBuilder } from "components/AsyncTable";
 
@@ -13,7 +13,8 @@ function createReplicasQuery(cluster: string, additionalLabels: Labels) {
             .withLabels(additionalLabels)
             .withLabelEquals('cluster', cluster)
     ).by([
-        Metrics.kubeDaemonsetStatusDesiredNumberScheduled.labels.daemonset
+        Metrics.kubeDaemonsetStatusDesiredNumberScheduled.labels.daemonset,
+        Metrics.kubeDaemonsetStatusDesiredNumberScheduled.labels.namespace,
     ])
 }
 
@@ -24,7 +25,8 @@ function createReplicasReadyQuery(cluster: string, additionalLabels: Labels) {
             .withLabels(additionalLabels)
             .withLabelEquals('cluster', cluster)
     ).by([
-        Metrics.kubeDaemonsetStatusNumberReady.labels.daemonset
+        Metrics.kubeDaemonsetStatusNumberReady.labels.daemonset,
+        Metrics.kubeDaemonsetStatusNumberReady.labels.namespace,
     ])
 }
 
@@ -57,6 +59,49 @@ export class DaemonSetsQueryBuilder implements QueryBuilder<TableRow> {
             Metrics.kubeDaemonSetCreated.labels.namespace,
         ]);
 
+        const remoteSort = sortingConfig && sortingConfig.local === false
+
+        let finalQuery: PromQLExpression = baseQuery;
+        if (remoteSort) {
+            switch (sorting.columnId) {
+                case 'alerts':
+                    finalQuery = PromQL.sort(
+                        sorting.direction,
+                        baseQuery
+                            .multiply()
+                            .on(['namespace', 'daemonset'])
+                            .groupRight(
+                                [],
+                                PromQL.count(
+                                    createAlertsQuery('$cluster', {
+                                        'daemonset': {
+                                            operator: MatchOperators.NOT_EQUALS,
+                                            value: ''
+                                        }
+                                    })
+                                ).by(['namespace', 'daemonset'])
+                            ).or(
+                                baseQuery.multiply().withScalar(0)
+                            )
+                        )
+                    break;
+                case 'replicas':
+                    finalQuery = PromQL.sort(
+                        sorting.direction,
+                        baseQuery
+                            .multiply()
+                            .on(['namespace', 'daemonset'])
+                            .groupRight(
+                                [],
+                                createReplicasQuery('$cluster', {})
+                            ).or(
+                                baseQuery.multiply().withScalar(0)
+                            )
+                        )
+                    break;
+            }
+        }
+
         return new SceneQueryRunner({
             datasource: {
                 uid: '$datasource',
@@ -65,7 +110,7 @@ export class DaemonSetsQueryBuilder implements QueryBuilder<TableRow> {
             queries: [
                 {
                     refId: 'daemonsets',
-                    expr: baseQuery.stringify(),
+                    expr: finalQuery.stringify(),
                     instant: true,
                     format: 'table'
                 },
