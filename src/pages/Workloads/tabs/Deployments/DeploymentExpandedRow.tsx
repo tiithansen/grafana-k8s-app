@@ -44,7 +44,12 @@ export function buildExpandedRowScene(row: TableRow) {
                 {
                   label: 'deployment',
                   op: '=',
-                  value: row.deployment
+                  value: row.deployment,
+                },
+                {
+                  label: 'namespace',
+                  op: '=',
+                  value: row.namespace,
                 }
               ], false, false)
             })
