@@ -190,7 +190,7 @@ export function InteractiveTable<TableData extends object>({
 }: Props<TableData>) {
   const styles = useStyles2(getStyles);
   const tableColumns = useMemo(() => {
-    return getColumns<TableData>(columns, showExpandAll);
+    return getColumns<TableData>(columns, showExpandAll, renderExpandedRow !== undefined);
   }, [columns, showExpandAll]);
 
   const [sorting, setSorting] = useState<SortingState>([])

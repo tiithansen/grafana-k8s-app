@@ -7,15 +7,16 @@ export const EXPANDER_CELL_ID = '__expander' as const;
 // Returns the columns in a "react-table" acceptable format
 export function getColumns<K extends object>(
   columns: Array<ColumnDef<K>>,
-  showExpandAll = false
+  showExpandAll = false,
+  showExpander = false,
 ): Array<ColumnDef<K>> {
   return [
-    {
+    ... (showExpander ? [{
       id: EXPANDER_CELL_ID,
       accessorFn: () => ' ',
       cell: ExpanderCell,
       header: showExpandAll ? ExpanderHeader : EmptyHeader,
-    },
+    }] : []),
     ...columns.map((column) => ({
       id: column.id,
       accessorKey: column.id,
