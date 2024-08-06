@@ -46,7 +46,6 @@ function createMemoryRequestsQuery(filters: Labels, options: MemoryUsagePanelOpt
             baseQuery
         ).by([
             Metrics.kubePodContainerResourceRequests.labels.container,
-            Metrics.kubePodContainerResourceLimits.labels.pod,
         ])
     } else {
         return PromQL.sum(
@@ -77,7 +76,6 @@ function createMemoryLimitsQuery(filters: Labels, options: MemoryUsagePanelOptio
             baseQuery
         ).by([
             Metrics.kubePodContainerResourceLimits.labels.container,
-            Metrics.kubePodContainerResourceLimits.labels.pod,
         ])
     } else {
         return PromQL.sum(
