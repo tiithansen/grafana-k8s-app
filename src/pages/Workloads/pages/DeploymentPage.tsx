@@ -13,7 +13,7 @@ import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { AlertsTable } from "components/AlertsTable";
 import { Labels, MatchOperators } from "common/promql";
 
-const REPLICASET_HASH_PATTERN='[a-z0-9]{10}'
+const REPLICASET_HASH_PATTERN='[a-z0-9]{8,10}'
 const DEPLOYMENT_HASH_PATTERN=`${REPLICASET_HASH_PATTERN}-[a-z0-9]{5}`
 
 function getPods(deployment: string, namespace: string) {
