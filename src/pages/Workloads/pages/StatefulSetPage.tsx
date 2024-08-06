@@ -11,6 +11,7 @@ import Heading from "components/Heading";
 import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { AlertsTable } from "components/AlertsTable";
+import { Labels, MatchOperators } from "common/promql";
 
 function getPods(statefulset: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
@@ -92,6 +93,18 @@ function getReplicasPanel(statefulset: string, namespace: string) {
 }
 
 function getScene(statefulset: string, namespace = '$namespace') {
+
+    const commonFilters: Labels = {
+        pod: {
+            operator: MatchOperators.MATCHES,
+            value: `${statefulset}-[0-9]+`,
+        }, 
+        namespace: {
+            operator: MatchOperators.EQUALS,
+            value: namespace,
+        },
+    }
+
     return new EmbeddedScene({
         controls: [
             new VariableValueSelectors({}),
@@ -146,31 +159,37 @@ function getScene(statefulset: string, namespace = '$namespace') {
                 new SceneFlexLayout({
                     direction: 'row',
                     children: [
-                        new Heading({ title: 'Resource Usage Overview'})
+                        new Heading({ title: 'Resource Usage (Combined)'})
                     ]
                 }),
                 new SceneFlexLayout({
                     direction: 'row',
                     minHeight: 400,
                     children: [
-                        CPUUsagePanel([{
-                            label: 'pod',
-                            op: '=~',
-                            value: `${statefulset}-[0-9]+`
-                        }, {
-                            label: 'namespace',
-                            op: '=',
-                            value: namespace
-                        }]),
-                        MemoryUsagePanel([{
-                            label: 'pod',
-                            op: '=~',
-                            value: `${statefulset}-[0-9]+`
-                        }, {
-                            label: 'namespace',
-                            op: '=',
-                            value: namespace
-                        }]),
+                        CPUUsagePanel(commonFilters, {
+                            mode: 'combined'
+                        }),
+                        MemoryUsagePanel(commonFilters, {
+                            mode: 'combined'
+                        }),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Resource Usage (per Pod)'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 400,
+                    children: [
+                        CPUUsagePanel(commonFilters, {
+                            mode: 'pod'
+                        }),
+                        MemoryUsagePanel(commonFilters, {
+                            mode: 'pod'
+                        }),
                     ]
                 }),
                 new SceneFlexLayout({

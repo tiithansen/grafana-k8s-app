@@ -1,11 +1,99 @@
 import { PanelBuilders, SceneQueryRunner } from "@grafana/scenes"
 import { LegendDisplayMode } from "@grafana/schema"
-import { LabelFilters, serializeLabelFilters } from "common/queryHelpers"
+import { Labels, PromQL } from "common/promql"
 import { Metrics } from "metrics/metrics"
 
-export function MemoryUsagePanel(filters: LabelFilters) {
+export interface MemoryUsagePanelOptions {
+    mode: 'combined' | 'pod'
+}
 
-    const serializedFilters = serializeLabelFilters(filters)
+function createMemoryUsageQuery(filters: Labels, options: MemoryUsagePanelOptions) {
+    const baseQuery = PromQL.max(
+        PromQL.metric(
+            Metrics.containerMemoryWorkingSetBytes.name,
+        )
+        .withLabels(filters)
+        .withLabelNotEquals(Metrics.containerMemoryWorkingSetBytes.labels.container, '')
+        .withLabelEquals('cluster', '$cluster')
+    ).by([
+        Metrics.containerMemoryWorkingSetBytes.labels.pod,
+        Metrics.containerMemoryWorkingSetBytes.labels.container,
+    ])
+
+    if (options.mode === 'pod') {
+        return baseQuery
+    } else {
+        return PromQL.sum(
+            baseQuery
+        ).by([
+            Metrics.containerMemoryWorkingSetBytes.labels.container,
+        ])
+    }
+}
+
+function createMemoryRequestsQuery(filters: Labels, options: MemoryUsagePanelOptions) {
+    const baseQuery =
+        PromQL.metric(
+            Metrics.kubePodContainerResourceRequests.name,
+        )
+        .withLabels(filters)
+        .withLabelEquals(Metrics.kubePodContainerResourceRequests.labels.resource, 'memory')
+        .withLabelNotEquals(Metrics.kubePodContainerResourceRequests.labels.container, '')
+        .withLabelEquals('cluster', '$cluster')
+
+    if (options.mode === 'pod') {
+        return PromQL.max(
+            baseQuery
+        ).by([
+            Metrics.kubePodContainerResourceRequests.labels.container,
+            Metrics.kubePodContainerResourceLimits.labels.pod,
+        ])
+    } else {
+        return PromQL.sum(
+            PromQL.max(
+                baseQuery
+            ).by([
+                Metrics.kubePodContainerResourceRequests.labels.container,
+                Metrics.kubePodContainerResourceLimits.labels.pod,
+            ])
+        ).by([
+            Metrics.kubePodContainerResourceRequests.labels.container,
+        ])
+    }
+}
+
+function createMemoryLimitsQuery(filters: Labels, options: MemoryUsagePanelOptions) {
+    const baseQuery = 
+        PromQL.metric(
+            Metrics.kubePodContainerResourceLimits.name,
+        )
+        .withLabels(filters)
+        .withLabelEquals(Metrics.kubePodContainerResourceLimits.labels.resource, 'memory')
+        .withLabelNotEquals(Metrics.kubePodContainerResourceLimits.labels.container, '')
+        .withLabelEquals('cluster', '$cluster')
+
+    if (options.mode === 'pod') {
+        return PromQL.max(
+            baseQuery
+        ).by([
+            Metrics.kubePodContainerResourceLimits.labels.container,
+            Metrics.kubePodContainerResourceLimits.labels.pod,
+        ])
+    } else {
+        return PromQL.sum(
+            PromQL.max(
+                baseQuery
+            ).by([
+                Metrics.kubePodContainerResourceLimits.labels.container,
+                Metrics.kubePodContainerResourceLimits.labels.pod,
+            ])
+        ).by([
+            Metrics.kubePodContainerResourceLimits.labels.container,
+        ])
+    }
+}
+
+export function MemoryUsagePanel(filters: Labels, options: MemoryUsagePanelOptions) {
 
     return PanelBuilders
         .timeseries()
@@ -19,51 +107,21 @@ export function MemoryUsagePanel(filters: LabelFilters) {
             queries: [
                 {
                     refId: 'memory_usage',
-                    expr: `
-                        max(
-                            ${Metrics.containerMemoryWorkingSetBytes.name}{
-                                ${serializedFilters}
-                                ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
-                                cluster="$cluster",
-                            }
-                        ) by (
-                            ${Metrics.containerMemoryWorkingSetBytes.labels.pod},
-                            ${Metrics.containerMemoryWorkingSetBytes.labels.container}
-                        )`,
+                    expr: createMemoryUsageQuery(filters, options).stringify(),
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Usage {{pod}} - {{container}}'
                 },
                 {
                     refId: 'memory_requests',
-                    expr: `
-                        max(
-                            ${Metrics.kubePodContainerResourceRequests.name}{
-                                ${Metrics.kubePodContainerResourceRequests.labels.resource}="memory",
-                                ${serializedFilters}
-                                ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
-                                cluster="$cluster"
-                            }
-                        ) by (
-                            ${Metrics.kubePodContainerResourceRequests.labels.container}
-                        )`,
+                    expr: createMemoryRequestsQuery(filters, options).stringify(),
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Requests {{container}}'
                 },
                 {
                     refId: 'memory_limit',
-                    expr: `
-                        max(
-                            ${Metrics.kubePodContainerResourceLimits.name}{
-                                ${Metrics.kubePodContainerResourceLimits.labels.resource}="memory",
-                                ${serializedFilters}
-                                ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
-                                cluster="$cluster"
-                            }
-                        ) by (
-                            ${Metrics.kubePodContainerResourceLimits.labels.container}
-                        )`,
+                    expr: createMemoryLimitsQuery(filters, options).stringify(),
                     instant: false,
                     timeseries: true,
                     legendFormat: 'Limits {{container}}'

@@ -11,6 +11,7 @@ import Heading from "components/Heading";
 import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { AlertsTable } from "components/AlertsTable";
+import { Labels, MatchOperators } from "common/promql";
 
 const REPLICASET_HASH_PATTERN='[a-z0-9]{10}'
 const DEPLOYMENT_HASH_PATTERN=`${REPLICASET_HASH_PATTERN}-[a-z0-9]{5}`
@@ -94,6 +95,18 @@ function getReplicasPanel(deployment: string, namespace: string) {
 }
 
 function getScene(deployment: string, namespace = '$namespace') {
+
+    const commonFilters: Labels = {
+        pod: {
+            operator: MatchOperators.MATCHES,
+            value: `${deployment}-${DEPLOYMENT_HASH_PATTERN}`,
+        },
+        namespace: {
+            operator: MatchOperators.EQUALS,
+            value: namespace,
+        },
+    }
+
     return new EmbeddedScene({
         controls: [
             new VariableValueSelectors({}),
@@ -153,31 +166,37 @@ function getScene(deployment: string, namespace = '$namespace') {
                 new SceneFlexLayout({
                     direction: 'row',
                     children: [
-                        new Heading({ title: 'Resource Usage Overview'})
+                        new Heading({ title: 'Resource Usage (Combined)'})
                     ]
                 }),
                 new SceneFlexLayout({
                     direction: 'row',
                     minHeight: 400,
                     children: [
-                        CPUUsagePanel([{
-                            label: 'pod',
-                            op: '=~',
-                            value: `${deployment}-${DEPLOYMENT_HASH_PATTERN}`
-                        }, {
-                            label: 'namespace',
-                            op: '=',
-                            value: namespace
-                        }]),
-                        MemoryUsagePanel([{
-                            label: 'pod',
-                            op: '=~',
-                            value: `${deployment}-${DEPLOYMENT_HASH_PATTERN}`
-                        }, {
-                            label: 'namespace',
-                            op: '=',
-                            value: namespace
-                        }]),
+                        CPUUsagePanel(commonFilters, {
+                            mode: 'combined'   
+                        }),
+                        MemoryUsagePanel(commonFilters, {
+                            mode: 'combined'
+                        }),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Resource Usage (per Pod)'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 400,
+                    children: [
+                        CPUUsagePanel(commonFilters, {
+                            mode: 'pod'   
+                        }),
+                        MemoryUsagePanel(commonFilters, {
+                            mode: 'pod'
+                        }),
                     ]
                 }),
                 new SceneFlexLayout({
