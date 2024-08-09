@@ -1,3 +1,4 @@
+import { RowBase } from "components/AsyncTable";
 
 export interface DeploymentAlert {
     deployment: string;
@@ -5,7 +6,7 @@ export interface DeploymentAlert {
     severity: string;
 }
 
-export interface TableRow {
+export interface TableRow extends RowBase{
     cluster: string;
     deployment: string;
     owner_name: string;

@@ -1,3 +1,4 @@
+import { RowBase } from "components/AsyncTable";
 
 export interface PodAlert {
     alertname: string;
@@ -5,7 +6,7 @@ export interface PodAlert {
     pod: string;
 }
 
-export interface TableRow {
+export interface TableRow extends RowBase {
     cluster: string;
     pod: string;
     namespace: string;

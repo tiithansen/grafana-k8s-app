@@ -31,6 +31,10 @@ export type FormattedCellProps<TableRow> = {
     format?: string;
 }
 
+export interface RowBase {
+    Time: number;
+}
+
 export type CellProps<TableRow> = { color?: TextColor | ((row: TableRow) => TextColor) } & (LinkCellProps<TableRow> | FormattedCellProps<TableRow>);
 
 export interface ColumnSortingConfig<TableRow> {
@@ -68,12 +72,12 @@ interface TableState<TableRow> extends SceneObjectState {
     queryBuilder: QueryBuilder<TableRow>;
 }
 
-interface ExpandedRowProps<TableRow> {
+interface ExpandedRowProps<TableRow extends RowBase> {
     table: AsyncTable<TableRow>;
     row: TableRow;
 }
 
-function ExpandedRow<TableRow>({ table, row }: ExpandedRowProps<TableRow>) {
+function ExpandedRow<TableRow extends RowBase>({ table, row }: ExpandedRowProps<TableRow>) {
     const { expandedRows } = table.useState();
   
     const rowScene = expandedRows?.find((scene) => scene.state.key === table.state.createRowId(row));
@@ -137,11 +141,12 @@ function mapColumn<TableRow>(column: Column<TableRow>): ColumnDef<TableRow> {
 
 }
 
-export class AsyncTable<TableRow> extends SceneObjectBase<TableState<TableRow>> {
+export class AsyncTable<TableRow extends RowBase> extends SceneObjectBase<TableState<TableRow>> {
 
     private onSortFn  = this.onSort.bind(this);;
     private onRowsChangedFn = this.onRowsChanged.bind(this);
     private createRowIdFn = this.createRowId.bind(this);
+    private rebuildQueryFn = this.rebuildQuery.bind(this);
 
     constructor(state: TableState<TableRow>) {
         super({ ...state, asyncRowData: new Map<string, number[]>() });
@@ -183,7 +188,7 @@ export class AsyncTable<TableRow> extends SceneObjectBase<TableState<TableRow>> 
 
     private onRowsChanged(rows: Array<Row<TableRow>>) {
 
-        const ids = rows.map((row: Row<TableRow>) => this.createRowId(row.original)).join(',');
+        const ids = rows.map((row: Row<TableRow>) => `${this.createRowId(row.original)}@${row.original.Time}`).join(',');
         
         if (!ids || ids.length === 0 || this.state.visibleRowIds === ids) {
             return;
@@ -241,9 +246,11 @@ export class AsyncTable<TableRow> extends SceneObjectBase<TableState<TableRow>> 
 
     static Component = (props: SceneComponentProps<AsyncTable<any>>) => {
 
+        const { rebuildQueryFn } = props.model;
+
         useEffect(() => {
-            props.model.rebuildQuery();
-        }, [props.model]);
+            rebuildQueryFn();
+        }, [rebuildQueryFn]);
 
         const { data } = sceneGraph.getData(props.model).useState();
         const { asyncRowData, sorting, columns, asyncDataRowMapper } = props.model.useState();

@@ -92,7 +92,7 @@ class ResourceLabels extends SceneObjectBase<ResourceLabelsState> {
 
             const result: Label[] = [];
 
-            if (data && data.state === LoadingState.Done) {
+            if (data && data.state === LoadingState.Done && data.series.length > 0) {
                 const df = new DataFrameView(data.series[0] || [])
                 const frames = df.toArray()
                 

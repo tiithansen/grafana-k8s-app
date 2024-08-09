@@ -11,9 +11,9 @@ import { getSeriesValue } from 'common/seriesHelpers';
 import { createNamespaceVariable, resolveVariable } from 'common/variableHelpers';
 import { Metrics } from 'metrics/metrics';
 import { SortingState } from 'common/sortingHelpers';
-import { AsyncTable, Column, ColumnSortingConfig } from 'components/AsyncTable';
+import { AsyncTable, Column, ColumnSortingConfig, RowBase } from 'components/AsyncTable';
 
-interface TableRow {
+interface TableRow extends RowBase {
     cluster: string;
     namespace: string;
     cpu: {
