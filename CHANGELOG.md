@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.4.2...v0.5.0) (2024-09-05)
+
+
+### Features
+
+* Add both combined and per pod resource usage graphs to statefulsets, deployments and daemonsets pages ([e765308](https://github.com/tiithansen/grafana-k8s-app/commit/e7653089e51a6df9e586925c7b3b06b366e15fb9))
+
+
+### Bug Fixes
+
+* Do not display every pods limits, nothing will be visible if looking at daemonsets for example ([2102db1](https://github.com/tiithansen/grafana-k8s-app/commit/2102db16fd7f405e1e752aedf7a1103b11008fdb))
+* Fix table refresh when timestamp changes ([7bff610](https://github.com/tiithansen/grafana-k8s-app/commit/7bff6103cf654b7aef549d4ac062c2965da741de))
+* Replicaset hash is not fixed to 10 chars default to 8 - 10 chars ([a61d629](https://github.com/tiithansen/grafana-k8s-app/commit/a61d62981106a81abdfe3f5a6175ec967908d690))
+
 ## [0.4.2](https://github.com/tiithansen/grafana-k8s-app/compare/v0.4.1...v0.4.2) (2024-08-04)
 
 
