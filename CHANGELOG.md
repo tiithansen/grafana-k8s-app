@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.5.0...v0.6.0) (2024-10-26)
+
+
+### Features
+
+* Add network IO panels to workload pages ([9dd944c](https://github.com/tiithansen/grafana-k8s-app/commit/9dd944c9b6a5dd3b748c880a5eae3d207d2d9f23))
+* Add possbility to change page size for tables ([5a676f7](https://github.com/tiithansen/grafana-k8s-app/commit/5a676f727bd65ef9e073f21651f32077accd5c8a))
+* Include cpu throttling panels both combined and per pod/container on every workload page ([d3c8315](https://github.com/tiithansen/grafana-k8s-app/commit/d3c83152d0a967d5f8318ae8cc410ad0669502d0))
+
 ## [0.5.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.4.2...v0.5.0) (2024-09-05)
 
 
