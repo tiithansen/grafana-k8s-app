@@ -13,6 +13,7 @@ import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { AlertsTable } from "components/AlertsTable";
 import { Labels, MatchOperators } from "common/promql";
 import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
+import { NetworkUsagePanel } from "../components/NetworkUsagePanel";
 
 function getPods(statefulset: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
@@ -203,6 +204,19 @@ function getScene(statefulset: string, namespace = '$namespace') {
                         MemoryUsagePanel(commonFilters, {
                             mode: 'pod'
                         }),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Network'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 400,
+                    children: [
+                        NetworkUsagePanel(commonFilters),
                     ]
                 }),
                 new SceneFlexLayout({

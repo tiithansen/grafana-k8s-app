@@ -14,6 +14,7 @@ import { AlertsTable } from "components/AlertsTable";
 import { LegendDisplayMode } from "@grafana/schema";
 import { Labels, MatchOperators } from "common/promql";
 import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
+import { NetworkUsagePanel } from "../components/NetworkUsagePanel";
 
 function getPods(daemonset: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
@@ -199,6 +200,19 @@ function getScene(daemonset: string, namespace = '$namespace') {
                         MemoryUsagePanel(commonLabels, {
                             mode: 'pod'
                         }),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Network'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 400,
+                    children: [
+                        NetworkUsagePanel(commonLabels),
                     ]
                 }),
                 new SceneFlexLayout({

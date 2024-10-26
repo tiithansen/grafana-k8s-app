@@ -1,10 +1,10 @@
 import { PanelBuilders, SceneQueryRunner } from "@grafana/scenes"
 import { GraphTransform } from "@grafana/schema"
 import { LegendDisplayMode } from "@grafana/ui"
-import { PromQL } from "common/promql"
+import { Labels, PromQL } from "common/promql"
 import { Metrics } from "metrics/metrics"
 
-function createReceivedBytesQuery(pod: string) {
+function createReceivedBytesQuery(filters: Labels) {
     return PromQL.sort('desc',
         PromQL.sum(
             PromQL.rate(
@@ -12,7 +12,7 @@ function createReceivedBytesQuery(pod: string) {
                     PromQL.metric(
                         Metrics.containerNetworkReceiveBytesTotal.name,
                     )
-                    .withLabelMatches(Metrics.containerNetworkReceiveBytesTotal.labels.pod, pod)
+                    .withLabels(filters)
                     .withLabelEquals('cluster', '$cluster'),
                 '$__rate_interval',
                 )
@@ -23,7 +23,7 @@ function createReceivedBytesQuery(pod: string) {
     )
 }
 
-function createTransmitBytesQuery(pod: string) {
+function createTransmitBytesQuery(filters: Labels) {
     return PromQL.sort('desc',
         PromQL.sum(
             PromQL.rate(
@@ -31,7 +31,7 @@ function createTransmitBytesQuery(pod: string) {
                     PromQL.metric(
                         Metrics.containerNetworkTransmitBytesTotal.name,
                     )
-                    .withLabelMatches(Metrics.containerNetworkTransmitBytesTotal.labels.pod, pod)
+                    .withLabels(filters)
                     .withLabelEquals('cluster', '$cluster'),
                 '$__rate_interval',
                 )
@@ -42,7 +42,7 @@ function createTransmitBytesQuery(pod: string) {
     )
 }
 
-export function getNetworkPanel(pod: string) {
+export function NetworkUsagePanel(filters: Labels) {
     return PanelBuilders
         .timeseries()
         .setTitle('Network IO')
@@ -55,17 +55,17 @@ export function getNetworkPanel(pod: string) {
             queries: [
                 {
                     refId: 'received_bytes',
-                    expr: createReceivedBytesQuery(pod).stringify(),
+                    expr: createReceivedBytesQuery(filters).stringify(),
                     instant: false,
                     timeseries: true,
-                    legendFormat: 'Receive {{container}}'
+                    legendFormat: 'Receive {{pod}} {{container}}'
                 },
                 {
                     refId: 'transmit_bytes',
-                    expr: createTransmitBytesQuery(pod).stringify(),
+                    expr: createTransmitBytesQuery(filters).stringify(),
                     instant: false,
                     timeseries: true,
-                    legendFormat: 'Transmit {{container}}'
+                    legendFormat: 'Transmit {{pod}} {{container}}'
                 },
             ],
         }))

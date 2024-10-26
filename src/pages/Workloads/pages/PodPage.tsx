@@ -6,11 +6,11 @@ import { getContainersScene } from "../components/ContainersTable/ContainersTabl
 import { usePluginJsonData } from "utils/utils.plugin";
 import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
 import { AlertsTable } from "components/AlertsTable";
-import { getNetworkPanel } from "../components/NetworkUsagePanel";
 import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
 import { MatchOperators } from "common/promql";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { CPUUsagePanel } from "../components/CPUUsagePanel";
+import { NetworkUsagePanel } from "../components/NetworkUsagePanel";
 
 export function getPodMemoryPanel(pod: string) {
     return MemoryUsagePanel({
@@ -116,7 +116,12 @@ function getScene(pod: string) {
                     height: 300,
                     children: [
                         new SceneFlexItem({
-                            body: getNetworkPanel(pod),
+                            body: NetworkUsagePanel({
+                                pod: {
+                                    operator: MatchOperators.EQUALS,
+                                    value: pod,
+                                },
+                            }),
                         })
                     ],
                 }),
