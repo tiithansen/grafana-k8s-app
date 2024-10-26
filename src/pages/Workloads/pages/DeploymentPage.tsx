@@ -13,7 +13,6 @@ import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { AlertsTable } from "components/AlertsTable";
 import { Labels, MatchOperators } from "common/promql";
 import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
-import { Network } from "pages/Network";
 import { NetworkUsagePanel } from "../components/NetworkUsagePanel";
 
 const REPLICASET_HASH_PATTERN='[a-z0-9]{8,10}'
