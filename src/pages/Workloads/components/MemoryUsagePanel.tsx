@@ -95,7 +95,7 @@ export function MemoryUsagePanel(filters: Labels, options: MemoryUsagePanelOptio
 
     return PanelBuilders
         .timeseries()
-        .setTitle('Memory')
+        .setTitle(`Memory Usage ${options.mode === 'pod' ? 'Per Container' : 'Combined'}`)
         .setUnit('bytes')
         .setData(new SceneQueryRunner({
             datasource: {

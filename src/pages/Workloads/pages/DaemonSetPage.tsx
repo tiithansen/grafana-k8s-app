@@ -13,6 +13,7 @@ import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { AlertsTable } from "components/AlertsTable";
 import { LegendDisplayMode } from "@grafana/schema";
 import { Labels, MatchOperators } from "common/promql";
+import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
 
 function getPods(daemonset: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
@@ -155,7 +156,7 @@ function getScene(daemonset: string, namespace = '$namespace') {
                 new SceneFlexLayout({
                     direction: 'row',
                     children: [
-                        new Heading({ title: 'Resource Usage (Combined)'})
+                        new Heading({ title: 'CPU'})
                     ]
                 }),
                 new SceneFlexLayout({
@@ -165,23 +166,35 @@ function getScene(daemonset: string, namespace = '$namespace') {
                         CPUUsagePanel(commonLabels, {
                             mode: 'combined'
                         }),
-                        MemoryUsagePanel(commonLabels, {
-                            mode: 'combined'
-                        }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Resource Usage (per Pod)'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
                         CPUUsagePanel(commonLabels, {
                             mode: 'pod'
+                        }),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 400,
+                    children: [
+                        CPUThrottlingPanel(commonLabels, {
+                            mode: 'combined'   
+                        }),
+                        CPUThrottlingPanel(commonLabels, {
+                            mode: 'pod'   
+                        }),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Memory'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 400,
+                    children: [
+                        MemoryUsagePanel(commonLabels, {
+                            mode: 'combined'
                         }),
                         MemoryUsagePanel(commonLabels, {
                             mode: 'pod'

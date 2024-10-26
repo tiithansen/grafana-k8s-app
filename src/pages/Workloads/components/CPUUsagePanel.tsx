@@ -103,7 +103,7 @@ export function CPUUsagePanel(filters: Labels, options: CPUUsagePanelOptions) {
 
     return PanelBuilders
         .timeseries()
-        .setTitle('CPU')
+        .setTitle(`CPU Usage ${options.mode === 'pod' ? 'Per Pod' : 'Combined'}`)
         .setData(new SceneQueryRunner({
             datasource: {
                 uid: '$datasource',

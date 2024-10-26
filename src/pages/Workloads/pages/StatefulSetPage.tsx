@@ -12,6 +12,7 @@ import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { AlertsTable } from "components/AlertsTable";
 import { Labels, MatchOperators } from "common/promql";
+import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
 
 function getPods(statefulset: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
@@ -159,7 +160,7 @@ function getScene(statefulset: string, namespace = '$namespace') {
                 new SceneFlexLayout({
                     direction: 'row',
                     children: [
-                        new Heading({ title: 'Resource Usage (Combined)'})
+                        new Heading({ title: 'CPU'})
                     ]
                 }),
                 new SceneFlexLayout({
@@ -169,23 +170,35 @@ function getScene(statefulset: string, namespace = '$namespace') {
                         CPUUsagePanel(commonFilters, {
                             mode: 'combined'
                         }),
-                        MemoryUsagePanel(commonFilters, {
-                            mode: 'combined'
-                        }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Resource Usage (per Pod)'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
                         CPUUsagePanel(commonFilters, {
                             mode: 'pod'
+                        }),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 400,
+                    children: [
+                        CPUThrottlingPanel(commonFilters, {
+                            mode: 'combined'   
+                        }),
+                        CPUThrottlingPanel(commonFilters, {
+                            mode: 'pod'   
+                        }),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Memory'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 400,
+                    children: [
+                        MemoryUsagePanel(commonFilters, {
+                            mode: 'combined'
                         }),
                         MemoryUsagePanel(commonFilters, {
                             mode: 'pod'

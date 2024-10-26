@@ -1,216 +1,48 @@
-import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
+import { EmbeddedScene, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
-import { LegendDisplayMode } from "@grafana/schema";
 import { createResourceLabels } from "../components/ResourceLabels";
 import { getContainersScene } from "../components/ContainersTable/ContainersTable";
 import { usePluginJsonData } from "utils/utils.plugin";
 import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
-import { Metrics } from "metrics/metrics";
 import { AlertsTable } from "components/AlertsTable";
 import { getNetworkPanel } from "../components/NetworkUsagePanel";
+import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
+import { MatchOperators } from "common/promql";
+import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
+import { CPUUsagePanel } from "../components/CPUUsagePanel";
 
 export function getPodMemoryPanel(pod: string) {
-    return PanelBuilders
-        .timeseries()
-        .setTitle('Memory')
-        .setUnit('bytes')
-        .setData(new SceneQueryRunner({
-            datasource: {
-                uid: '$datasource',
-                type: 'prometheus',
-            },
-            queries: [
-                {
-                    refId: 'memory_usage',
-                    expr: `
-                        max(
-                            ${Metrics.containerMemoryWorkingSetBytes.name}{
-                                ${Metrics.containerMemoryWorkingSetBytes.labels.pod}="${pod}",
-                                ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
-                                cluster="$cluster",
-                            }
-                        ) by (
-                            ${Metrics.containerMemoryWorkingSetBytes.labels.pod},
-                            ${Metrics.containerMemoryWorkingSetBytes.labels.container}
-                        )`,
-                    instant: false,
-                    timeseries: true,
-                    legendFormat: 'Usage {{container}}'
-                },
-                {
-                    refId: 'memory_requests',
-                    expr: `
-                        max(
-                            ${Metrics.kubePodContainerResourceRequests.name}{
-                                ${Metrics.kubePodContainerResourceRequests.labels.resource}="memory",
-                                ${Metrics.kubePodContainerResourceRequests.labels.pod}="${pod}",
-                                ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
-                                cluster="$cluster"
-                            }
-                        ) by (
-                            ${Metrics.kubePodContainerResourceRequests.labels.pod},
-                            ${Metrics.kubePodContainerResourceRequests.labels.container}
-                        )`,
-                    instant: false,
-                    timeseries: true,
-                    legendFormat: 'Requests {{container}}'
-                },
-                {
-                    refId: 'memory_limit',
-                    expr: `
-                        max(
-                            ${Metrics.kubePodContainerResourceLimits.name}{
-                                ${Metrics.kubePodContainerResourceLimits.labels.resource}="memory",
-                                ${Metrics.kubePodContainerResourceLimits.labels.pod}="${pod}",
-                                ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
-                                cluster="$cluster"
-                            }
-                        ) by (${Metrics.kubePodContainerResourceLimits.labels.pod}, ${Metrics.kubePodContainerResourceLimits.labels.container})`,
-                    instant: false,
-                    timeseries: true,
-                    legendFormat: 'Limits {{container}}'
-                }
-            ],
-        }))
-        .setOverrides((builder) => {
-            builder.matchFieldsByQuery('memory_requests')
-                .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [5, 5] })
-                .overrideCustomFieldConfig('fillOpacity', 10)
-            builder.matchFieldsByQuery('memory_limit')
-                .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [20, 5] })
-                .overrideCustomFieldConfig('fillOpacity', 10)
-        })
-        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
-        .build()
+    return MemoryUsagePanel({
+        pod: {
+            operator: MatchOperators.EQUALS,
+            value: pod,
+        },
+    }, {
+        mode: 'pod',
+    });
 }
 
 export function getPodCPUPanel(pod: string) {
-    return PanelBuilders
-        .timeseries()
-        .setTitle('CPU')
-        .setData(new SceneQueryRunner({
-            datasource: {
-                uid: '$datasource',
-                type: 'prometheus',
-            },
-            queries: [
-                {
-                    refId: 'cpu_usage',
-                    expr: `
-                        max(
-                            rate(
-                                ${Metrics.containerCpuUsageSecondsTotal.name}{
-                                    ${Metrics.containerCpuUsageSecondsTotal.labels.pod}="${pod}",
-                                    ${Metrics.containerCpuUsageSecondsTotal.labels.container}!="",
-                                    cluster="$cluster",
-                                }[$__rate_interval]
-                            )
-                        ) by (
-                            ${Metrics.containerCpuUsageSecondsTotal.labels.pod},
-                            ${Metrics.containerCpuUsageSecondsTotal.labels.container}
-                        )`,
-                    instant: false,
-                    timeseries: true,
-                    legendFormat: 'Usage {{container}}'
-                },
-                {
-                    refId: 'cpu_requests',
-                    expr: `
-                        max(
-                            ${Metrics.kubePodContainerResourceRequests.name}{
-                                ${Metrics.kubePodContainerResourceRequests.labels.resource}="cpu",
-                                ${Metrics.kubePodContainerResourceRequests.labels.pod}="${pod}",
-                                ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
-                                cluster="$cluster"
-                            }
-                        ) by (
-                            ${Metrics.kubePodContainerResourceRequests.labels.pod},
-                            ${Metrics.kubePodContainerResourceRequests.labels.container}
-                        )`,
-                    instant: false,
-                    timeseries: true,
-                    legendFormat: 'Requests {{container}}'
-                },
-                {
-                    refId: 'cpu_limit',
-                    expr: `
-                        max(
-                            ${Metrics.kubePodContainerResourceLimits.name}{
-                                ${Metrics.kubePodContainerResourceLimits.labels.resource}="cpu",
-                                ${Metrics.kubePodContainerResourceLimits.labels.pod}="${pod}",
-                                ${Metrics.kubePodContainerResourceLimits.labels.container}!="",
-                                cluster="$cluster"
-                            }
-                        ) by (
-                            ${Metrics.kubePodContainerResourceLimits.labels.pod},
-                            ${Metrics.kubePodContainerResourceLimits.labels.container}
-                        )`,
-                    instant: false,
-                    timeseries: true,
-                    legendFormat: 'Limits {{container}}'
-                }
-            ],
-        }))
-        .setOverrides((builder) => {
-            builder.matchFieldsByQuery('cpu_requests')
-                .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [5, 5] })
-                .overrideCustomFieldConfig('fillOpacity', 10)
-            builder.matchFieldsByQuery('cpu_limit')
-                .overrideCustomFieldConfig('lineStyle', { fill: 'dash', dash: [20, 5] })
-                .overrideCustomFieldConfig('fillOpacity', 10)
-        })
-        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
-        .build()
+    return CPUUsagePanel({
+        pod: {
+            operator: MatchOperators.EQUALS,
+            value: pod,
+        },
+    }, {
+        mode: 'pod',
+    });
 }
 
 function getCPUThrottling(pod: string) {
-    return PanelBuilders
-        .timeseries()
-        .setTitle('CPU Throttling')
-        .setUnit('percent')
-        .setData(new SceneQueryRunner({
-            datasource: {
-                uid: '$datasource',
-                type: 'prometheus',
-            },
-            queries: [
-                {
-                    refId: 'throttling',
-                    expr: `
-                        (
-                            sum(
-                                rate(
-                                    ${Metrics.containerCpuCfsThrottledPeriodsTotal.name}{
-                                        ${Metrics.containerCpuCfsThrottledPeriodsTotal.labels.container}!="",
-                                        ${Metrics.containerCpuCfsThrottledPeriodsTotal.labels.pod}="${pod}",
-                                        cluster="$cluster"
-                                    }[$__rate_interval]
-                                )
-                            ) by (${Metrics.containerCpuCfsThrottledPeriodsTotal.labels.container})
-                            /
-                            sum(
-                                rate(
-                                    ${Metrics.containerCpuCfsPeriodsTotal.name}{
-                                        ${Metrics.containerCpuCfsPeriodsTotal.labels.container}!="",
-                                        ${Metrics.containerCpuCfsPeriodsTotal.labels.pod}="${pod}",
-                                        cluster="$cluster"
-                                    }[$__rate_interval]
-                                )
-                            ) by (${Metrics.containerCpuCfsPeriodsTotal.labels.container})
-                        ) * 100 > 0.01`,
-                    instant: false,
-                    timeseries: true,
-                    legendFormat: 'Throttling {{container}}'
-                },
-            ],
-        }))
-        .setOverrides((builder) => {
-            builder.matchFieldsByQuery('throttling')
-                .overrideCustomFieldConfig('fillOpacity', 10)
-        })
-        .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
-        .build()
+    return CPUThrottlingPanel({
+        pod: {
+            operator: MatchOperators.EQUALS,
+            value: pod,
+        },
+    }, {
+        mode: 'pod',
+    });
 }
 
 function getScene(pod: string) {

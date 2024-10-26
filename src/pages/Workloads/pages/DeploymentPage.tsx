@@ -12,6 +12,7 @@ import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { AlertsTable } from "components/AlertsTable";
 import { Labels, MatchOperators } from "common/promql";
+import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
 
 const REPLICASET_HASH_PATTERN='[a-z0-9]{8,10}'
 const DEPLOYMENT_HASH_PATTERN=`${REPLICASET_HASH_PATTERN}-[a-z0-9]{5}`
@@ -166,7 +167,7 @@ function getScene(deployment: string, namespace = '$namespace') {
                 new SceneFlexLayout({
                     direction: 'row',
                     children: [
-                        new Heading({ title: 'Resource Usage (Combined)'})
+                        new Heading({ title: 'CPU'})
                     ]
                 }),
                 new SceneFlexLayout({
@@ -176,23 +177,35 @@ function getScene(deployment: string, namespace = '$namespace') {
                         CPUUsagePanel(commonFilters, {
                             mode: 'combined'   
                         }),
-                        MemoryUsagePanel(commonFilters, {
-                            mode: 'combined'
+                        CPUUsagePanel(commonFilters, {
+                            mode: 'pod'   
                         }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Resource Usage (per Pod)'})
                     ]
                 }),
                 new SceneFlexLayout({
                     direction: 'row',
                     minHeight: 400,
                     children: [
-                        CPUUsagePanel(commonFilters, {
+                        CPUThrottlingPanel(commonFilters, {
+                            mode: 'combined'   
+                        }),
+                        CPUThrottlingPanel(commonFilters, {
                             mode: 'pod'   
+                        }),
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Memory'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    minHeight: 400,
+                    children: [
+                        MemoryUsagePanel(commonFilters, {
+                            mode: 'combined'
                         }),
                         MemoryUsagePanel(commonFilters, {
                             mode: 'pod'

@@ -50,28 +50,7 @@ enum BinaryOperators {
     POW = '^',
 }
 
-class PromQLBinaryExpression extends PromQLExpression {
 
-    constructor(private operator: BinaryOperators, private left: PromQLExpression) {
-        super();
-    }
-
-    stringify() {
-        return `${this.left.stringify()} ${this.operator} `;
-    }
-
-    ignoring(labels: string[]) {
-        return new PromQLMatchingModifier(MatchingModifiers.IGNORING, labels, this);
-    }
-
-    on(labels: string[]) {
-        return new PromQLMatchingModifier(MatchingModifiers.ON, labels, this);
-    }
-
-    withScalar(scalar: number) {
-        return new PromQLScalarExpression(scalar, this);
-    }
-}
 
 
 export abstract class PromQLVectorExpression extends PromQLExpression {
@@ -88,7 +67,7 @@ export abstract class PromQLVectorExpression extends PromQLExpression {
         return new PromQLBinaryExpression(BinaryOperators.MULTIPLY, this);
     }
 
-    divide() {
+    divide(right?: PromQLExpression) {
         return new PromQLBinaryExpression(BinaryOperators.DIVIDE, this);
     }
 
@@ -110,6 +89,40 @@ export abstract class PromQLVectorExpression extends PromQLExpression {
 
     equals(value: number) {
         return new PromQLComparisonExpression(ComparisonOperators.EQUALS, this, new PromQLScalarExpression(value));
+    }
+}
+
+class PromQLBinaryExpression extends PromQLVectorExpression {
+
+    private right?: PromQLExpression;
+
+    constructor(private operator: BinaryOperators, private left: PromQLExpression) {
+        super();
+    }
+
+    stringify() {
+        if (this.right) {
+            return `${this.left.stringify()} ${this.operator} ${this.right.stringify()}`;
+        } else {
+            return `${this.left.stringify()} ${this.operator}`;
+        }
+    }
+
+    ignoring(labels: string[]) {
+        return new PromQLMatchingModifier(MatchingModifiers.IGNORING, labels, this);
+    }
+
+    on(labels: string[]) {
+        return new PromQLMatchingModifier(MatchingModifiers.ON, labels, this);
+    }
+
+    withScalar(scalar: number) {
+        return new PromQLScalarExpression(scalar, this);
+    }
+
+    withExpression(expr: PromQLExpression) {
+        this.right = expr;
+        return PromQL.parenthesis(this);
     }
 }
 
