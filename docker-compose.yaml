@@ -1,15 +1,17 @@
 services:
   grafana:
-    container_name: 'k8s-app-11.0.0'
+    container_name: 'k8s-app-11.3.0'
     platform: 'linux/amd64'
+    image: k8s-app:11.3.0
     build:
       context: ./.config
       dockerfile: ./Dockerfile.localdev
       args:
         grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
-        grafana_version: ${GRAFANA_VERSION:-11.0.0}
+        grafana_version: ${GRAFANA_VERSION:-11.3.0}
     ports:
       - 3000:3000/tcp
+    network_mode: "host"
     volumes:
       - ./dist:/var/lib/grafana/plugins/k8s-app
       - ./provisioning:/etc/grafana/provisioning
