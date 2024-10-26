@@ -15,9 +15,16 @@ import {
 } from '@tanstack/react-table';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
-import { Icon, Pagination, PopoverContent, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Pagination, PopoverContent, Select, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getColumns } from './Utils';
+
+const DEFAULT_PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [
+  { label: '10', value: 10 },
+  { label: '20', value: 20 },
+  { label: '50', value: 50 },
+];
 
 const getStyles = (theme: GrafanaTheme2) => {
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
@@ -29,6 +36,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       width: '100%',
       overflowX: 'auto',
+    }),
+    paginationContainer: css({
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'end',
+      alignItems: 'center',
+      padding: theme.spacing(2),
+      'li' : {
+        marginBottom: '0px'
+      },
     }),
     table: css({
       borderRadius: theme.shape.radius.default,
@@ -181,7 +198,7 @@ export function InteractiveTable<TableData extends object>({
   data,
   getRowId,
   headerTooltips,
-  pageSize = 0,
+  pageSize = DEFAULT_PAGE_SIZE,
   renderExpandedRow,
   showExpandAll = false,
   onSort,
@@ -264,9 +281,9 @@ export function InteractiveTable<TableData extends object>({
             );
           })}
         </thead>
-
         <tbody>
           { tableInstance.getRowModel().rows.map((row) => {
+            
 
             const isExpanded = row.getIsExpanded();
 
@@ -291,13 +308,21 @@ export function InteractiveTable<TableData extends object>({
           })}
         </tbody>
       </table>
-      <span>
+      <div
+        className={styles.paginationContainer}
+      >
+        <Select
+          width={10}
+          onChange={(value) => tableInstance.setPageSize(value.value || DEFAULT_PAGE_SIZE)}
+          options={PAGE_SIZE_OPTIONS}
+          value={tableInstance.getState().pagination.pageSize}
+        />
         <Pagination
           currentPage={tableInstance.getState().pagination.pageIndex + 1}
           numberOfPages={tableInstance.getPageCount()}
           onNavigate={(toPage) => tableInstance.setPageIndex(toPage - 1)}
         />
-      </span>
+      </div>
     </div>
   );
 }
