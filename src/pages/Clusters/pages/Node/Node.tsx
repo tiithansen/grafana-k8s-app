@@ -20,6 +20,8 @@ import { LabelFilters } from "common/queryHelpers";
 import { getPodsScene } from "pages/Workloads/tabs/Pods/Pods";
 import { Metrics } from "metrics/metrics";
 import { LegendDisplayMode } from "@grafana/schema";
+import { CPUThrottlingPanel } from "pages/Workloads/components/CPUThrottlingPanel";
+import { MatchOperators } from "common/promql";
 
 function getScene(node: string) {
     return new EmbeddedScene({
@@ -49,12 +51,29 @@ function getScene(node: string) {
                 }),
                 new SceneFlexLayout({
                     direction: 'row',
+                    height: 300,
+                    children: [
+                        new SceneFlexItem({
+                            body: CPUThrottlingPanel({
+                                node: {
+                                    operator: MatchOperators.EQUALS,
+                                    value: node
+                                }
+                            }, {
+                                mode: 'pod'
+                            })
+                        })
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
                     children: [
                         new SceneFlexItem({
                             body: getPods(node)
                         })
                     ]
                 }),
+                
             ]
         }),
     })
