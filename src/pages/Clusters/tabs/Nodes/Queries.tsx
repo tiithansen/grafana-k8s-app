@@ -4,6 +4,7 @@ import { Metrics } from "metrics/metrics";
 import { TableRow } from "./types";
 import { ColumnSortingConfig, QueryBuilder } from "components/AsyncTable";
 import { SortingState } from "common/sortingHelpers";
+import { PromQL } from "common/promql";
 
 export class NodesQueryBuilder implements QueryBuilder<TableRow> {
 
@@ -34,119 +35,156 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
         })
     }
 
+    createMemoryTotalQuery(cluster: string, nodes: string) {
+        return PromQL.max(
+            PromQL.metric(
+                Metrics.nodeMemoryMemTotalBytes.name,
+            )
+            .withLabelMatches(Metrics.nodeMemoryMemTotalBytes.labels.instance, nodes)
+            .withLabelEquals('cluster', cluster)
+        ).by([
+            Metrics.nodeMemoryMemTotalBytes.labels.instance,
+            'cluster'
+        ]);
+    }
+
+    createMemoryFreeQuery(cluster: string, nodes: string) {
+        return PromQL.max(
+            PromQL.metric(
+                Metrics.nodeMemoryMemAvailableBytes.name,
+            )
+            .withLabelMatches(Metrics.nodeMemoryMemAvailableBytes.labels.instance, nodes)
+            .withLabelEquals('cluster', cluster)
+        ).by([
+            Metrics.nodeMemoryMemAvailableBytes.labels.instance,
+            'cluster'
+        ]);
+    }
+
+    createMemoryRequestsQuery(cluster: string, nodes: string) {
+        return PromQL.sum(
+            PromQL.metric(
+                Metrics.kubePodContainerResourceRequests.name,
+            )
+            .withLabelEquals(Metrics.kubePodContainerResourceRequests.labels.resource, 'memory')
+            .withLabelMatches(Metrics.kubePodContainerResourceRequests.labels.node, nodes)
+            .withLabelNotEquals(Metrics.kubePodContainerResourceRequests.labels.container, '')
+            .withLabelEquals('cluster', cluster)
+        ).by([
+            Metrics.kubePodContainerResourceRequests.labels.node
+        ]);
+    }
+
+    createCoresQuery(cluster: string, nodes: string) {
+        return PromQL.max(
+            PromQL.metric(
+                Metrics.machineCpuCores.name,
+            )
+            .withLabelMatches(Metrics.machineCpuCores.labels.node, nodes)
+            .withLabelEquals('cluster', cluster)
+        ).by([
+            Metrics.machineCpuCores.labels.node
+        ]);
+    }
+
+    createCpuRequestsQuery(cluster: string, nodes: string) {
+        return PromQL.sum(
+            PromQL.metric(
+                Metrics.kubePodContainerResourceRequests.name,
+            )
+            .withLabelEquals(Metrics.kubePodContainerResourceRequests.labels.resource, 'cpu')
+            .withLabelMatches(Metrics.kubePodContainerResourceRequests.labels.node, nodes)
+            .withLabelNotEquals(Metrics.kubePodContainerResourceRequests.labels.container, '')
+            .withLabelEquals('cluster', cluster)
+        ).by([
+            Metrics.kubePodContainerResourceRequests.labels.node
+        ]);
+    }
+
+    createCpuUsageQuery(cluster: string, nodes: string) {
+        return `(
+            sum by(${Metrics.nodeCpuSecondsTotal.labels.instance}) (
+                irate(
+                    ${Metrics.nodeCpuSecondsTotal.name}{
+                        ${Metrics.nodeCpuSecondsTotal.labels.instance}=~"${nodes}",
+                        ${Metrics.nodeCpuSecondsTotal.labels.mode}!="idle",
+                        cluster="${cluster}"
+                    }[$__rate_interval]
+                )
+            )
+            /
+            on (${Metrics.nodeCpuSecondsTotal.labels.instance}) group_left sum by (${Metrics.nodeCpuSecondsTotal.labels.instance}) (
+                (
+                    irate(
+                        ${Metrics.nodeCpuSecondsTotal.name}{
+                            ${Metrics.nodeCpuSecondsTotal.labels.instance}=~"${nodes}",
+                            cluster="${cluster}",
+                        }[$__rate_interval]
+                    )
+                )
+            )
+        ) * 100`;
+    }
+
+    createPodCountQuery(cluster: string, nodes: string) {
+        return PromQL.count(
+            PromQL.metric(
+                Metrics.kubePodInfo.name,
+            )
+            .withLabelMatches(Metrics.kubePodInfo.labels.node, nodes)
+            .withLabelEquals('cluster', cluster)
+        ).by([
+            Metrics.kubePodInfo.labels.node
+        ]);
+    }
+
     rowQueryBuilder(rows: TableRow[], variables: SceneVariableSet | SceneVariables) {
         const nodes = rows.map(row => row.internal_ip + ":.*").join('|');
         const nodeNames = rows.map(row => row.node).join('|');
         const cluster = resolveVariable(variables, 'cluster');
 
+        const clusterValue = cluster?.toString() || '';
+
         return [
             {
-                    refId: 'memory_total',
-                    expr: `
-                        max(
-                            ${Metrics.nodeMemoryMemTotalBytes.name}{
-                                ${Metrics.nodeMemoryMemTotalBytes.labels.instance}=~"${nodes}",
-                                cluster="${cluster}"
-                            }
-                        ) by (
-                            ${Metrics.nodeMemoryMemTotalBytes.labels.instance},
-                            cluster
-                        )`,
-                    instant: true,
-                    format: 'table'
+                refId: 'memory_total',
+                expr: this.createMemoryTotalQuery(clusterValue, nodes).stringify(),
+                instant: true,
+                format: 'table'
             },
             {
-                    refId: 'memory_free',
-                    expr: `
-                        max(
-                            ${Metrics.nodeMemoryMemAvailableBytes.name}{
-                                ${Metrics.nodeMemoryMemAvailableBytes.labels.instance}=~"${nodes}",
-                                cluster="${cluster}"
-                            }
-                        ) by (
-                            ${Metrics.nodeMemoryMemAvailableBytes.labels.instance},
-                            cluster
-                        )`,
-                    instant: true,
-                    format: 'table'
-                },
-                {
-                    refId: 'memory_requests',
-                    expr: `
-                        sum(
-                            ${Metrics.kubePodContainerResourceRequests.name}{
-                                ${Metrics.kubePodContainerResourceRequests.labels.resource}="memory",
-                                ${Metrics.kubePodContainerResourceRequests.labels.node}=~"${nodeNames}",
-                                ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
-                                cluster="${cluster}"
-                            }
-                        ) by (${Metrics.kubePodContainerResourceRequests.labels.node})`,
-                    instant: true,
-                    format: 'table'
-                },
-                {
-                    refId: 'cores',
-                    expr: `
-                        max(
-                            ${Metrics.machineCpuCores.name}{
-                                ${Metrics.machineCpuCores.labels.node}=~"${nodeNames}",
-                                cluster="${cluster}"
-                            }
-                        ) by (${Metrics.machineCpuCores.labels.node})`,    
-                    instant: true,
-                    format: 'table'
+                refId: 'memory_free',
+                expr: this.createMemoryFreeQuery(clusterValue, nodes).stringify(),
+                instant: true,
+                format: 'table'
+            },
+            {
+                refId: 'memory_requests',
+                expr: this.createMemoryRequestsQuery(clusterValue, nodeNames).stringify(),
+                instant: true,
+                format: 'table'
+            },
+            {
+                refId: 'cores',
+                expr: this.createCoresQuery(clusterValue, nodeNames).stringify(),   
+                instant: true,
+                format: 'table'
             },
             {
                 refId: 'cpu_requests',
-                expr: `
-                    sum(
-                        ${Metrics.kubePodContainerResourceRequests.name}{
-                            ${Metrics.kubePodContainerResourceRequests.labels.resource}="cpu",
-                            ${Metrics.kubePodContainerResourceRequests.labels.node}=~"${nodeNames}",
-                            ${Metrics.kubePodContainerResourceRequests.labels.container}!="",
-                            cluster="${cluster}"
-                        }
-                    ) by (${Metrics.kubePodContainerResourceRequests.labels.node})`,
+                expr: this.createCpuRequestsQuery(clusterValue, nodeNames).stringify(),
                 instant: true,
                 format: 'table'
             },
             {
                 refId: 'cpu_usage',
-                expr: `
-                    (
-                        sum by(${Metrics.nodeCpuSecondsTotal.labels.instance}) (
-                            irate(
-                                ${Metrics.nodeCpuSecondsTotal.name}{
-                                    ${Metrics.nodeCpuSecondsTotal.labels.instance}=~"${nodes}",
-                                    ${Metrics.nodeCpuSecondsTotal.labels.mode}!="idle",
-                                    cluster="${cluster}"
-                                }[$__rate_interval]
-                            )
-                        )
-                        /
-                        on (${Metrics.nodeCpuSecondsTotal.labels.instance}) group_left sum by (${Metrics.nodeCpuSecondsTotal.labels.instance}) (
-                            (
-                                irate(
-                                    ${Metrics.nodeCpuSecondsTotal.name}{
-                                        ${Metrics.nodeCpuSecondsTotal.labels.instance}=~"${nodes}",
-                                        cluster="${cluster}",
-                                    }[$__rate_interval]
-                                )
-                            )
-                        )
-                    ) * 100`,
+                expr: this.createCpuUsageQuery(clusterValue, nodes),
                 instant: true,
                 format: 'table'
             },
             {
                 refId: 'pod_count',
-                expr: `
-                    count(
-                        ${Metrics.kubePodInfo.name}{
-                            ${Metrics.kubePodInfo.labels.node}=~"${nodeNames}",
-                            cluster="${cluster}"
-                        }
-                    ) by (${Metrics.kubePodInfo.labels.node})`,
+                expr: this.createPodCountQuery(clusterValue, nodeNames).stringify(),
                 instant: true,
                 format: 'table'
             }
