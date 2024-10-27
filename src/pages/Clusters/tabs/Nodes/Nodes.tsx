@@ -67,7 +67,7 @@ const columns: Array<Column<TableRow>> = [
         sortingConfig: {
             enabled: true,
             type: 'label',
-            local: true
+            local: false
         }
     },
     {
@@ -219,7 +219,7 @@ function asyncDataRowMapper(row: TableRow, asyncRowData: Record<string, number[]
     row.cpu = {
         usage: getSeriesValue(asyncRowData, 'cpu_usage', serieMatcherByIPPredicate(row)),
         requests: getSeriesValue(asyncRowData, 'cpu_requests', serieMatcherByNodeNamePredicate(row)),
-        cores: getSeriesValue(asyncRowData, 'cores', serieMatcherByNodeNamePredicate(row))
+        cores: getSeriesValue(asyncRowData, 'cpu_cores', serieMatcherByNodeNamePredicate(row))
     }
 
     row.pod_count = getSeriesValue(asyncRowData, 'pod_count', serieMatcherByNodeNamePredicate(row))

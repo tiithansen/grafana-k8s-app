@@ -4,11 +4,104 @@ import { Metrics } from "metrics/metrics";
 import { TableRow } from "./types";
 import { ColumnSortingConfig, QueryBuilder } from "components/AsyncTable";
 import { SortingState } from "common/sortingHelpers";
-import { PromQL } from "common/promql";
+import { Labels, MatchOperators, PromQL, PromQLExpression } from "common/promql";
 
 export class NodesQueryBuilder implements QueryBuilder<TableRow> {
 
     rootQueryBuilder(variables: SceneVariableSet | SceneVariables, sorting: SortingState, sortingConfig?: ColumnSortingConfig<TableRow> | undefined) {
+
+        const baseQuery = PromQL.group(
+            PromQL.metric(
+                Metrics.kubeNodeInfo.name,
+            )
+            .withLabelEquals('cluster', '$cluster')
+            .withLabelMatches(Metrics.kubeNodeInfo.labels.node, '.*$search.*')
+        ).by([
+            Metrics.kubeNodeInfo.labels.internalIP,
+            Metrics.kubeNodeInfo.labels.node,
+            'cluster'
+        ]);
+
+        const remoteSort = sortingConfig && sortingConfig.local === false
+
+        let finalQuery: PromQLExpression = baseQuery;
+        if (remoteSort) {
+            switch (sorting.columnId) {
+                // Node name based queries
+                case 'memory_requests':
+                    finalQuery = PromQL.sort(
+                        sorting.direction,
+                        baseQuery
+                            .multiply()
+                            .on(['node'])
+                            .groupRight(
+                                [
+                                    'internal_ip'
+                                ],
+                                this.createMemoryRequestsQuery('$cluster', {
+                                    'node': {
+                                        operator: MatchOperators.NOT_EQUALS,
+                                        value: ''
+                                    }
+                                })
+                            ).or(
+                                baseQuery.multiply().withScalar(0)
+                            )
+                        )
+                    break;
+                case 'cpu_requests':
+                    finalQuery = PromQL.sort(
+                        sorting.direction,
+                        baseQuery
+                            .multiply()
+                            .on(['node'])
+                            .groupRight(
+                                [
+                                    'internal_ip'
+                                ],
+                                this.createCpuRequestsQuery('$cluster', {})
+                            ).or(
+                                baseQuery.multiply().withScalar(0)
+                            )
+                        )
+                    break;
+                case 'cpu_cores':
+                    finalQuery = PromQL.sort(
+                        sorting.direction,
+                        baseQuery
+                            .multiply()
+                            .on(['node'])
+                            .groupRight(
+                                [
+                                    'internal_ip'
+                                ],
+                                this.createCoresQuery('$cluster', {})
+                            ).or(
+                                baseQuery.multiply().withScalar(0)
+                            )
+                        )
+                    break;
+                case 'pod_count':
+                    finalQuery = PromQL.sort(
+                        sorting.direction,
+                        baseQuery
+                            .multiply()
+                            .on(['node'])
+                            .groupRight(
+                                [
+                                    'internal_ip'
+                                ],
+                                this.createPodCountQuery('$cluster', {})
+                            ).or(
+                                baseQuery.multiply().withScalar(0)
+                            )
+                        )
+                    break;
+                // Node IP based queries
+                // TODO figure out how join using internal_ip
+            }
+        }
+
         return new SceneQueryRunner({
             datasource: {
                 uid: '$datasource',
@@ -17,17 +110,7 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
             queries: [
                 {
                     refId: 'nodes',
-                    expr: `
-                        group(
-                            ${Metrics.kubeNodeInfo.name}{
-                                cluster="$cluster",
-                                ${Metrics.kubeNodeInfo.labels.node}=~".*$search.*"
-                            }
-                        ) by (
-                            ${Metrics.kubeNodeInfo.labels.internalIP},
-                            ${Metrics.kubeNodeInfo.labels.node},
-                            cluster
-                        )`,
+                    expr: finalQuery.stringify(),
                     instant: true,
                     format: 'table'
                 },
@@ -61,43 +144,46 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
         ]);
     }
 
-    createMemoryRequestsQuery(cluster: string, nodes: string) {
+    createMemoryRequestsQuery(cluster: string, additionalLabels: Labels) {
         return PromQL.sum(
             PromQL.metric(
                 Metrics.kubePodContainerResourceRequests.name,
             )
             .withLabelEquals(Metrics.kubePodContainerResourceRequests.labels.resource, 'memory')
-            .withLabelMatches(Metrics.kubePodContainerResourceRequests.labels.node, nodes)
+            .withLabels(additionalLabels)
             .withLabelNotEquals(Metrics.kubePodContainerResourceRequests.labels.container, '')
             .withLabelEquals('cluster', cluster)
         ).by([
-            Metrics.kubePodContainerResourceRequests.labels.node
+            Metrics.kubePodContainerResourceRequests.labels.node,
+            'cluster'
         ]);
     }
 
-    createCoresQuery(cluster: string, nodes: string) {
+    createCoresQuery(cluster: string, additionalLabels: Labels) {
         return PromQL.max(
             PromQL.metric(
                 Metrics.machineCpuCores.name,
             )
-            .withLabelMatches(Metrics.machineCpuCores.labels.node, nodes)
+            .withLabels(additionalLabels)
             .withLabelEquals('cluster', cluster)
         ).by([
-            Metrics.machineCpuCores.labels.node
+            Metrics.machineCpuCores.labels.node,
+            'cluster'
         ]);
     }
 
-    createCpuRequestsQuery(cluster: string, nodes: string) {
+    createCpuRequestsQuery(cluster: string, additionalLabels: Labels) {
         return PromQL.sum(
             PromQL.metric(
                 Metrics.kubePodContainerResourceRequests.name,
             )
             .withLabelEquals(Metrics.kubePodContainerResourceRequests.labels.resource, 'cpu')
-            .withLabelMatches(Metrics.kubePodContainerResourceRequests.labels.node, nodes)
+            .withLabels(additionalLabels)
             .withLabelNotEquals(Metrics.kubePodContainerResourceRequests.labels.container, '')
             .withLabelEquals('cluster', cluster)
         ).by([
-            Metrics.kubePodContainerResourceRequests.labels.node
+            Metrics.kubePodContainerResourceRequests.labels.node,
+            'cluster'
         ]);
     }
 
@@ -126,15 +212,16 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
         ) * 100`;
     }
 
-    createPodCountQuery(cluster: string, nodes: string) {
+    createPodCountQuery(cluster: string, additionalLabels: Labels) {
         return PromQL.count(
             PromQL.metric(
                 Metrics.kubePodInfo.name,
             )
-            .withLabelMatches(Metrics.kubePodInfo.labels.node, nodes)
+            .withLabels(additionalLabels)
             .withLabelEquals('cluster', cluster)
         ).by([
-            Metrics.kubePodInfo.labels.node
+            Metrics.kubePodInfo.labels.node,
+            'cluster'
         ]);
     }
 
@@ -144,6 +231,13 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
         const cluster = resolveVariable(variables, 'cluster');
 
         const clusterValue = cluster?.toString() || '';
+
+        const nodeNamesLabels = {
+            node: {
+                operator: MatchOperators.MATCHES,
+                value: nodeNames
+            }
+        }
 
         return [
             {
@@ -160,19 +254,19 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
             },
             {
                 refId: 'memory_requests',
-                expr: this.createMemoryRequestsQuery(clusterValue, nodeNames).stringify(),
+                expr: this.createMemoryRequestsQuery(clusterValue, nodeNamesLabels).stringify(),
                 instant: true,
                 format: 'table'
             },
             {
-                refId: 'cores',
-                expr: this.createCoresQuery(clusterValue, nodeNames).stringify(),   
+                refId: 'cpu_cores',
+                expr: this.createCoresQuery(clusterValue, nodeNamesLabels).stringify(),   
                 instant: true,
                 format: 'table'
             },
             {
                 refId: 'cpu_requests',
-                expr: this.createCpuRequestsQuery(clusterValue, nodeNames).stringify(),
+                expr: this.createCpuRequestsQuery(clusterValue, nodeNamesLabels).stringify(),
                 instant: true,
                 format: 'table'
             },
@@ -184,7 +278,7 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
             },
             {
                 refId: 'pod_count',
-                expr: this.createPodCountQuery(clusterValue, nodeNames).stringify(),
+                expr: this.createPodCountQuery(clusterValue, nodeNamesLabels).stringify(),
                 instant: true,
                 format: 'table'
             }
