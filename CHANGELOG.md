@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.6.1...v0.7.0) (2024-10-27)
+
+
+### Features
+
+* Add CPU throttling panel to Node page ([8a72b28](https://github.com/tiithansen/grafana-k8s-app/commit/8a72b28531b51e639a6b49967a4fdeed36f85bd3))
+* Add sorting support for Nodes table for metrics which have node name attached ([b258c0d](https://github.com/tiithansen/grafana-k8s-app/commit/b258c0d5e48774369e01dc074dd8d66f6cf48392))
+
 ## [0.6.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.6.0...v0.6.1) (2024-10-26)
 
 
