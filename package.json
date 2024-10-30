@@ -21,7 +21,7 @@
     "@babel/core": "^7.21.4",
     "@grafana/e2e": "11.0.2",
     "@grafana/e2e-selectors": "10.3.3",
-    "@grafana/eslint-config": "^7.0.0",
+    "@grafana/eslint-config": "^8.0.0",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@swc/core": "^1.6.7",
     "@swc/helpers": "^0.5.0",
