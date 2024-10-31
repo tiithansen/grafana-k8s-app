@@ -22,6 +22,8 @@ import { Metrics } from "metrics/metrics";
 import { LegendDisplayMode } from "@grafana/schema";
 import { CPUThrottlingPanel } from "pages/Workloads/components/CPUThrottlingPanel";
 import { MatchOperators } from "common/promql";
+import { NetworkUsagePanel } from "pages/Workloads/components/NetworkUsagePanel";
+import Heading from "components/Heading";
 
 function getScene(node: string) {
     return new EmbeddedScene({
@@ -63,6 +65,32 @@ function getScene(node: string) {
                                 mode: 'pod'
                             })
                         })
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Network'})
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    height: 300,
+                    children: [
+                        new SceneFlexItem({
+                            body: NetworkUsagePanel({
+                                node: {
+                                    operator: MatchOperators.EQUALS,
+                                    value: node
+                                }
+                            })
+                        })
+                    ]
+                }),
+                new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                        new Heading({ title: 'Pods'})
                     ]
                 }),
                 new SceneFlexLayout({
@@ -234,7 +262,7 @@ function getPods(node: string) {
         },
     ]
 
-    return getPodsScene(staticLabelFilters, false, false)
+    return getPodsScene(staticLabelFilters, true, true)
 }
 
 export function NodePage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
