@@ -35,7 +35,7 @@ function getPods(statefulset: string, namespace: string) {
         }
     ]
 
-    return getPodsScene(staticLabelFilters, false, false)
+    return getPodsScene(staticLabelFilters, true, true)
 }
 
 function getReplicasPanel(statefulset: string, namespace: string) {

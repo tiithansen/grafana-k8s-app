@@ -37,7 +37,7 @@ function getPods(deployment: string, namespace: string) {
         }
     ]
 
-    return getPodsScene(staticLabelFilters, false, false)
+    return getPodsScene(staticLabelFilters, true, true)
 }
 
 function getReplicasPanel(deployment: string, namespace: string) {

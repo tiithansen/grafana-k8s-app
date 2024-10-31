@@ -226,7 +226,7 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
     }
 
     rowQueryBuilder(rows: TableRow[], variables: SceneVariableSet | SceneVariables) {
-        const nodes = rows.map(row => row.internal_ip + ":.*").join('|');
+        const internalIPs = rows.map(row => row.internal_ip + ":.*").join('|');
         const nodeNames = rows.map(row => row.node).join('|');
         const cluster = resolveVariable(variables, 'cluster');
 
@@ -242,13 +242,13 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
         return [
             {
                 refId: 'memory_total',
-                expr: this.createMemoryTotalQuery(clusterValue, nodes).stringify(),
+                expr: this.createMemoryTotalQuery(clusterValue, internalIPs).stringify(),
                 instant: true,
                 format: 'table'
             },
             {
                 refId: 'memory_free',
-                expr: this.createMemoryFreeQuery(clusterValue, nodes).stringify(),
+                expr: this.createMemoryFreeQuery(clusterValue, internalIPs).stringify(),
                 instant: true,
                 format: 'table'
             },
@@ -272,7 +272,7 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
             },
             {
                 refId: 'cpu_usage',
-                expr: this.createCpuUsageQuery(clusterValue, nodes),
+                expr: this.createCpuUsageQuery(clusterValue, internalIPs),
                 instant: true,
                 format: 'table'
             },

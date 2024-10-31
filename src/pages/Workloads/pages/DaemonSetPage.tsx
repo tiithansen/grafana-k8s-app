@@ -35,7 +35,7 @@ function getPods(daemonset: string, namespace: string) {
         }
     ]
 
-    return getPodsScene(staticLabelFilters, false, false)
+    return getPodsScene(staticLabelFilters, true, true)
 }
 
 function getNumberPanel(daemonset: string, namespace: string) {
