@@ -63,7 +63,7 @@
     "@emotion/css": "11.13.4",
     "@grafana/data": "10.4.5",
     "@grafana/runtime": "10.4.11",
-    "@grafana/scenes": "^5.21.2",
+    "@grafana/scenes": "^5.23.0",
     "@grafana/schema": "10.4.6",
     "@grafana/ui": "10.4.5",
     "@tanstack/react-table": "^8.17.3",
