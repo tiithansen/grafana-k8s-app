@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.8.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.7.0...v0.8.0) (2024-11-10)
+
+
+### Features
+
+* Add more panels for nginx ingress metrics ([e2df175](https://github.com/tiithansen/grafana-k8s-app/commit/e2df175591a973c700d3b297306367750bdd3ba7))
+* Add network panel to node page and enable pod table filters ([5911bb0](https://github.com/tiithansen/grafana-k8s-app/commit/5911bb0ff9dee6740746b00c606c62b73dc07202))
+* Add timeseries panel to AlertsTable to show how alerts change over time ([9ae3bce](https://github.com/tiithansen/grafana-k8s-app/commit/9ae3bced50e327b3584482f0dd36e7631755ae87))
+* Enable filters for embedded pod tables ([f112a49](https://github.com/tiithansen/grafana-k8s-app/commit/f112a49a3e98c3cbea24d0878b4872ccfca829df))
+* Make it possible to filter alerts based on state ([3281252](https://github.com/tiithansen/grafana-k8s-app/commit/32812520364e15247900f3bdf1185cd830a91754))
+
+
+### Bug Fixes
+
+* Add clusters link to navigation and add instructions how to move app to Infrastrucutre section ([eb169ba](https://github.com/tiithansen/grafana-k8s-app/commit/eb169bae0a223dc2564585f880cad5f6c39fcd2f))
+
 ## [0.7.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.6.1...v0.7.0) (2024-10-27)
 
 
