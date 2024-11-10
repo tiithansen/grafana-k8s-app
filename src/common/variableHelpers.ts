@@ -84,6 +84,25 @@ export function createNamespaceVariable() {
     })
 }
 
+export function createAlertStateVariable() {
+    return new QueryVariable({
+        name: 'alertState',
+        label: 'Alert State',
+        datasource: {
+            uid: '$datasource',
+            type: 'prometheus',
+        },
+        query: {
+            refId: 'alertState',
+            query: `label_values(ALERTS{cluster="$cluster"},alertstate)`,
+        },
+        defaultToAll: true,
+        allValue: '.*',
+        includeAll: true,
+        isMulti: true,
+    })
+}
+
 export function createTimeRange() {
     return new SceneTimeRange({
         from: 'now-1h',

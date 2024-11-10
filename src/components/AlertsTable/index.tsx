@@ -8,7 +8,7 @@ import {
     VariableValueSelectors,
     SceneVariables,
 } from '@grafana/scenes';
-import { createNamespaceVariable } from 'common/variableHelpers';
+import { createAlertStateVariable, createNamespaceVariable } from 'common/variableHelpers';
 import { SortingState } from 'common/sortingHelpers';
 import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
 import { TextColor } from 'common/types';
@@ -137,13 +137,14 @@ class AlertsQueryBuilder implements QueryBuilder<TableRow> {
         const serializedFilters = this.labelFilters ? serializeLabelFilters(this.labelFilters) : '';
         const hasNamespaceVariable = variables.getByName('namespace') !== undefined;
         const hasSearchVariable = variables.getByName('alertSearch') !== undefined;
+        const hasAlertStateVariable = variables.getByName('alertState') !== undefined;
 
         const finalQuery = `
             ALERTS{
                 cluster="$cluster",
                 ${ hasSearchVariable ? `alertname=~"$alertSearch.*",`: '' }
                 ${ hasNamespaceVariable ? `namespace=~"$namespace",` : '' }
-                alertstate="firing",
+                ${ hasAlertStateVariable ? `alertstate=~"$alertState",` : '' }
                 ${serializedFilters}
             }
             * ignoring(alertstate) group_right(alertstate) ALERTS_FOR_STATE{
@@ -179,6 +180,7 @@ export function AlertsTable(labelFilters?: LabelFilters, showVariableControls = 
     const variables = new SceneVariableSet({
         variables: shouldCreateVariables ? [
             createNamespaceVariable(),
+            createAlertStateVariable(),
             new TextBoxVariable({
                 name: 'alertSearch',
                 label: 'Search',
