@@ -7,6 +7,7 @@ import {
     SceneVariableSet,
     VariableValueSelectors,
     SceneVariables,
+    PanelBuilders,
 } from '@grafana/scenes';
 import { createAlertStateVariable, createNamespaceVariable } from 'common/variableHelpers';
 import { SortingState } from 'common/sortingHelpers';
@@ -16,6 +17,7 @@ import { TableRow } from './types';
 import { alertLabelValues } from './utils';
 import { expandedRowSceneBuilder } from './AlertExpandedRow';
 import { LabelFilters, serializeLabelFilters } from 'common/queryHelpers';
+import { LegendDisplayMode } from '@grafana/ui';
 
 interface SeverityColors {
     [key: string]: TextColor;
@@ -175,6 +177,33 @@ class AlertsQueryBuilder implements QueryBuilder<TableRow> {
     }
 }
 
+function alertsTimeseries() {
+    return PanelBuilders.timeseries()
+        .setTitle('Alerts')
+        .setData(new SceneQueryRunner({
+            datasource: {
+                uid: '$datasource',
+                type: 'prometheus',
+            },
+            queries: [
+                {
+                    refId: 'alerts',
+                    expr: `
+                        count(
+                            ALERTS{
+                                cluster="$cluster",
+                                alertstate=~"$alertState",
+                                namespace=~"$namespace",
+                            }
+                        ) by (alertname, namespace, alertstate)`,
+                    legendFormat: '{{alertname}} [{{alertstate}}] - {{namespace}}',
+                }
+            ],
+        }))
+        .setOption('legend', { displayMode: LegendDisplayMode.Table, placement: 'right', calcs: ['mean', 'last', 'max'] })
+        .build()
+}
+
 export function AlertsTable(labelFilters?: LabelFilters, showVariableControls = true, shouldCreateVariables = true) {
 
     const variables = new SceneVariableSet({
@@ -215,7 +244,12 @@ export function AlertsTable(labelFilters?: LabelFilters, showVariableControls = 
             $variables: variables,
             controls: controls,
             body: new SceneFlexLayout({
+                direction: 'column',
                 children: [
+                    new SceneFlexItem({
+                        height: 300,
+                        body: alertsTimeseries(),
+                    }),
                     new SceneFlexItem({
                         width: '100%',
                         body: table,
