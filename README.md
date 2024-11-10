@@ -90,6 +90,9 @@ grafana.ini:
   plugins:
     # Allow this plugin to be loaded even if it's unsigned
     allow_loading_unsigned_plugins: k8s-app
+  navigation.app_sections:
+    # Move the plugin from More Apps to Infrastructure in the menu
+    k8s-app: infrastructure
 ```
 ## Contributing
 

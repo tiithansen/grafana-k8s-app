@@ -1,5 +1,6 @@
 services:
   grafana:
+    restart: always
     container_name: 'k8s-app-11.3.0'
     platform: 'linux/amd64'
     image: k8s-app:11.3.0
@@ -13,5 +14,6 @@ services:
       - 3000:3000/tcp
     network_mode: "host"
     volumes:
-      - ./dist:/var/lib/grafana/plugins/k8s-app
+      - ./dist:/var/lib/grafana/plugins/grafana-k8s-app
       - ./provisioning:/etc/grafana/provisioning
+      - ./provisioning/custom.ini:/etc/grafana/grafana.ini

@@ -5,7 +5,7 @@
   "id": "k8s-app",
   "info": {
     "keywords": ["app"],
-    "description": "",
+    "description": "Explore your Kubernetes clusters with the Grafana Kubernetes App",
     "author": {
       "name": "tiithansen"
     },
@@ -21,10 +21,10 @@
     {
       "type": "page",
       "name": "Clusters",
-      "path": "/a/%PLUGIN_ID%/clusters/overview",
+      "path": "/a/%PLUGIN_ID%/clusters",
       "role": "Viewer",
-      "addToNav": false,
-      "defaultNav": true
+      "addToNav": true,
+      "defaultNav": false
     },
     {
       "type": "page",
