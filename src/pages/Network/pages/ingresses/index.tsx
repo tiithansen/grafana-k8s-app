@@ -27,7 +27,21 @@ import { Metrics } from "metrics/metrics";
 import React, { useMemo } from "react";
 import { DataFrameView } from "@grafana/data";
 import { Spinner } from "@grafana/ui";
-import { getNginxLatencyPanel, getNginxRequestRatePanel } from "pages/Network/components/nginx/NginxPanels";
+import {
+    getNginxFailureRatioPanel,
+    getNginxHeaderLatencyPanel,
+    getNginxRequestLatencyPanel,
+    getNginxRequestRateByStatusCodePanel,
+    getNginxRequestRatePanel,
+    getNginxRequestSizePanel,
+    getNginxResponseLatencyPanel,
+    getNginxResponseSizePanel,
+    getNginxUpstreamConnectLatencyPanel
+} from "pages/Network/components/nginx/NginxPanels";
+import Heading from "components/Heading";
+
+// TODO:
+// Try connecting kube_ingress_path service_name to pods
 
 interface ConditionalSceneObjectState extends SceneObjectState {
     builder: (data: string) => SceneObject<SceneObjectState>;
@@ -94,27 +108,101 @@ function ingressInfoQuery(namespace: string, ingress: string) {
 }
 
 function displayBasicNginxMetrics(ingress: string, namespace: string) {
-    return [
-        new SceneFlexItem({
-            width: '50%',
-            height: 300,
-            body: getNginxLatencyPanel(ingress, namespace)
-        }),
-        new SceneFlexItem({
-            width: '50%',
-            height: 300,
-            body: getNginxRequestRatePanel(ingress, namespace)
-        }),
-    ];
+     
+    return new SceneFlexLayout({
+        direction: 'column',
+        children: [
+            new SceneFlexLayout({
+                direction: 'row',
+                children: [
+                    new Heading({ title: "Rate" }),
+                ]
+            }),
+            new SceneFlexLayout({
+                height: 300,
+                direction: 'row',
+                children: [
+                    new SceneFlexItem({
+                        height: 300,
+                        body: getNginxRequestRatePanel(ingress, namespace)
+                    }),
+                    new SceneFlexItem({
+                        height: 300,
+                        body: getNginxRequestRateByStatusCodePanel(ingress, namespace)
+                    }),
+                    new SceneFlexItem({
+                        height: 300,
+                        body: getNginxFailureRatioPanel(ingress, namespace)
+                    }),
+                ]
+            }),
+            new SceneFlexLayout({
+                direction: 'row',
+                children: [
+                    new Heading({ title: "Latencies" }),
+                ]
+            }),
+            new SceneFlexLayout({
+                height: 300,
+                direction: 'row',
+                children: [
+                    new SceneFlexItem({
+                        width: '50%',
+                        height: 300,
+                        body: getNginxRequestLatencyPanel(ingress, namespace)
+                    }),
+                    new SceneFlexItem({
+                        width: '50%',
+                        height: 300,
+                        body: getNginxResponseLatencyPanel(ingress, namespace)
+                    }),
+                ]
+            }),
+            new SceneFlexLayout({
+                height: 300,
+                direction: 'row',
+                children: [
+                    new SceneFlexItem({
+                        width: '50%',
+                        height: 300,
+                        body: getNginxHeaderLatencyPanel(ingress, namespace)
+                    }),
+                    new SceneFlexItem({
+                        width: '50%',
+                        height: 300,
+                        body: getNginxUpstreamConnectLatencyPanel(ingress, namespace)
+                    }),
+                ]
+            }),
+            new SceneFlexLayout({
+                direction: 'row',
+                children: [
+                    new Heading({ title: "Size" }),
+                ]
+            }),
+            new SceneFlexLayout({
+                height: 300,
+                direction: 'row',
+                children: [
+                    new SceneFlexItem({
+                        width: '50%',
+                        height: 300,
+                        body: getNginxRequestSizePanel(ingress, namespace)
+                    }),
+                    new SceneFlexItem({
+                        width: '50%',
+                        height: 300,
+                        body: getNginxResponseSizePanel(ingress, namespace)
+                    }),
+                ]
+            }),
+        ]   
+    });
 }
 
 function buildRequestsPanels(controller: string, ingress: string, namespace: string) {
     if (controller === 'k8s.io/ingress-nginx') {
-        return new SceneFlexLayout({
-            direction: 'row',
-            minHeight: 300,
-            children: displayBasicNginxMetrics(ingress, namespace)
-        });
+        return displayBasicNginxMetrics(ingress, namespace);
     } else {
         return new SceneFlexLayout({
             direction: 'row',

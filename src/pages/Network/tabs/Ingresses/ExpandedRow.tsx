@@ -1,7 +1,7 @@
 import { SceneFlexLayout, SceneFlexItem } from "@grafana/scenes";
 import { AlertsTable } from "components/AlertsTable";
 import { TableRow } from "./types";
-import { getNginxLatencyPanel, getNginxRequestRatePanel } from "pages/Network/components/nginx/NginxPanels";
+import { getNginxRequestLatencyPanel, getNginxRequestRatePanel } from "pages/Network/components/nginx/NginxPanels";
 
 const NGINX_CONTROLLER = 'k8s.io/ingress-nginx';
 
@@ -11,7 +11,7 @@ function displayBasicNginxMetrics(row: TableRow) {
         new SceneFlexItem({
             width: '50%',
             height: 300,
-            body: getNginxLatencyPanel(row.ingress, row.namespace)
+            body: getNginxRequestLatencyPanel(row.ingress, row.namespace)
         }),
         new SceneFlexItem({
             width: '50%',
