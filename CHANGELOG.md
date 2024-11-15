@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.8.0...v0.8.1) (2024-11-15)
+
+
+### Bug Fixes
+
+* Fix 'npm run server' to use 'docker compose' instead of docker-compose. ([eee08c1](https://github.com/tiithansen/grafana-k8s-app/commit/eee08c1290331beae8de0252ce4fadb585cc8d43))
+* Fix crash if Severity is not set ([f2d75bf](https://github.com/tiithansen/grafana-k8s-app/commit/f2d75bf5797463fcd0f3ab0cbbb5a93b80afecfd))
+
 ## [0.8.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.7.0...v0.8.0) (2024-11-10)
 
 
