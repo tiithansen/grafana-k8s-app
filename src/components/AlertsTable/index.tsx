@@ -50,7 +50,7 @@ const columns: Array<Column<TableRow>> = [
     {
         id: 'alertstate',
         header: 'STATE',
-        accessor: (row: TableRow) => row.alertstate.toLocaleUpperCase(),
+        accessor: (row: TableRow) => row.alertstate?.toLocaleUpperCase(),
         cellProps: {},
         sortingConfig: {
             enabled: true,
@@ -90,7 +90,7 @@ const columns: Array<Column<TableRow>> = [
     {
         id: 'severity',
         header: 'SEVERITY',
-        accessor: (row: TableRow) => row.severity.toLocaleUpperCase(),
+        accessor: (row: TableRow) => row.severity?.toLocaleUpperCase(),
         cellProps: {
             color: (row: TableRow) => KNOWN_SEVERITY_COLORS[row.severity],
         },
