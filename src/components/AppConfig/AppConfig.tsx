@@ -1,16 +1,19 @@
 import React, { useState, ChangeEvent, useEffect } from 'react';
-import { Button, Field, Input, useStyles2, FieldSet, TagList } from '@grafana/ui';
+import { Button, Field, Input, useStyles2, FieldSet, TagList, Switch, Alert, Link } from '@grafana/ui';
 import { PluginConfigPageProps, AppPluginMeta, PluginMeta, GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { css } from '@emotion/css';
 import { testIds } from '../testIds';
 import { lastValueFrom } from 'rxjs';
+import { AnalyticsOptions } from 'components/Analytics/options';
 
 export type JsonData = {
   datasource?: string;
   defaultDatasource?: string;
   defaultCluster?: string;
   clusterFilter?: string;
+  analyticsEnabled?: boolean;
+  analytics?: AnalyticsOptions;
 };
 
 type State = {
@@ -20,7 +23,20 @@ type State = {
   defaultCluster?: string;
   clusterFilter?: string;
   matchingDatasources?: string[];
+  analyticsEnabled: boolean;
+  analytics: AnalyticsOptions;
 };
+
+const DEFAULT_ANALYTIC_OPTIONS: AnalyticsOptions = {
+  server: '',
+  showDetails: true,
+  postStart: true,
+  postHeartbeat: true,
+  heartbeatInterval: 30,
+  heartbeatAlways: true,
+  postEnd: true,
+  flatten: false,
+}
 
 interface Props extends PluginConfigPageProps<AppPluginMeta<JsonData>> {}
 
@@ -32,6 +48,11 @@ export const AppConfig = ({ plugin }: Props) => {
     defaultDatasource: jsonData?.defaultDatasource || '',
     defaultCluster: jsonData?.defaultCluster || '',
     clusterFilter: jsonData?.clusterFilter || '',
+    analyticsEnabled: jsonData?.analyticsEnabled || false,
+    analytics: {
+      ...DEFAULT_ANALYTIC_OPTIONS,
+      ...jsonData?.analytics,
+    },
   });
 
   const onChangeDatasource = (event: ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +80,23 @@ export const AppConfig = ({ plugin }: Props) => {
     setState({
       ...state,
       clusterFilter: event.target.value,
+    });
+  }
+
+  const onToggleAnalytics = (event: ChangeEvent<HTMLInputElement>) => {
+    setState({
+      ...state,
+      analyticsEnabled: event.target.checked,
+    });
+  }
+
+  const onChangeAnalyticsServer = (event: ChangeEvent<HTMLInputElement>) => {
+    setState({
+      ...state,
+      analytics: {
+        ...state.analytics,
+        server: event.target.value,
+      },
     });
   }
 
@@ -128,9 +166,9 @@ export const AppConfig = ({ plugin }: Props) => {
       </FieldSet>
 
       {/* CUSTOM SETTINGS */}
-      <FieldSet label="Settings" className={s.marginTopXl}>
+      <FieldSet label="Metrics settings" className={s.marginTopXl}>
         {/* API Url */}
-        <Field label="Metrics Datasource (Prometheus compatible)" description="" className={s.marginTop}>
+        <Field label="Metrics Datasource (Prometheus compatible)" description="">
           <Input
             width={60}
             id="datasource"
@@ -176,8 +214,32 @@ export const AppConfig = ({ plugin }: Props) => {
             onChange={onChangeClusterFilter}
           />
         </Field>
-
-        <div className={s.marginTop}>
+      </FieldSet>
+      <FieldSet label="Analytics settings" className={s.marginTopXl}>
+        <Alert  severity="warning" title="Analytics settings">
+          <p>EXPERIMENTAL: Analytics integration allows you to send data to an analytics server. This data can be used to monitor the plugin usage locally. No data will be sent to third parties.</p>
+          <p>Original source code for analytics: <Link href="https://github.com/MacroPower/macropower-analytics-panel">MacroPower/macropower-analytics-panel</Link></p>
+        </Alert>
+        <Field label="Enable analytics" description="Enable analytics for this plugin">
+          <Switch
+            id="analyticsEnabled"
+            label={`Enable analytics`}
+            value={state?.analyticsEnabled}
+            onChange={onToggleAnalytics}
+          />
+        </Field>
+        <Field label="Analytics server" description="URL of the analytics server">
+          <Input
+            width={60}
+            id="analyticsServer"
+            label={`Analytics server`}
+            value={state?.analytics?.server}
+            placeholder={`E.g.: https://analytics.example.com`}
+            onChange={onChangeAnalyticsServer}
+          />
+        </Field>
+      </FieldSet>
+      <div className={s.marginTop}>
           <Button
             type="submit"
             data-testid={testIds.appConfig.submit}
@@ -190,6 +252,8 @@ export const AppConfig = ({ plugin }: Props) => {
                   defaultDatasource: state.defaultDatasource,
                   defaultCluster: state.defaultCluster,
                   clusterFilter: state.clusterFilter,
+                  analyticsEnabled: state.analyticsEnabled,
+                  analytics: state.analytics,
                 },
               })
             }
@@ -198,7 +262,6 @@ export const AppConfig = ({ plugin }: Props) => {
             Save
           </Button>
         </div>
-      </FieldSet>
     </div>
   );
 };
@@ -211,7 +274,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-top: ${theme.spacing(3)};
   `,
   marginTopXl: css`
-    margin-top: ${theme.spacing(6)};
+    margin-top: ${theme.spacing(3)};
   `,
   justifyStart: css`
     justify-content: flex-start;

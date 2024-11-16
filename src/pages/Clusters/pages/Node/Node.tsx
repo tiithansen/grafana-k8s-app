@@ -24,6 +24,7 @@ import { CPUThrottlingPanel } from "pages/Workloads/components/CPUThrottlingPane
 import { MatchOperators } from "common/promql";
 import { NetworkUsagePanel } from "pages/Workloads/components/NetworkUsagePanel";
 import Heading from "components/Heading";
+import Analytics from "components/Analytics";
 
 function getScene(node: string) {
     return new EmbeddedScene({
@@ -36,74 +37,79 @@ function getScene(node: string) {
                 isOnCanvas: true,
             }),
         ],
-        body: new SceneFlexLayout({
-            direction: 'column',
+        body: new Analytics({
+            viewName: 'Clusters - Node',
             children: [
                 new SceneFlexLayout({
-                    direction: 'row',
-                    height: 300,
-                    children: [
-                        new SceneFlexItem({
-                            body: getCPUPanel(node)
+                    direction: 'column',
+                    children: [  
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            height: 300,
+                            children: [
+                                new SceneFlexItem({
+                                    body: getCPUPanel(node)
+                                }),
+                                new SceneFlexItem({
+                                    body: getMemoryPanel(node)
+                                })
+                            ]
                         }),
-                        new SceneFlexItem({
-                            body: getMemoryPanel(node)
-                        })
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            height: 300,
+                            children: [
+                                new SceneFlexItem({
+                                    body: CPUThrottlingPanel({
+                                        node: {
+                                            operator: MatchOperators.EQUALS,
+                                            value: node
+                                        }
+                                    }, {
+                                        mode: 'pod'
+                                    })
+                                })
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Network'})
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            height: 300,
+                            children: [
+                                new SceneFlexItem({
+                                    body: NetworkUsagePanel({
+                                        node: {
+                                            operator: MatchOperators.EQUALS,
+                                            value: node
+                                        }
+                                    })
+                                })
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Pods'})
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new SceneFlexItem({
+                                    body: getPods(node)
+                                })
+                            ]
+                        }),
+                        
                     ]
                 }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    height: 300,
-                    children: [
-                        new SceneFlexItem({
-                            body: CPUThrottlingPanel({
-                                node: {
-                                    operator: MatchOperators.EQUALS,
-                                    value: node
-                                }
-                            }, {
-                                mode: 'pod'
-                            })
-                        })
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Network'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    height: 300,
-                    children: [
-                        new SceneFlexItem({
-                            body: NetworkUsagePanel({
-                                node: {
-                                    operator: MatchOperators.EQUALS,
-                                    value: node
-                                }
-                            })
-                        })
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Pods'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new SceneFlexItem({
-                            body: getPods(node)
-                        })
-                    ]
-                }),
-                
             ]
-        }),
+        })
     })
 }
 

@@ -11,6 +11,7 @@ import { ServicesQueryBuilder } from './Queries';
 import { TableRow } from './types';
 import { AsyncTable, Column } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
+import Analytics from 'components/Analytics';
 
 const columns: Array<Column<TableRow>> = [
     {
@@ -73,19 +74,24 @@ export function getServicesScene() {
         controls: [
             new VariableValueSelectors({})
         ],
-        body: new SceneFlexLayout({
+        body: new Analytics({
+            viewName: 'Network - Services',
             children: [
-                new SceneFlexItem({
-                    width: '100%',
-                    height: '100%',
-                    body: new AsyncTable<TableRow>({
-                        columns: columns,
-                        $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
-                        createRowId: createRowId,
-                        queryBuilder: queryBuilder,
-                        asyncDataRowMapper: asyncDataRowMapper,
-                        sorting: defaultSorting,
-                    }),
+                new SceneFlexLayout({
+                    children: [
+                        new SceneFlexItem({
+                            width: '100%',
+                            height: '100%',
+                            body: new AsyncTable<TableRow>({
+                                columns: columns,
+                                $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
+                                createRowId: createRowId,
+                                queryBuilder: queryBuilder,
+                                asyncDataRowMapper: asyncDataRowMapper,
+                                sorting: defaultSorting,
+                            }),
+                        }),
+                    ],
                 }),
             ],
         }),

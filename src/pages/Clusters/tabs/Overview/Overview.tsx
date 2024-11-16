@@ -4,6 +4,7 @@ import { Metrics } from "metrics/metrics"
 import { ResourceBreakdownTable } from "components/ResourceBreakdownTable"
 import Heading from "components/Heading"
 import { AlertsTable } from "components/AlertsTable"
+import Analytics from "components/Analytics"
 
 function getNodesPerClusterPanel() {
     return PanelBuilders.timeseries()
@@ -180,48 +181,53 @@ export const getOverviewScene = () => {
         controls: [
             new VariableValueSelectors({}),
         ],
-        body: new SceneFlexLayout({
-            direction: 'column',
-            children: [
+        body: new Analytics({
+            viewName: 'Clusters - Overview',
+            children:[
                 new SceneFlexLayout({
-                    direction: 'row',
-                    height: 400,
+                    direction: 'column',
                     children: [
-                        new SceneFlexItem({
-                            body: getNodesPerClusterPanel(),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            height: 400,
+                            children: [
+                                new SceneFlexItem({
+                                    body: getNodesPerClusterPanel(),
+                                }),
+                                new SceneFlexItem({
+                                    body: getNodesMemoryPanel(),
+                                }),
+                                new SceneFlexItem({
+                                    body: getNodesCpuPanel(),
+                                }),
+                            ]
                         }),
-                        new SceneFlexItem({
-                            body: getNodesMemoryPanel(),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Alerts' }),
+                            ]
                         }),
-                        new SceneFlexItem({
-                            body: getNodesCpuPanel(),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                AlertsTable()
+                            ]
+                        }),  
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Resource Usage Breakdown' }),
+                            ]
                         }),
-                    ]
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                ResourceBreakdownTable()
+                            ]
+                        }),         
+                    ],
                 }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Alerts' }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        AlertsTable()
-                    ]
-                }),  
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Resource Usage Breakdown' }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        ResourceBreakdownTable()
-                    ]
-                }),         
             ],
         }),
     })

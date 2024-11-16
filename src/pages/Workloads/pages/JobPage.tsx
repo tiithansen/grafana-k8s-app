@@ -3,6 +3,7 @@ import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
 import { usePluginJsonData } from "utils/utils.plugin";
+import Analytics from "components/Analytics";
 
 function getScene(job: string) {
     return new EmbeddedScene({
@@ -15,9 +16,14 @@ function getScene(job: string) {
                 isOnCanvas: true,
             }),
         ],
-        body: new SceneFlexLayout({
-            direction: 'column',
-            children: []
+        body: new Analytics({
+            viewName: 'Workloads - Job',
+            children: [
+                new SceneFlexLayout({
+                    direction: 'column',
+                    children: []
+                })
+            ]
         }),
     })
 }

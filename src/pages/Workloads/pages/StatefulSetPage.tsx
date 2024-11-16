@@ -14,6 +14,7 @@ import { AlertsTable } from "components/AlertsTable";
 import { Labels, MatchOperators } from "common/promql";
 import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
 import { NetworkUsagePanel } from "../components/NetworkUsagePanel";
+import Analytics from "components/Analytics";
 
 function getPods(statefulset: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
@@ -117,120 +118,125 @@ function getScene(statefulset: string, namespace = '$namespace') {
                 isOnCanvas: true,
             }),
         ],
-        body: new SceneFlexLayout({
-            direction: 'column',
+        body: new Analytics({
+            viewName: 'Workloads - StatefulSet',
             children: [
                 new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 200,
+                    direction: 'column',
                     children: [
-                        new SceneFlexItem({
-                            height: 'auto',
-                            width: `${(1/3) * 100}%`,
-                            body: createResourceLabels('statefulset', [{
-                                label: 'statefulset',
-                                op: '=',
-                                value: statefulset,
-                            }, {
-                                label: 'namespace',
-                                op: '=',
-                                value: namespace,
-                            }]),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 200,
+                            children: [
+                                new SceneFlexItem({
+                                    height: 'auto',
+                                    width: `${(1/3) * 100}%`,
+                                    body: createResourceLabels('statefulset', [{
+                                        label: 'statefulset',
+                                        op: '=',
+                                        value: statefulset,
+                                    }, {
+                                        label: 'namespace',
+                                        op: '=',
+                                        value: namespace,
+                                    }]),
+                                }),
+                                new SceneFlexItem({
+                                    width: `${(2/3) * 100}%`,
+                                    body: AlertsTable([
+                                        {
+                                            label: 'statefulset',
+                                            op: '=',
+                                            value: statefulset,
+                                        }
+                                    ], false, false)
+                                }),
+                            ]
                         }),
-                        new SceneFlexItem({
-                            width: `${(2/3) * 100}%`,
-                            body: AlertsTable([
-                                {
-                                    label: 'statefulset',
-                                    op: '=',
-                                    value: statefulset,
-                                }
-                            ], false, false)
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new SceneFlexItem({
+                                    height: 200, 
+                                    body: getReplicasPanel(statefulset, namespace)
+                                }),
+                            ]
                         }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new SceneFlexItem({
-                            height: 200, 
-                            body: getReplicasPanel(statefulset, namespace)
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'CPU'})
+                            ]
                         }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'CPU'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        CPUUsagePanel(commonFilters, {
-                            mode: 'combined'
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                CPUUsagePanel(commonFilters, {
+                                    mode: 'combined'
+                                }),
+                                CPUUsagePanel(commonFilters, {
+                                    mode: 'pod'
+                                }),
+                            ]
                         }),
-                        CPUUsagePanel(commonFilters, {
-                            mode: 'pod'
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                CPUThrottlingPanel(commonFilters, {
+                                    mode: 'combined'   
+                                }),
+                                CPUThrottlingPanel(commonFilters, {
+                                    mode: 'pod'   
+                                }),
+                            ]
                         }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        CPUThrottlingPanel(commonFilters, {
-                            mode: 'combined'   
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Memory'})
+                            ]
                         }),
-                        CPUThrottlingPanel(commonFilters, {
-                            mode: 'pod'   
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                MemoryUsagePanel(commonFilters, {
+                                    mode: 'combined'
+                                }),
+                                MemoryUsagePanel(commonFilters, {
+                                    mode: 'pod'
+                                }),
+                            ]
                         }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Memory'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        MemoryUsagePanel(commonFilters, {
-                            mode: 'combined'
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Network'})
+                            ]
                         }),
-                        MemoryUsagePanel(commonFilters, {
-                            mode: 'pod'
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                NetworkUsagePanel(commonFilters),
+                            ]
                         }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Network'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        NetworkUsagePanel(commonFilters),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Pods'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new SceneFlexItem({
-                            width: '100%',
-                            body: getPods(statefulset, namespace),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Pods'})
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new SceneFlexItem({
+                                    width: '100%',
+                                    body: getPods(statefulset, namespace),
+                                }),
+                            ]
                         }),
                     ]
                 }),

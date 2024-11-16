@@ -15,6 +15,7 @@ import { LegendDisplayMode } from "@grafana/schema";
 import { Labels, MatchOperators } from "common/promql";
 import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
 import { NetworkUsagePanel } from "../components/NetworkUsagePanel";
+import Analytics from "components/Analytics";
 
 function getPods(daemonset: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
@@ -118,125 +119,130 @@ function getScene(daemonset: string, namespace = '$namespace') {
                 isOnCanvas: true,
             }),
         ],
-        body: new SceneFlexLayout({
-            direction: 'column',
+        body: new Analytics({
+            viewName: 'Workloads - DaemonSet',
             children: [
                 new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 200,
+                    direction: 'column',
                     children: [
-                        new SceneFlexItem({
-                            height: 'auto',
-                            width: `25%`,
-                            body: createResourceLabels('daemonset', [{
-                                label: 'daemonset',
-                                op: '=',
-                                value: daemonset,
-                            }, {
-                                label: 'namespace',
-                                op: '=',
-                                value: namespace,
-                            }]),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 200,
+                            children: [
+                                new SceneFlexItem({
+                                    height: 'auto',
+                                    width: `25%`,
+                                    body: createResourceLabels('daemonset', [{
+                                        label: 'daemonset',
+                                        op: '=',
+                                        value: daemonset,
+                                    }, {
+                                        label: 'namespace',
+                                        op: '=',
+                                        value: namespace,
+                                    }]),
+                                }),
+                                new SceneFlexItem({
+                                    height: 200,
+                                    body: AlertsTable([
+                                        {
+                                            label: 'pod',
+                                            op: '=~',
+                                            value: `${daemonset}.*`,
+                                        }, {
+                                            label: 'namespace',
+                                            op: '=',
+                                            value: namespace,
+                                        }
+                                    ], false, false)
+                                })
+                            ]
                         }),
-                        new SceneFlexItem({
-                            height: 200,
-                            body: AlertsTable([
-                                {
-                                    label: 'pod',
-                                    op: '=~',
-                                    value: `${daemonset}.*`,
-                                }, {
-                                    label: 'namespace',
-                                    op: '=',
-                                    value: namespace,
-                                }
-                            ], false, false)
-                        })
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'CPU'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        CPUUsagePanel(commonLabels, {
-                            mode: 'combined'
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'CPU'})
+                            ]
                         }),
-                        CPUUsagePanel(commonLabels, {
-                            mode: 'pod'
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                CPUUsagePanel(commonLabels, {
+                                    mode: 'combined'
+                                }),
+                                CPUUsagePanel(commonLabels, {
+                                    mode: 'pod'
+                                }),
+                            ]
                         }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        CPUThrottlingPanel(commonLabels, {
-                            mode: 'combined'   
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                CPUThrottlingPanel(commonLabels, {
+                                    mode: 'combined'   
+                                }),
+                                CPUThrottlingPanel(commonLabels, {
+                                    mode: 'pod'   
+                                }),
+                            ]
                         }),
-                        CPUThrottlingPanel(commonLabels, {
-                            mode: 'pod'   
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Memory'})
+                            ]
                         }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Memory'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        MemoryUsagePanel(commonLabels, {
-                            mode: 'combined'
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                MemoryUsagePanel(commonLabels, {
+                                    mode: 'combined'
+                                }),
+                                MemoryUsagePanel(commonLabels, {
+                                    mode: 'pod'
+                                }),
+                            ]
                         }),
-                        MemoryUsagePanel(commonLabels, {
-                            mode: 'pod'
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Network'})
+                            ]
                         }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Network'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        NetworkUsagePanel(commonLabels),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Pods'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    height: 300,
-                    children: [
-                        getNumberPanel(daemonset, namespace),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new SceneFlexItem({
-                            width: '100%',
-                            body: getPods(daemonset, namespace),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                NetworkUsagePanel(commonLabels),
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Pods'})
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            height: 300,
+                            children: [
+                                getNumberPanel(daemonset, namespace),
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new SceneFlexItem({
+                                    width: '100%',
+                                    body: getPods(daemonset, namespace),
+                                }),
+                            ]
                         }),
                     ]
-                }),
+                })
             ]
         }),
     })

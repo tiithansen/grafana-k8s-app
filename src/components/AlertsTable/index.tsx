@@ -3,7 +3,6 @@ import {
     SceneFlexLayout, 
     SceneFlexItem, 
     SceneQueryRunner,
-    TextBoxVariable,
     SceneVariableSet,
     VariableValueSelectors,
     SceneVariables,
@@ -210,11 +209,6 @@ export function AlertsTable(labelFilters?: LabelFilters, showVariableControls = 
         variables: shouldCreateVariables ? [
             createNamespaceVariable(),
             createAlertStateVariable(),
-            new TextBoxVariable({
-                name: 'alertSearch',
-                label: 'Search',
-                value: '',
-            }),
         ]: []
     })
 

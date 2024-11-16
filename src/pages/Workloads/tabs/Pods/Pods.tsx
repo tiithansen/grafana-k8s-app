@@ -23,6 +23,7 @@ import { TableRow } from './types';
 import { createRootQuery, createRowQueries } from './Queries';
 import { buildExpandedRowScene } from './PodExpandedRow';
 import { ToggleVariable } from 'components/ToggleVariable';
+import Analytics from 'components/Analytics';
 
 function createVariables() {
     return [
@@ -450,12 +451,17 @@ export const getPodsScene = (staticLabelFilters: LabelFilters, showVariableContr
         $variables: variableSet,
         $behaviors: [onShowStoppedPodsChanged],
         controls: controls,
-        body: new SceneFlexLayout({
+        body: new Analytics({
+            viewName: 'Workloads - PodList',
             children: [
-                new SceneFlexItem({
-                    width: '100%',
-                    height: '100%',
-                    body: podsTable,
+                new SceneFlexLayout({
+                    children: [
+                        new SceneFlexItem({
+                            width: '100%',
+                            height: '100%',
+                            body: podsTable,
+                        }),
+                    ],
                 }),
             ],
         }),

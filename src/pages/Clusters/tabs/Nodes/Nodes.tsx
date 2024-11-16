@@ -15,6 +15,7 @@ import { AsyncTable, Column } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
 import { prefixRoute } from 'utils/utils.routing';
 import { ROUTES } from '../../../../constants';
+import Analytics from 'components/Analytics';
 
 function determineMemoryUsageColor(row: TableRow) {
     let usageColor: TextColor = 'primary'
@@ -249,20 +250,25 @@ export const getNodesScene = () => {
         controls: [
             new VariableValueSelectors({}),
         ],
-        body: new SceneFlexLayout({
+        body: new Analytics({
+            viewName: 'Clusters - Nodes',
             children: [
-                new SceneFlexItem({
-                    width: '100%',
-                    height: '100%',
-                    body: new AsyncTable<TableRow>({
-                        columns,
-                        $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
-                        asyncDataRowMapper,
-                        queryBuilder,
-                        createRowId: (row) => row.node,
-                        expandedRowBuilder: buildExpandedRowScene,
-                        sorting: defaultSorting,
-                    }),
+                new SceneFlexLayout({
+                    children: [
+                        new SceneFlexItem({
+                            width: '100%',
+                            height: '100%',
+                            body: new AsyncTable<TableRow>({
+                                columns,
+                                $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
+                                asyncDataRowMapper,
+                                queryBuilder,
+                                createRowId: (row) => row.node,
+                                expandedRowBuilder: buildExpandedRowScene,
+                                sorting: defaultSorting,
+                            }),
+                        }),
+                    ],
                 }),
             ],
         }),

@@ -14,6 +14,7 @@ import { AlertsTable } from "components/AlertsTable";
 import { Labels, MatchOperators } from "common/promql";
 import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
 import { NetworkUsagePanel } from "../components/NetworkUsagePanel";
+import Analytics from "components/Analytics";
 
 const REPLICASET_HASH_PATTERN='[a-z0-9]{8,10}'
 const DEPLOYMENT_HASH_PATTERN=`${REPLICASET_HASH_PATTERN}-[a-z0-9]{5}`
@@ -119,129 +120,134 @@ function getScene(deployment: string, namespace = '$namespace') {
                 isOnCanvas: true,
             }),
         ],
-        body: new SceneFlexLayout({
-            direction: 'column',
+        body: new Analytics({
+            viewName: 'Workloads - Deployment',
             children: [
                 new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 200,
+                    direction: 'column',
                     children: [
-                        new SceneFlexItem({
-                            height: 'auto',
-                            width: `${(1/3) * 100}%`,
-                            body: createResourceLabels('deployment', [{
-                                label: 'deployment',
-                                op: '=',
-                                value: deployment,
-                            }, {
-                                label: 'namespace',
-                                op: '=',
-                                value: namespace,
-                            }]),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 200,
+                            children: [
+                                new SceneFlexItem({
+                                    height: 'auto',
+                                    width: `${(1/3) * 100}%`,
+                                    body: createResourceLabels('deployment', [{
+                                        label: 'deployment',
+                                        op: '=',
+                                        value: deployment,
+                                    }, {
+                                        label: 'namespace',
+                                        op: '=',
+                                        value: namespace,
+                                    }]),
+                                }),
+                                new SceneFlexItem({
+                                    width: `${(2/3) * 100}%`,
+                                    body: AlertsTable([
+                                        {
+                                            label: 'deployment',
+                                            op: '=',
+                                            value: deployment,
+                                        },
+                                        {
+                                            label: 'namespace',
+                                            op: '=',
+                                            value: namespace,
+                                        }
+                                    ], false, false)
+                                }),
+                            ]
                         }),
-                        new SceneFlexItem({
-                            width: `${(2/3) * 100}%`,
-                            body: AlertsTable([
-                                {
-                                    label: 'deployment',
-                                    op: '=',
-                                    value: deployment,
-                                },
-                                {
-                                    label: 'namespace',
-                                    op: '=',
-                                    value: namespace,
-                                }
-                            ], false, false)
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new SceneFlexItem({
+                                    height: 200,
+                                    body: getReplicasPanel(deployment, namespace),
+                                })
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'CPU'})
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                CPUUsagePanel(commonFilters, {
+                                    mode: 'combined'   
+                                }),
+                                CPUUsagePanel(commonFilters, {
+                                    mode: 'pod'   
+                                }),
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                CPUThrottlingPanel(commonFilters, {
+                                    mode: 'combined'   
+                                }),
+                                CPUThrottlingPanel(commonFilters, {
+                                    mode: 'pod'   
+                                }),
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Memory'})
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                MemoryUsagePanel(commonFilters, {
+                                    mode: 'combined'
+                                }),
+                                MemoryUsagePanel(commonFilters, {
+                                    mode: 'pod'
+                                }),
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Network'})
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 400,
+                            children: [
+                                NetworkUsagePanel(commonFilters),
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new Heading({ title: 'Pods'})
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new SceneFlexItem({
+                                    width: '100%',
+                                    body: getPods(deployment, namespace),
+                                }),
+                            ]
                         }),
                     ]
                 }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new SceneFlexItem({
-                            height: 200,
-                            body: getReplicasPanel(deployment, namespace),
-                        })
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'CPU'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        CPUUsagePanel(commonFilters, {
-                            mode: 'combined'   
-                        }),
-                        CPUUsagePanel(commonFilters, {
-                            mode: 'pod'   
-                        }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        CPUThrottlingPanel(commonFilters, {
-                            mode: 'combined'   
-                        }),
-                        CPUThrottlingPanel(commonFilters, {
-                            mode: 'pod'   
-                        }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Memory'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        MemoryUsagePanel(commonFilters, {
-                            mode: 'combined'
-                        }),
-                        MemoryUsagePanel(commonFilters, {
-                            mode: 'pod'
-                        }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Network'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 400,
-                    children: [
-                        NetworkUsagePanel(commonFilters),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new Heading({ title: 'Pods'})
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new SceneFlexItem({
-                            width: '100%',
-                            body: getPods(deployment, namespace),
-                        }),
-                    ]
-                }),
-            ]
+            ],
         }),
     })
 }
