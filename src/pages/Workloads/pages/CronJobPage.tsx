@@ -3,6 +3,7 @@ import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { usePluginJsonData } from "utils/utils.plugin";
 import { createTopLevelVariables, createTimeRange } from "../../../common/variableHelpers";
+import Analytics from "components/Analytics";
 
 function getScene(cronJob: string) {
     return new EmbeddedScene({
@@ -15,9 +16,14 @@ function getScene(cronJob: string) {
                 isOnCanvas: true,
             }),
         ],
-        body: new SceneFlexLayout({
-            direction: 'column',
-            children: []
+        body: new Analytics({
+            viewName: 'Workloads - CronJob',
+            children: [
+                new SceneFlexLayout({
+                    direction: 'column',
+                    children: []
+                })
+            ]
         }),
     })
 }

@@ -39,6 +39,7 @@ import {
     getNginxUpstreamConnectLatencyPanel
 } from "pages/Network/components/nginx/NginxPanels";
 import Heading from "components/Heading";
+import Analytics from "components/Analytics";
 
 // TODO:
 // Try connecting kube_ingress_path service_name to pods
@@ -239,66 +240,71 @@ function getScene(namespace: string, ingress: string) {
                 isOnCanvas: true,
             }),
         ],
-        body: new SceneFlexLayout({
-            direction: 'column',
+        body: new Analytics({
+            viewName: 'Network - Ingress',
             children: [
                 new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 200,
+                    direction: 'column',
                     children: [
-                        new SceneFlexItem({
-                            height: 'auto',
-                            width: `${(1/3) * 100}%`,
-                            body: createResourceLabels('ingress', [{
-                                label: 'ingress',
-                                op: '=',
-                                value: ingress,
-                            },
-                            {
-                                label: 'namespace',
-                                op: '=',
-                                value: namespace,
-                            }]),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 200,
+                            children: [
+                                new SceneFlexItem({
+                                    height: 'auto',
+                                    width: `${(1/3) * 100}%`,
+                                    body: createResourceLabels('ingress', [{
+                                        label: 'ingress',
+                                        op: '=',
+                                        value: ingress,
+                                    },
+                                    {
+                                        label: 'namespace',
+                                        op: '=',
+                                        value: namespace,
+                                    }]),
+                                }),
+                                new SceneFlexItem({
+                                    width: `${(2/3) * 100}%`,
+                                    body: AlertsTable([
+                                        {
+                                            label: 'ingress',
+                                            op: '=',
+                                            value: ingress,
+                                        },
+                                        {
+                                            label: 'exported_namespace',
+                                            op: '=',
+                                            value: namespace,
+                                        }
+                                    ], false, false)
+                                }),
+                            ],
                         }),
-                        new SceneFlexItem({
-                            width: `${(2/3) * 100}%`,
-                            body: AlertsTable([
-                                {
-                                    label: 'ingress',
-                                    op: '=',
-                                    value: ingress,
-                                },
-                                {
-                                    label: 'exported_namespace',
-                                    op: '=',
-                                    value: namespace,
-                                }
-                            ], false, false)
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 300,
+                            children: [
+                                new SceneFlexItem({
+                                    width: '100%',
+                                    body: new ConditionalSceneObject({
+                                        $data: ingressInfoData,
+                                        builder: (controller: string) => {
+                                            return buildRequestsPanels(controller, ingress, namespace)
+                                        }
+                                    }),
+                                }),
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 300,
+                            children: [
+                            ]
                         }),
                     ],
                 }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 300,
-                    children: [
-                        new SceneFlexItem({
-                            width: '100%',
-                            body: new ConditionalSceneObject({
-                                $data: ingressInfoData,
-                                builder: (controller: string) => {
-                                    return buildRequestsPanels(controller, ingress, namespace)
-                                }
-                            }),
-                        }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 300,
-                    children: [
-                    ]
-                }),
-            ]
+            ],
         }),
     })
 }

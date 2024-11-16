@@ -11,6 +11,7 @@ import { MatchOperators } from "common/promql";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { NetworkUsagePanel } from "../components/NetworkUsagePanel";
+import Analytics from "components/Analytics";
 
 export function getPodMemoryPanel(pod: string) {
     return MemoryUsagePanel({
@@ -56,76 +57,81 @@ function getScene(pod: string) {
                 isOnCanvas: true,
             }),
         ],
-        body: new SceneFlexLayout({
-            direction: 'column',
+        body: new Analytics({
+            viewName: 'Workloads - Pod',
             children: [
                 new SceneFlexLayout({
-                    direction: 'row',
-                    minHeight: 300,
+                    direction: 'column',
                     children: [
-                        new SceneFlexItem({
-                            height: 'auto',
-                            width: `${(1/3) * 100}%`,
-                            body: createResourceLabels('pod', [{
-                                label: 'pod',
-                                op: '=',
-                                value: pod,
-                            }]),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            minHeight: 300,
+                            children: [
+                                new SceneFlexItem({
+                                    height: 'auto',
+                                    width: `${(1/3) * 100}%`,
+                                    body: createResourceLabels('pod', [{
+                                        label: 'pod',
+                                        op: '=',
+                                        value: pod,
+                                    }]),
+                                }),
+                                new SceneFlexItem({
+                                    width: `${(2/3) * 100}%`,
+                                    body: AlertsTable([
+                                        {
+                                            label: 'pod',
+                                            op: '=',
+                                            value: pod,
+                                        }
+                                    ], false, false)
+                                }),
+                            ],
                         }),
-                        new SceneFlexItem({
-                            width: `${(2/3) * 100}%`,
-                            body: AlertsTable([
-                                {
-                                    label: 'pod',
-                                    op: '=',
-                                    value: pod,
-                                }
-                            ], false, false)
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            children: [
+                                new SceneFlexItem({
+                                    body: getContainersScene([{
+                                        label: 'pod',
+                                        op: '=',
+                                        value: pod,
+                                    }], false, false)
+                                }),
+                            ],
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            height: 300,
+                            children: [
+                                new SceneFlexItem({
+                                    body: getPodMemoryPanel(pod),
+                                }),
+                                new SceneFlexItem({
+                                    body: getPodCPUPanel(pod),
+                                }),
+                                new SceneFlexItem({
+                                    body: getCPUThrottling(pod),
+                                })
+                            ],
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            height: 300,
+                            children: [
+                                new SceneFlexItem({
+                                    body: NetworkUsagePanel({
+                                        pod: {
+                                            operator: MatchOperators.EQUALS,
+                                            value: pod,
+                                        },
+                                    }),
+                                })
+                            ],
                         }),
                     ],
                 }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    children: [
-                        new SceneFlexItem({
-                            body: getContainersScene([{
-                                label: 'pod',
-                                op: '=',
-                                value: pod,
-                            }], false, false)
-                        }),
-                    ],
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    height: 300,
-                    children: [
-                        new SceneFlexItem({
-                            body: getPodMemoryPanel(pod),
-                        }),
-                        new SceneFlexItem({
-                            body: getPodCPUPanel(pod),
-                        }),
-                        new SceneFlexItem({
-                            body: getCPUThrottling(pod),
-                        })
-                    ],
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    height: 300,
-                    children: [
-                        new SceneFlexItem({
-                            body: NetworkUsagePanel({
-                                pod: {
-                                    operator: MatchOperators.EQUALS,
-                                    value: pod,
-                                },
-                            }),
-                        })
-                    ],
-                }),
-            ]
+            ],
         })
     })
 }

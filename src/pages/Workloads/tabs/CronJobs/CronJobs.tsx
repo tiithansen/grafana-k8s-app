@@ -15,6 +15,7 @@ import { Metrics } from 'metrics/metrics';
 import { TableRow } from './types';
 import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
+import Analytics from 'components/Analytics';
 
 const columns: Array<Column<TableRow>> = [
     {
@@ -139,19 +140,24 @@ export const getCronJobsScene = () => {
         controls: [
             new VariableValueSelectors({})
         ],
-        body: new SceneFlexLayout({
+        body: new Analytics({
+            viewName: 'Workloads - CronJobList',
             children: [
-                new SceneFlexItem({
-                    width: '100%',
-                    height: '100%',
-                    body: new AsyncTable<TableRow>({
-                        columns: columns,
-                        $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
-                        createRowId: (row: TableRow) => `${row.namespace}/${row.cronjob}`,
-                        queryBuilder: queryBuilder,
-                        asyncDataRowMapper: asyncDataRowMapper,
-                        sorting: defaultSorting,
-                    }),
+                new SceneFlexLayout({
+                    children: [
+                        new SceneFlexItem({
+                            width: '100%',
+                            height: '100%',
+                            body: new AsyncTable<TableRow>({
+                                columns: columns,
+                                $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
+                                createRowId: (row: TableRow) => `${row.namespace}/${row.cronjob}`,
+                                queryBuilder: queryBuilder,
+                                asyncDataRowMapper: asyncDataRowMapper,
+                                sorting: defaultSorting,
+                            }),
+                        }),
+                    ],
                 }),
             ],
         }),

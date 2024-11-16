@@ -1,5 +1,6 @@
 import { EmbeddedScene, PanelBuilders, SceneFlexItem, SceneFlexLayout, SceneQueryRunner } from "@grafana/scenes"
 import { LegendDisplayMode } from "@grafana/schema"
+import Analytics from "components/Analytics"
 
 function createPodsPanel() {
     return PanelBuilders.timeseries()
@@ -151,38 +152,43 @@ function createCronjobsPanel() {
 
 export const getOverviewScene = () => {
     return new EmbeddedScene({
-        body: new SceneFlexLayout({
-            direction: 'column',
+        body: new Analytics({
+            viewName: 'Workloads - Overview',
             children: [
                 new SceneFlexLayout({
-                    direction: 'row',
-                    height: 300,
+                    direction: 'column',
                     children: [
-                        new SceneFlexItem({
-                            body: createDeploymentsPanel(),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            height: 300,
+                            children: [
+                                new SceneFlexItem({
+                                    body: createDeploymentsPanel(),
+                                }),
+                                new SceneFlexItem({
+                                    body: createStatefulsetsPanel(),
+                                }),
+                                new SceneFlexItem({
+                                    body: createDaemonsetsPanel(),
+                                }),
+                                new SceneFlexItem({
+                                    body: createCronjobsPanel(),
+                                }),
+                            ]
                         }),
-                        new SceneFlexItem({
-                            body: createStatefulsetsPanel(),
+                        new SceneFlexLayout({
+                            direction: 'row',
+                            height: 400,
+                            children: [
+                                new SceneFlexItem({
+                                    body: createPodsPanel(),
+                                }),
+                                new SceneFlexItem({
+                                    body: createPodsByOwnerKindPanel(),
+                                }),
+                            ]
                         }),
-                        new SceneFlexItem({
-                            body: createDaemonsetsPanel(),
-                        }),
-                        new SceneFlexItem({
-                            body: createCronjobsPanel(),
-                        }),
-                    ]
-                }),
-                new SceneFlexLayout({
-                    direction: 'row',
-                    height: 400,
-                    children: [
-                        new SceneFlexItem({
-                            body: createPodsPanel(),
-                        }),
-                        new SceneFlexItem({
-                            body: createPodsByOwnerKindPanel(),
-                        }),
-                    ]
+                    ],
                 }),
             ],
         }),

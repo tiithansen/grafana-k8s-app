@@ -17,6 +17,7 @@ import { ROUTES } from '../../../../constants';
 import { prefixRoute } from 'utils/utils.routing';
 import { TableRow } from "./types";
 import { TextColor } from 'common/types';
+import Analytics from 'components/Analytics';
 
 const serieMatcherPredicate = (row: TableRow) => (value: any) => value.statefulset === row.statefulset;
 
@@ -119,20 +120,25 @@ export const getStatefulSetsScene = () => {
         controls: [
             new VariableValueSelectors({})
         ],
-        body: new SceneFlexLayout({
+        body: new Analytics({
+            viewName: 'Workloads - StatefulSetList',
             children: [
-                new SceneFlexItem({
-                    width: '100%',
-                    height: '100%',
-                    body: new AsyncTable<TableRow>({
-                        columns,
-                        $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
-                        asyncDataRowMapper,
-                        createRowId: (row) => `${row.namespace}/${row.statefulset}`,
-                        expandedRowBuilder: buildExpandedRowScene,
-                        queryBuilder,
-                        sorting: defaultSorting,
-                    }),
+                new SceneFlexLayout({
+                    children: [
+                        new SceneFlexItem({
+                            width: '100%',
+                            height: '100%',
+                            body: new AsyncTable<TableRow>({
+                                columns,
+                                $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
+                                asyncDataRowMapper,
+                                createRowId: (row) => `${row.namespace}/${row.statefulset}`,
+                                expandedRowBuilder: buildExpandedRowScene,
+                                queryBuilder,
+                                sorting: defaultSorting,
+                            }),
+                        }),
+                    ],
                 }),
             ],
         }),

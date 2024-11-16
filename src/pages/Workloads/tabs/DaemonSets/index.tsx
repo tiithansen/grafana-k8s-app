@@ -17,6 +17,7 @@ import { prefixRoute } from 'utils/utils.routing';
 import { ROUTES } from '../../../../constants';
 import { TableRow } from "./types";
 import { TextColor } from 'common/types';
+import Analytics from 'components/Analytics';
 
 const serieMatcherPredicate = (row: TableRow) => (value: any) => value.daemonset === row.daemonset;
 
@@ -122,20 +123,25 @@ export const getDaemonSetsScene = () => {
         controls: [
             new VariableValueSelectors({})
         ],
-        body: new SceneFlexLayout({
+        body: new Analytics({
+            viewName: 'Workloads - DaemonSetList',
             children: [
-                new SceneFlexItem({
-                    width: '100%',
-                    height: '100%',
-                    body: new AsyncTable<TableRow>({
-                        columns,
-                        $data: queryBuilder.rootQueryBuilder(variables, deaultSorting),
-                        queryBuilder,
-                        asyncDataRowMapper,
-                        createRowId: (row: TableRow) => `${row.namespace}/${row.daemonset}`,
-                        expandedRowBuilder: buildExpandedRowScene,
-                        sorting: deaultSorting,
-                    }),
+                new SceneFlexLayout({
+                    children: [
+                        new SceneFlexItem({
+                            width: '100%',
+                            height: '100%',
+                            body: new AsyncTable<TableRow>({
+                                columns,
+                                $data: queryBuilder.rootQueryBuilder(variables, deaultSorting),
+                                queryBuilder,
+                                asyncDataRowMapper,
+                                createRowId: (row: TableRow) => `${row.namespace}/${row.daemonset}`,
+                                expandedRowBuilder: buildExpandedRowScene,
+                                sorting: deaultSorting,
+                            }),
+                        }),
+                    ],
                 }),
             ],
         }),

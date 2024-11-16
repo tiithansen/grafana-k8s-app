@@ -14,6 +14,7 @@ import { SortingState } from 'common/sortingHelpers';
 import { ROUTES } from '../../../../constants';
 import { prefixRoute } from 'utils/utils.routing';
 import { buildExpandedRowScene } from './ExpandedRow';
+import Analytics from 'components/Analytics';
 
 const columns: Array<Column<TableRow>> = [
     {
@@ -89,19 +90,24 @@ export function getIngressesScene() {
         controls: [
             new VariableValueSelectors({})
         ],
-        body: new SceneFlexLayout({
+        body: new Analytics({
+            viewName: 'Network - Ingresses',
             children: [
-                new SceneFlexItem({
-                    width: '100%',
-                    body: new AsyncTable<TableRow>({
-                        columns: columns,
-                        $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
-                        createRowId: createRowId,
-                        queryBuilder: queryBuilder,
-                        asyncDataRowMapper: asyncDataRowMapper,
-                        sorting: defaultSorting,
-                        expandedRowBuilder: buildExpandedRowScene,
-                    }),
+                new SceneFlexLayout({
+                    children: [
+                        new SceneFlexItem({
+                            width: '100%',
+                            body: new AsyncTable<TableRow>({
+                                columns: columns,
+                                $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
+                                createRowId: createRowId,
+                                queryBuilder: queryBuilder,
+                                asyncDataRowMapper: asyncDataRowMapper,
+                                sorting: defaultSorting,
+                                expandedRowBuilder: buildExpandedRowScene,
+                            }),
+                        }),
+                    ],
                 }),
             ],
         }),

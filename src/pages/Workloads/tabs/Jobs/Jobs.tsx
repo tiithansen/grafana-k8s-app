@@ -15,6 +15,7 @@ import { Metrics } from 'metrics/metrics';
 import { TableRow } from './types';
 import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
 import { SortingState } from 'common/sortingHelpers';
+import Analytics from 'components/Analytics';
 
 const columns: Array<Column<TableRow>> = [
     {
@@ -123,19 +124,24 @@ export const getJobsScene = () => {
         controls: [
             new VariableValueSelectors({})
         ],
-        body: new SceneFlexLayout({
+        body: new Analytics({
+            viewName: 'Workloads - JobList',
             children: [
-                new SceneFlexItem({
-                    width: '100%',
-                    height: '100%',
-                    body: new AsyncTable<TableRow>({
-                        columns: columns,
-                        $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
-                        asyncDataRowMapper: asyncRowMapper,
-                        queryBuilder: queryBuilder,
-                        createRowId: (row) => row.job_name,
-                        sorting: defaultSorting,
-                    }),
+                new SceneFlexLayout({
+                    children: [
+                        new SceneFlexItem({
+                            width: '100%',
+                            height: '100%',
+                            body: new AsyncTable<TableRow>({
+                                columns: columns,
+                                $data: queryBuilder.rootQueryBuilder(variables, defaultSorting),
+                                asyncDataRowMapper: asyncRowMapper,
+                                queryBuilder: queryBuilder,
+                                createRowId: (row) => row.job_name,
+                                sorting: defaultSorting,
+                            }),
+                        }),
+                    ],
                 }),
             ],
         }),

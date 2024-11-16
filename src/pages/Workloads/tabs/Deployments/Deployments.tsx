@@ -16,6 +16,7 @@ import { SortingState } from 'common/sortingHelpers';
 import { prefixRoute } from 'utils/utils.routing';
 import { ROUTES } from '../../../../constants';
 import { DeploymentQueryBuilder } from './Queries';
+import Analytics from 'components/Analytics';
 
 const columns: Array<Column<TableRow>> = [
     {
@@ -112,20 +113,25 @@ export const getDeploymentsScene = () => {
         controls: [
             new VariableValueSelectors({}),
         ],
-        body: new SceneFlexLayout({
+        body: new Analytics({
+            viewName: 'Workloads - DeploymentList',
             children: [
-                new SceneFlexItem({
-                    width: '100%',
-                    height: '100%',
-                    body: new AsyncTable<TableRow>({
-                        columns: columns,
-                        $data: queryBuilder.rootQueryBuilder(variables, defaultSorting, undefined),
-                        createRowId: createRowId,
-                        asyncDataRowMapper: asyncRowMapper,
-                        queryBuilder: queryBuilder,
-                        expandedRowBuilder: buildExpandedRowScene,
-                        sorting: defaultSorting,
-                    }),
+                new SceneFlexLayout({
+                    children: [
+                        new SceneFlexItem({
+                            width: '100%',
+                            height: '100%',
+                            body: new AsyncTable<TableRow>({
+                                columns: columns,
+                                $data: queryBuilder.rootQueryBuilder(variables, defaultSorting, undefined),
+                                createRowId: createRowId,
+                                asyncDataRowMapper: asyncRowMapper,
+                                queryBuilder: queryBuilder,
+                                expandedRowBuilder: buildExpandedRowScene,
+                                sorting: defaultSorting,
+                            }),
+                        }),
+                    ],
                 }),
             ],
         }),
