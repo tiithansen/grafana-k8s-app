@@ -15,6 +15,7 @@ import { getIngressesScene } from './tabs/Ingresses/Ingresses';
 import { getServicesScene } from './tabs/Services/Services';
 import { IngressPage } from './pages/ingresses';
 import { JsonData } from 'components/AppConfig';
+import { TitleNavigation } from 'components/TitleNavigation';
 
 function getScene(props: JsonData) {
 
@@ -25,6 +26,7 @@ function getScene(props: JsonData) {
         pages: [
           new SceneAppPage({
             title: 'Network',
+            renderTitle: TitleNavigation,
             url: prefixRoute(`${ROUTES.Network}`),
             $timeRange: timeRange,
             controls: [

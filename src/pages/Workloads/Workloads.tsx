@@ -25,6 +25,7 @@ import { DaemonSetPage } from './pages/DaemonSetPage';
 import { CronJobPage } from './pages/CronJobPage';
 import { JobPage } from './pages/JobPage';
 import { JsonData } from 'components/AppConfig';
+import { TitleNavigation } from 'components/TitleNavigation';
 
 function getScene(props: JsonData) {
 
@@ -35,6 +36,7 @@ function getScene(props: JsonData) {
         pages: [
           new SceneAppPage({
             title: 'Workloads',
+            renderTitle: TitleNavigation,
             url: prefixRoute(`${ROUTES.Workloads}`),
             $timeRange: timeRange,
             controls: [

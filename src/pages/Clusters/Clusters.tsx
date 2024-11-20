@@ -16,12 +16,14 @@ import { usePluginJsonData } from 'utils/utils.plugin';
 import { NodePage } from './pages/Node/Node';
 import { createTopLevelVariables } from 'common/variableHelpers';
 import { JsonData } from 'components/AppConfig';
+import { TitleNavigation } from 'components/TitleNavigation';
 
 function getScene(props: JsonData) {
     return new SceneApp({
         pages: [
             new SceneAppPage({
                 title: 'Clusters',
+                renderTitle: TitleNavigation,
                 url: prefixRoute(`${ROUTES.Clusters}`),
                 $timeRange: new SceneTimeRange({
                     from: 'now-1h',
