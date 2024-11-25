@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.8.1...v0.9.0) (2024-11-25)
+
+
+### Features
+
+* Analytics integration with https://github.com/MacroPower/macropower-analytics-panel ([8feea2b](https://github.com/tiithansen/grafana-k8s-app/commit/8feea2b9b53990b493e4ae70091698b63eb627e8))
+* Turn page titles into dropdown for better navigation ([bdbf159](https://github.com/tiithansen/grafana-k8s-app/commit/bdbf1591b32ff74ee58838cfe84b9613d241131c))
+
 ## [0.8.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.8.0...v0.8.1) (2024-11-15)
 
 
