@@ -341,6 +341,21 @@ const columns: Array<Column<TableRow>> = [
                     type: 'value'
                 }
             },
+            {
+                id: 'cpu_throttling',
+                header: 'THROTTLING',
+                accessor: (row: TableRow) => row.cpu.throttling,
+                cellType: 'formatted',
+                cellProps: {
+                    decimals: 2,
+                    format: 'percent',
+                },
+                sortingConfig: {
+                    enabled: true,
+                    local: false,
+                    type: 'value'
+                }
+            }
         ],
     },
 ]
@@ -381,11 +396,13 @@ function asyncDataRowMapper(row: TableRow, asyncRowData: any) {
     const cpuUsage = getSeriesValue(asyncRowData, 'cpu_usage', serieMatcherPredicate(row))
     const cpuRequested = getSeriesValue(asyncRowData, 'cpu_requests', serieMatcherPredicate(row))
     const cpuLimit = getSeriesValue(asyncRowData, 'cpu_limit', serieMatcherPredicate(row))
+    const cpuThrottling = getSeriesValue(asyncRowData, 'cpu_throttling', serieMatcherPredicate(row))
 
     row.cpu = {
         usage: cpuUsage,
         requests: cpuRequested,
-        limits: cpuLimit
+        limits: cpuLimit,
+        throttling: cpuThrottling
     }
 }
 

@@ -202,6 +202,46 @@ function createNodeQuery(cluster: string, additionalLabels: Labels) {
     ])
 }
 
+function createCpuThrottlingQuery(cluster: string, additionalLabels: Labels) {
+    return PromQL.sum(
+        PromQL.rate(
+            PromQL.withRange(
+                PromQL.metric(
+                    Metrics.containerCpuCfsThrottledPeriodsTotal.name,
+                )
+                .withLabels(additionalLabels)
+                .withLabelEquals('cluster', cluster),
+                '$__rate_interval',
+            )
+        )
+    ).by([
+        Metrics.containerCpuCfsThrottledPeriodsTotal.labels.pod,
+        Metrics.kubePodInfo.labels.namespace,
+        'cluster'
+    ])
+    .divide()
+    .withExpression(
+        PromQL.sum(
+            PromQL.rate(
+                PromQL.withRange(
+                    PromQL.metric(
+                        Metrics.containerCpuCfsPeriodsTotal.name,
+                    )
+                    .withLabels(additionalLabels)
+                    .withLabelEquals('cluster', cluster),
+                    '$__rate_interval',
+                )
+            )
+        ).by([
+            Metrics.containerCpuCfsPeriodsTotal.labels.pod,
+            Metrics.kubePodInfo.labels.namespace,
+            'cluster'
+        ])
+    )
+    .multiply()
+    .withScalar(100)
+}
+
 export function createRootQuery(
     staticLabelFilters: LabelFilters,
     variableSet: SceneVariableSet | SceneVariables,
@@ -283,6 +323,11 @@ export function createRootQuery(
             case 'cpu_limits': {
                 onLabels.push(Metrics.kubePodInfo.labels.uid)
                 sortQuery = createResourceLimitsQuery('cpu', '$cluster', {})
+                break;
+            }
+            case 'cpu_throttling': {
+                carryOverLabels.push(Metrics.kubePodInfo.labels.uid)
+                sortQuery = createCpuThrottlingQuery('$cluster', {})
                 break;
             }
         }
@@ -458,6 +503,12 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
         {
             refId: 'restarts',
             expr: createRestartsQuery(clusterValue, additionalLabels).stringify(),
+            instant: true,
+            format: 'table'
+        },
+        {
+            refId: 'cpu_throttling',
+            expr: createCpuThrottlingQuery(clusterValue, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         }

@@ -29,5 +29,6 @@ export interface TableRow extends RowBase {
         usage: number;
         requests: number;
         limits: number;
+        throttling: number;
     };
 }
