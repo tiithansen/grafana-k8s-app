@@ -4,6 +4,7 @@ export interface TableRow extends RowBase{
     cluster: string;
     node: string;
     internal_ip: string;
+    kubelet_version: string;
     memory: {
         free: number;
         total: number;
@@ -16,4 +17,5 @@ export interface TableRow extends RowBase{
         cores: number;
     },
     pod_count: number;
+    age: number;
 }

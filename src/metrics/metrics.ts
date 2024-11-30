@@ -308,6 +308,17 @@ export const Metrics = {
         labels:{
             node: 'node',
             internalIP: 'internal_ip',
+            kernelVersion: 'kernel_version',
+            osImage: 'os_image',
+            containerRuntimeVersion: 'container_runtime_version',
+            kubeletVersion: 'kubelet_version',
+            kubeproxyVersion: 'kubeproxy_version',
+        }
+    },
+    kubeNodeCreated: {
+        name: 'kube_node_created',
+        labels:{
+            node: 'node',
         }
     },
     machineCpuCores: {

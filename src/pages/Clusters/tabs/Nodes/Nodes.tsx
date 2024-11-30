@@ -54,6 +54,30 @@ const columns: Array<Column<TableRow>> = [
         }
     },
     {
+        id: 'version',
+        header: 'VERSION',
+        accessor: (row: TableRow) => row.kubelet_version,
+        sortingConfig: {
+            enabled: true,
+            type: 'label',
+            local: true
+        }
+    },
+    {
+        id: 'age',
+        header: 'AGE',
+        sortingConfig: {
+            enabled: true,
+            local: false,
+            type: 'value'
+        },
+        cellType: 'formatted',
+        cellProps: {
+            format: 'dtdurations',
+        },
+        accessor: (row: TableRow) => row.age > 0 ? (Date.now() / 1000) - row.age : 0
+    },
+    {
         id: 'cluster',
         header: 'CLUSTER',
         sortingConfig: {
@@ -224,6 +248,7 @@ function asyncDataRowMapper(row: TableRow, asyncRowData: Record<string, number[]
     }
 
     row.pod_count = getSeriesValue(asyncRowData, 'pod_count', serieMatcherByNodeNamePredicate(row))
+    row.age = getSeriesValue(asyncRowData, 'age', serieMatcherByNodeNamePredicate(row))
 }
 
 export const getNodesScene = () => {
