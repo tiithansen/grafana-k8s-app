@@ -1,11 +1,16 @@
 import React, { useState, ChangeEvent, useEffect } from 'react';
-import { Button, Field, Input, useStyles2, FieldSet, TagList, Switch, Alert, Link } from '@grafana/ui';
-import { PluginConfigPageProps, AppPluginMeta, PluginMeta, GrafanaTheme2 } from '@grafana/data';
+import { Button, Field, Input, useStyles2, FieldSet, TagList, Switch, Alert, Link, Select } from '@grafana/ui';
+import { PluginConfigPageProps, AppPluginMeta, PluginMeta, GrafanaTheme2, DataSourceInstanceSettings, DataSourceJsonData, SelectableValue } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { css } from '@emotion/css';
 import { testIds } from '../testIds';
 import { lastValueFrom } from 'rxjs';
 import { AnalyticsOptions } from 'components/Analytics/options';
+
+export type RulerClusterMapping = {
+  cluster: string;
+  datasource: string
+}
 
 export type JsonData = {
   datasource?: string;
@@ -14,6 +19,7 @@ export type JsonData = {
   clusterFilter?: string;
   analyticsEnabled?: boolean;
   analytics?: AnalyticsOptions;
+  rulerMappings?: RulerClusterMapping[];
 };
 
 type State = {
@@ -22,9 +28,11 @@ type State = {
   defaultDatasource?: string;
   defaultCluster?: string;
   clusterFilter?: string;
+  prometheusDatasources?: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   matchingDatasources?: string[];
   analyticsEnabled: boolean;
   analytics: AnalyticsOptions;
+  rulerMappings?: RulerClusterMapping[];
 };
 
 const DEFAULT_ANALYTIC_OPTIONS: AnalyticsOptions = {
@@ -53,6 +61,7 @@ export const AppConfig = ({ plugin }: Props) => {
       ...DEFAULT_ANALYTIC_OPTIONS,
       ...jsonData?.analytics,
     },
+    rulerMappings: jsonData?.rulerMappings || [],
   });
 
   const onChangeDatasource = (event: ChangeEvent<HTMLInputElement>) => {
@@ -100,6 +109,39 @@ export const AppConfig = ({ plugin }: Props) => {
     });
   }
 
+  const onAddRulerMapping = () => {
+    const mappings = state.rulerMappings || [];
+    mappings.push({
+      cluster: '',
+      datasource: '',
+    });
+
+    setState({
+      ...state,
+      rulerMappings: mappings,
+    });
+  }
+
+  const onChangeRulerCluster = (event: ChangeEvent<HTMLInputElement>, index: number) => {
+    const mappings = state.rulerMappings || [];
+    mappings[index].cluster = event.target.value;
+
+    setState({
+      ...state,
+      rulerMappings: mappings,
+    });
+  }
+
+  const onChangeRulerDatasource = (event: SelectableValue<string>, index: number) => {
+    const mappings = state.rulerMappings || [];
+    mappings[index].datasource = event.value || '';
+
+    setState({
+      ...state,
+      rulerMappings: mappings,
+    });
+  }
+
   const onDiscoverDatasources = () => {
     const datasources = getDataSourceSrv()
       .getList({ type: 'prometheus' });
@@ -114,7 +156,24 @@ export const AppConfig = ({ plugin }: Props) => {
     setState({
       ...state,
       matchingDatasources: matchingNames,
+      prometheusDatasources: datasources,
     });
+  }
+
+  const onSave = () => {
+    updatePluginAndReload(plugin.meta.id, {
+      enabled,
+      pinned,
+      jsonData: {
+        datasource: state.datasource,
+        defaultDatasource: state.defaultDatasource,
+        defaultCluster: state.defaultCluster,
+        clusterFilter: state.clusterFilter,
+        analyticsEnabled: state.analyticsEnabled,
+        analytics: state.analytics,
+        rulerMappings: state.rulerMappings,
+      },
+    })
   }
 
   useEffect(() => {
@@ -181,7 +240,6 @@ export const AppConfig = ({ plugin }: Props) => {
           />
         </Field>
         <TagList className={s.justifyStart} getColorIndex={() => 9} tags={state.matchingDatasources || []} />
-
         <Field label="Default datasource" description="" className={s.marginTop}>
           <Input
             width={60}
@@ -192,7 +250,6 @@ export const AppConfig = ({ plugin }: Props) => {
             onChange={onChangeDefaultDatasource}
           />
         </Field>
-
         <Field label="Default cluster" description="" className={s.marginTop}>
           <Input
             width={60}
@@ -203,7 +260,6 @@ export const AppConfig = ({ plugin }: Props) => {
             onChange={onChangeDefaultCluster}
           />
         </Field>
-
         <Field label="Cluster filter" description="Expression to filter clusters" className={s.marginTop}>
           <Input
             width={60}
@@ -214,6 +270,45 @@ export const AppConfig = ({ plugin }: Props) => {
             onChange={onChangeClusterFilter}
           />
         </Field>
+      </FieldSet>
+      <FieldSet label="Ruler settings" className={s.marginTopXl}>
+        <Alert  severity="warning" title="Ruler settings">
+          <p>EXPERIMENTAL: Allows mapping clusters to rulers to fetch additional data for alerts from the rulers.</p>
+        </Alert>
+        <Button
+            type="button"
+            onClick={onAddRulerMapping}
+          >
+            Add ruler mapping
+          </Button>
+          {
+            state.rulerMappings?.map((mapping, index) => {
+              return (
+                <FieldSet key={index} className={s.rulerMappingFieldset}>
+                  <Field label="Cluster" description="">
+                    <Input
+                      width={60}
+                      id="cluster"
+                      label={`Cluster`}
+                      value={mapping?.cluster}
+                      placeholder={`E.g.: Production`}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => onChangeRulerCluster(e, index)}
+                    />
+                  </Field>
+                  <Field label="Ruler Datasource" description="">
+                    <Select
+                      width={60}
+                      id="datasource"
+                      label={`Ruler Datasource`}
+                      value={mapping?.datasource}
+                      options={state.prometheusDatasources?.map((ds) => ({ label: ds.name, value: ds.uid })) || []}
+                      onChange={(e: SelectableValue<string>) => onChangeRulerDatasource(e, index)}
+                    />
+                  </Field>
+                </FieldSet>
+              )
+            })
+          }
       </FieldSet>
       <FieldSet label="Analytics settings" className={s.marginTopXl}>
         <Alert  severity="warning" title="Analytics settings">
@@ -243,20 +338,7 @@ export const AppConfig = ({ plugin }: Props) => {
           <Button
             type="submit"
             data-testid={testIds.appConfig.submit}
-            onClick={() =>
-              updatePluginAndReload(plugin.meta.id, {
-                enabled,
-                pinned,
-                jsonData: {
-                  datasource: state.datasource,
-                  defaultDatasource: state.defaultDatasource,
-                  defaultCluster: state.defaultCluster,
-                  clusterFilter: state.clusterFilter,
-                  analyticsEnabled: state.analyticsEnabled,
-                  analytics: state.analytics,
-                },
-              })
-            }
+            onClick={onSave}
             disabled={Boolean(!state.datasource)}
           >
             Save
@@ -279,11 +361,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   justifyStart: css`
     justify-content: flex-start;
   `,
+  rulerMappingFieldset: css`
+    display: flex;
+    flex-direction: row;
+    gap: ${theme.spacing(2)};
+    margin-top: ${theme.spacing(2)};
+    margin-bottom: ${theme.spacing(2)};
+  `,
 });
 
 const updatePluginAndReload = async (pluginId: string, data: Partial<PluginMeta<JsonData>>) => {
   try {
-    console.log(data)
     await updatePlugin(pluginId, data);
 
     // Reloading the page as the changes made here wouldn't be propagated to the actual plugin otherwise.
