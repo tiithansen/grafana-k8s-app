@@ -49,7 +49,7 @@ function createQuery(filters: Labels, options: CPUThrottlingPanelOptions) {
     if (options.mode === 'pod') {
         return baseQuery
     } else {
-        return PromQL.sum(
+        return PromQL.avg(
             baseQuery
         ).by([
             Metrics.containerCpuUsageSecondsTotal.labels.container,

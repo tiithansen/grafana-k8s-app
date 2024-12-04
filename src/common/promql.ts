@@ -366,6 +366,15 @@ class PromQLSumFunction extends PromQLAggregationFunction {
     }
 }
 
+class PromQLAvgFunction extends PromQLAggregationFunction {
+
+    constructor(subExpression: PromQLVectorExpression) {
+        super('avg', [
+            new PromQLVectorExpressionFunctionArg(subExpression)
+        ]);
+    }
+}
+
 class PromQLMaxFunction extends PromQLAggregationFunction {
     
     constructor(subExpression: PromQLVectorExpression) {
@@ -442,6 +451,10 @@ export class PromQL {
 
     static sum(subExpression: PromQLVectorExpression) {
         return new PromQLSumFunction(subExpression);
+    }
+
+    static avg(subExpression: PromQLVectorExpression) {
+        return new PromQLAvgFunction(subExpression);
     }
 
     static sort(direction: 'asc' | 'desc', subExpression: PromQLVectorExpression) {
