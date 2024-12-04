@@ -1,5 +1,6 @@
 import { EmbeddedScene, PanelBuilders, SceneFlexItem, SceneFlexLayout, SceneQueryRunner } from "@grafana/scenes"
-import { LegendDisplayMode } from "@grafana/schema"
+import { LegendDisplayMode, StackingMode } from "@grafana/schema"
+import { DrawStyle } from "@grafana/ui"
 import Analytics from "components/Analytics"
 
 function createPodsPanel() {
@@ -24,6 +25,8 @@ function createPodsPanel() {
             ],
         }))
         .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
+        .setCustomFieldConfig('stacking', { mode: StackingMode.Normal })
+        .setCustomFieldConfig('fillOpacity', 50)
         .build()
 }
 
@@ -49,6 +52,8 @@ function createPodsByOwnerKindPanel() {
             ],
         }))
         .setOption('legend', { displayMode: LegendDisplayMode.Table, calcs: ['mean', 'last', 'max'] })
+        .setCustomFieldConfig('stacking', { mode: StackingMode.Normal })
+        .setCustomFieldConfig('fillOpacity', 50)
         .build()
 }
 
