@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.10.0...v0.10.1) (2024-12-04)
+
+
+### Bug Fixes
+
+* Fix lint error ([e79643b](https://github.com/tiithansen/grafana-k8s-app/commit/e79643b1a9fa260bfd191e6c785154d4b52407b8))
+
 ## [0.10.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.9.0...v0.10.0) (2024-12-04)
 
 
