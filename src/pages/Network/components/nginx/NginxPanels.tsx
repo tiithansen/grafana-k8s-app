@@ -334,7 +334,7 @@ export function getNginxFailureRatioPanel(ingress: string, namespace: string) {
                                 )
                             ) by (host, path)
                         `,
-                        legendFormat: 'Failure Ratio',
+                        legendFormat: '{{host}} - {{path}}',
                     },
                 ],
             })
