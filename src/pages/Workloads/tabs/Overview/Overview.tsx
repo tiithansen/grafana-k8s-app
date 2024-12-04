@@ -1,6 +1,5 @@
 import { EmbeddedScene, PanelBuilders, SceneFlexItem, SceneFlexLayout, SceneQueryRunner } from "@grafana/scenes"
 import { LegendDisplayMode, StackingMode } from "@grafana/schema"
-import { DrawStyle } from "@grafana/ui"
 import Analytics from "components/Analytics"
 
 function createPodsPanel() {
