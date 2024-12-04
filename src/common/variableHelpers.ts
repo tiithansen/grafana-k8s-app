@@ -103,6 +103,44 @@ export function createAlertStateVariable() {
     })
 }
 
+export function createAlertNameVariable() {
+    return new QueryVariable({
+        name: 'alertName',
+        label: 'Alert name',
+        datasource: {
+            uid: '$datasource',
+            type: 'prometheus',
+        },
+        query: {
+            refId: 'alertName',
+            query: `label_values(ALERTS{cluster="$cluster"},alertname)`,
+        },
+        defaultToAll: true,
+        allValue: '.*',
+        includeAll: true,
+        isMulti: true,
+    })
+}
+
+export function createAlertSeverityVariable() {
+    return new QueryVariable({
+        name: 'alertSeverity',
+        label: 'Alert Severity',
+        datasource: {
+            uid: '$datasource',
+            type: 'prometheus',
+        },
+        query: {
+            refId: 'alertSeverity',
+            query: `label_values(ALERTS{cluster="$cluster"},severity)`,
+        },
+        defaultToAll: true,
+        allValue: '.*',
+        includeAll: true,
+        isMulti: true,
+    })
+}
+
 export function createTimeRange() {
     return new SceneTimeRange({
         from: 'now-1h',

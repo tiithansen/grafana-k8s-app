@@ -9,7 +9,7 @@ import {
     SceneVariables,
     PanelBuilders,
 } from '@grafana/scenes';
-import { createAlertStateVariable, createNamespaceVariable } from 'common/variableHelpers';
+import { createAlertNameVariable, createAlertSeverityVariable, createAlertStateVariable, createNamespaceVariable } from 'common/variableHelpers';
 import { SortingState } from 'common/sortingHelpers';
 import { AsyncTable, Column, ColumnSortingConfig, QueryBuilder } from 'components/AsyncTable';
 import { TextColor } from 'common/types';
@@ -17,7 +17,7 @@ import { TableRow } from './types';
 import { alertLabelValues } from './utils';
 import { expandedRowSceneBuilder } from './AlertExpandedRow';
 import { LabelFilters, serializeLabelFilters } from 'common/queryHelpers';
-import { LegendDisplayMode } from '@grafana/ui';
+import { LegendDisplayMode, StackingMode } from '@grafana/ui';
 
 interface SeverityColors {
     [key: string]: TextColor;
@@ -140,13 +140,17 @@ class AlertsQueryBuilder implements QueryBuilder<TableRow> {
         const hasNamespaceVariable = variables.getByName('namespace') !== undefined;
         const hasSearchVariable = variables.getByName('alertSearch') !== undefined;
         const hasAlertStateVariable = variables.getByName('alertState') !== undefined;
+        const hasAlertSeverityVariable = variables.getByName('alertSeverity') !== undefined;
+        const hasAlertNameVariable = variables.getByName('alertName') !== undefined;
 
         const finalQuery = `
             ALERTS{
                 cluster="$cluster",
                 ${ hasSearchVariable ? `alertname=~"$alertSearch.*",`: '' }
+                ${ hasAlertNameVariable ? `alertname=~"$alertName",` : '' }
                 ${ hasNamespaceVariable ? `namespace=~"$namespace",` : '' }
                 ${ hasAlertStateVariable ? `alertstate=~"$alertState",` : '' }
+                ${ hasAlertSeverityVariable ? `severity=~"$alertSeverity",` : '' }
                 ${serializedFilters}
             }
             * ignoring(alertstate) group_right(alertstate) ALERTS_FOR_STATE{
@@ -193,6 +197,8 @@ function alertsTimeseries() {
                             ALERTS{
                                 cluster="$cluster",
                                 alertstate=~"$alertState",
+                                alertname=~"$alertName",
+                                severity=~"$alertSeverity",
                                 namespace=~"$namespace",
                             }
                         ) by (alertname, namespace, alertstate)`,
@@ -201,6 +207,8 @@ function alertsTimeseries() {
             ],
         }))
         .setOption('legend', { displayMode: LegendDisplayMode.Table, placement: 'right', calcs: ['mean', 'last', 'max'] })
+        .setCustomFieldConfig('stacking', { mode: StackingMode.Normal })
+        .setCustomFieldConfig('fillOpacity', 50)
         .build()
 }
 
@@ -209,6 +217,8 @@ export function AlertsTable(labelFilters?: LabelFilters, showVariableControls = 
     const variables = new SceneVariableSet({
         variables: shouldCreateVariables ? [
             createNamespaceVariable(),
+            createAlertNameVariable(),
+            createAlertSeverityVariable(),
             createAlertStateVariable(),
             new TextBoxVariable({
                 name: 'alertSearch',
