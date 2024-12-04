@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.10.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.9.0...v0.10.0) (2024-12-04)
+
+
+### Features
+
+* Add additional filters for alerts ([5589702](https://github.com/tiithansen/grafana-k8s-app/commit/558970264e173c9c4f969133e460c3d82038ecfc))
+* Add cpu throttling to pods table ([c65655c](https://github.com/tiithansen/grafana-k8s-app/commit/c65655cdbe37c1b2ff773fcfae315e628e59b8a9))
+* Add node age and version to nodes table ([fe1d51a](https://github.com/tiithansen/grafana-k8s-app/commit/fe1d51a3a2a3225243796d387491ad2020d5051c))
+* Change pods and pods by owner kind to stacking mode ([5b1cb7f](https://github.com/tiithansen/grafana-k8s-app/commit/5b1cb7fcb2587a3baf7aede1ed3dfcd1f3e61c6e))
+* Fetch additional data about alerts like annotations, query from rulers ([dd70fc3](https://github.com/tiithansen/grafana-k8s-app/commit/dd70fc3664d7e37c121bab3aca9703fd620f6830))
+
+
+### Bug Fixes
+
+* Show average throttling across pods in combined view ([4f90cb6](https://github.com/tiithansen/grafana-k8s-app/commit/4f90cb69baebda1fe24b93a11468f2ce98c42ba4))
+* Show path in failure ratio legend ([76ac029](https://github.com/tiithansen/grafana-k8s-app/commit/76ac0294cc59287a460a79a592b39a787f0d8bda))
+
 ## [0.9.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.8.1...v0.9.0) (2024-11-25)
 
 
