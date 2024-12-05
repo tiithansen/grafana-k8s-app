@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent, useEffect } from 'react';
-import { Button, Field, Input, useStyles2, FieldSet, TagList, Switch, Alert, Link, Select } from '@grafana/ui';
+import { Button, Field, Input, useStyles2, FieldSet, TagList, Switch, Alert, Link, Select, IconButton } from '@grafana/ui';
 import { PluginConfigPageProps, AppPluginMeta, PluginMeta, GrafanaTheme2, DataSourceInstanceSettings, DataSourceJsonData, SelectableValue } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { css } from '@emotion/css';
@@ -115,6 +115,16 @@ export const AppConfig = ({ plugin }: Props) => {
       cluster: '',
       datasource: '',
     });
+
+    setState({
+      ...state,
+      rulerMappings: mappings,
+    });
+  }
+
+  const onDeleteRulerMapping = (index: number) => {
+    const mappings = state.rulerMappings || [];
+    mappings.splice(index, 1);
 
     setState({
       ...state,
@@ -305,6 +315,11 @@ export const AppConfig = ({ plugin }: Props) => {
                       onChange={(e: SelectableValue<string>) => onChangeRulerDatasource(e, index)}
                     />
                   </Field>
+                  <IconButton
+                    name="trash-alt"
+                    aria-label="Delete ruler mapping"
+                    onClick={() => onDeleteRulerMapping(index)}
+                  />
                 </FieldSet>
               )
             })
