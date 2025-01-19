@@ -11,7 +11,7 @@ const REQUEST_SIZE_DESCRIPTION = `The request length (including request line, he
 
 export function getNginxRequestLatencyPanel(ingress: string, namespace: string) {
     return PanelBuilders.timeseries()
-        .setTitle('Request Latency P95 [5m]')
+        .setTitle('Request Latency P95 [1m]')
         .setDescription(REQUEST_LATENCY_DESCRIPTION)
         .setData(
             new SceneQueryRunner({
@@ -31,7 +31,7 @@ export function getNginxRequestLatencyPanel(ingress: string, namespace: string) 
                                             cluster="$cluster",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
-                                        }[5m]
+                                        }[1m]
                                     )
                                 ) by (host, path, le)
                             )
@@ -48,7 +48,7 @@ export function getNginxRequestLatencyPanel(ingress: string, namespace: string) 
 
 export function getNginxResponseLatencyPanel(ingress: string, namespace: string) {
     return PanelBuilders.timeseries()
-        .setTitle('Response Latency P95 [5m]')
+        .setTitle('Response Latency P95 [1m]')
         .setDescription(RESPONSE_LATENCY_DESCRIPTION)
         .setData(
             new SceneQueryRunner({
@@ -68,7 +68,7 @@ export function getNginxResponseLatencyPanel(ingress: string, namespace: string)
                                             cluster="$cluster",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
-                                        }[5m]
+                                        }[1m]
                                     )
                                 ) by (host, path, le)
                             )
@@ -85,7 +85,7 @@ export function getNginxResponseLatencyPanel(ingress: string, namespace: string)
 
 export function getNginxHeaderLatencyPanel(ingress: string, namespace: string) {
     return PanelBuilders.timeseries()
-        .setTitle('Header Latency P95 [5m]')
+        .setTitle('Header Latency P95 [1m]')
         .setDescription(HEADER_LATENCY_DESCRIPTION)
         .setData(
             new SceneQueryRunner({
@@ -105,7 +105,7 @@ export function getNginxHeaderLatencyPanel(ingress: string, namespace: string) {
                                             cluster="$cluster",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
-                                        }[5m]
+                                        }[1m]
                                     )
                                 ) by (host, path, le)
                             )
@@ -122,7 +122,7 @@ export function getNginxHeaderLatencyPanel(ingress: string, namespace: string) {
 
 export function getNginxUpstreamConnectLatencyPanel(ingress: string, namespace: string) {
     return PanelBuilders.timeseries()
-        .setTitle('Upstream Connect Latency P95 [5m]')
+        .setTitle('Upstream Connect Latency P95 [1m]')
         .setDescription(UPSTREAM_CONNECT_LATENCY_DESCRIPTION)
         .setData(
             new SceneQueryRunner({
@@ -142,7 +142,7 @@ export function getNginxUpstreamConnectLatencyPanel(ingress: string, namespace: 
                                             cluster="$cluster",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
-                                        }[5m]
+                                        }[1m]
                                     )
                                 ) by (host, path, le)
                             )
@@ -159,7 +159,7 @@ export function getNginxUpstreamConnectLatencyPanel(ingress: string, namespace: 
 
 export function getNginxRequestRatePanel(ingress: string, namespace: string) {
     return PanelBuilders.timeseries()
-        .setTitle('Request Rate [5m]')
+        .setTitle('Request Rate [1m]')
         .setData(
             new SceneQueryRunner({
                 datasource: {
@@ -176,7 +176,7 @@ export function getNginxRequestRatePanel(ingress: string, namespace: string) {
                                         cluster="$cluster",
                                         ingress="${ingress}",
                                         exported_namespace="${namespace}",
-                                    }[5m]
+                                    }[1m]
                                 )
                             ) by (host, path)
                         `,
@@ -192,7 +192,7 @@ export function getNginxRequestRatePanel(ingress: string, namespace: string) {
 
 export function getNginxResponseSizePanel(ingress: string, namespace: string) {
     return PanelBuilders.timeseries()
-        .setTitle('Response Size [5m]')
+        .setTitle('Response Size [1m]')
         .setDescription(RESPONSE_SIZE_DESCRIPTION)
         .setUnit('bytes')
         .setData(
@@ -213,7 +213,7 @@ export function getNginxResponseSizePanel(ingress: string, namespace: string) {
                                             cluster="$cluster",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
-                                        }[5m]
+                                        }[1m]
                                     )
                                 ) by (host, path, le)
                             )
@@ -230,7 +230,7 @@ export function getNginxResponseSizePanel(ingress: string, namespace: string) {
 
 export function getNginxRequestSizePanel(ingress: string, namespace: string) {
     return PanelBuilders.timeseries()
-        .setTitle('Request Size [5m]')
+        .setTitle('Request Size [1m]')
         .setDescription(REQUEST_SIZE_DESCRIPTION)
         .setUnit('bytes')
         .setData(
@@ -251,7 +251,7 @@ export function getNginxRequestSizePanel(ingress: string, namespace: string) {
                                             cluster="$cluster",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
-                                        }[5m]
+                                        }[1m]
                                     )
                                 ) by (host, path, le)
                             )
@@ -268,7 +268,7 @@ export function getNginxRequestSizePanel(ingress: string, namespace: string) {
 
 export function getNginxRequestRateByStatusCodePanel(ingress: string, namespace: string) {
     return PanelBuilders.timeseries()
-        .setTitle('Request Rate by Status Code [5m]')
+        .setTitle('Request Rate by Status Code [1m]')
         .setData(
             new SceneQueryRunner({
                 datasource: {
@@ -285,7 +285,7 @@ export function getNginxRequestRateByStatusCodePanel(ingress: string, namespace:
                                         cluster="$cluster",
                                         ingress="${ingress}",
                                         exported_namespace="${namespace}",
-                                    }[5m]
+                                    }[1m]
                                 )
                             ) by (host, path, status)
                         `,
@@ -301,7 +301,7 @@ export function getNginxRequestRateByStatusCodePanel(ingress: string, namespace:
 
 export function getNginxFailureRatioPanel(ingress: string, namespace: string) {
     return PanelBuilders.timeseries()
-        .setTitle('Failure Ratio [5m]')
+        .setTitle('Failure Ratio [1m]')
         .setDescription('The ratio of failed requests to total requests over the last 5 minutes')
         .setData(
             new SceneQueryRunner({
@@ -320,7 +320,7 @@ export function getNginxFailureRatioPanel(ingress: string, namespace: string) {
                                         ingress="${ingress}",
                                         exported_namespace="${namespace}",
                                         status=~"5.*"
-                                    }[5m]
+                                    }[1m]
                                 )
                             ) by (host, path)
                             /
@@ -330,7 +330,7 @@ export function getNginxFailureRatioPanel(ingress: string, namespace: string) {
                                         cluster="$cluster",
                                         ingress="${ingress}",
                                         exported_namespace="${namespace}",
-                                    }[5m]
+                                    }[1m]
                                 )
                             ) by (host, path)
                         `,
