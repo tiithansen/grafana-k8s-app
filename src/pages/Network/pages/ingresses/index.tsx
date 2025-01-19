@@ -22,10 +22,9 @@ import { usePluginJsonData } from "utils/utils.plugin";
 import { createTimeRange, createTopLevelVariables } from "common/variableHelpers";
 import { AlertsTable } from "components/AlertsTable";
 import { createResourceLabels } from "pages/Workloads/components/ResourceLabels";
-import { PromQL } from "common/promql";
+import { MatchOperators, PromQL } from "common/promql";
 import { Metrics } from "metrics/metrics";
 import React, { useMemo } from "react";
-import { DataFrameView } from "@grafana/data";
 import { Spinner } from "@grafana/ui";
 import {
     getNginxFailureRatioPanel,
@@ -45,7 +44,7 @@ import Analytics from "components/Analytics";
 // Try connecting kube_ingress_path service_name to pods
 
 interface ConditionalSceneObjectState extends SceneObjectState {
-    builder: (data: string) => SceneObject<SceneObjectState>;
+    builder: (rowCounts: Map<string, number>) => SceneObject<SceneObjectState>;
     children?: Array<SceneObject<SceneObjectState>>; 
 }
 
@@ -63,16 +62,16 @@ function ConditionalRenderer({ model }: SceneComponentProps<ConditionalSceneObje
             return [];
         }
 
-        const frame = data.series[0];
-        const view = new DataFrameView<any>(frame);
-        const rows = view.toArray();
-        
-        const controller = rows && rows.length > 0 ? rows[0].controller : undefined;
+        const rowCounts = new Map<string, number>();
+        // result counts per query
+        for (const serie of data.series) {
+            rowCounts.set(serie.refId || 'unknown', serie.length);
+        }
 
         // By setting it via state we can trigger render but also grafana connects the model to the scene graph
         // so that all nested objects could use the variables ...
         model.setState({
-            children: [builder(controller)]
+            children: [builder(rowCounts)]
         });
 
         return;
@@ -92,19 +91,33 @@ function ConditionalRenderer({ model }: SceneComponentProps<ConditionalSceneObje
     }
 }
 
-function ingressInfoQuery(namespace: string, ingress: string) {
-    return PromQL.metric(Metrics.kubeIngressInfo.name)
-        .withLabelEquals('namespace', namespace)
-        .withLabelEquals('ingress', ingress)
-        .withLabelEquals('cluster', '$cluster')
-        .multiply()
-        .on([
-            Metrics.kubeIngressInfo.labels.ingressClass
-        ])
-        .groupLeft([
-            Metrics.kubeIngressClassInfo.labels.controller
-        ], PromQL.metric(Metrics.kubeIngressClassInfo.name)
-            .withLabelEquals('cluster', '$cluster')
+function nginxBuildInfoQuery(namespace: string, ingress: string) {
+
+    return PromQL.metric(Metrics.nginxIngressControllerBuildInfo.name)
+        .withLabel('cluster', MatchOperators.EQUALS, '$cluster')
+        .and()
+        .on(['controller_class', 'cluster'])
+        .withExpression(
+            PromQL.labelReplace(
+                PromQL.metric(
+                    Metrics.kubeIngressInfo.name
+                )
+                .withLabel('cluster', MatchOperators.EQUALS, '$cluster')
+                .withLabel('ingress', MatchOperators.EQUALS, ingress)
+                .multiply()
+                .on(['ingressclass', 'cluster'])
+                .groupLeft(
+                    [
+                        'controller'
+                    ],
+                    PromQL.metric(Metrics.kubeIngressClassInfo.name)
+                    .withLabel('cluster', MatchOperators.EQUALS, '$cluster')
+                ),
+                'controller_class',
+                'controller',
+                '$1',
+                '(.*)'
+            )
         )
 }
 
@@ -201,8 +214,11 @@ function displayBasicNginxMetrics(ingress: string, namespace: string) {
     });
 }
 
-function buildRequestsPanels(controller: string, ingress: string, namespace: string) {
-    if (controller === 'k8s.io/ingress-nginx') {
+function buildRequestsPanels(rowCounts: Map<string, number>, ingress: string, namespace: string) {
+
+    const nginxBuildInfo = rowCounts.get('nginx_ingress_controller_build_info') || 0;
+
+    if (nginxBuildInfo > 0) {
         return displayBasicNginxMetrics(ingress, namespace);
     } else {
         return new SceneFlexLayout({
@@ -222,8 +238,8 @@ function getScene(namespace: string, ingress: string) {
         },
         queries: [
             {
-                refId: 'ingresses',
-                expr: ingressInfoQuery(namespace, ingress).stringify(),
+                refId: 'nginx_ingress_controller_build_info',
+                expr: nginxBuildInfoQuery(namespace, ingress).stringify(),
                 instant: true,
                 format: 'table'
             },
@@ -289,8 +305,8 @@ function getScene(namespace: string, ingress: string) {
                                     width: '100%',
                                     body: new ConditionalSceneObject({
                                         $data: ingressInfoData,
-                                        builder: (controller: string) => {
-                                            return buildRequestsPanels(controller, ingress, namespace)
+                                        builder: (rowCounts: Map<string, number>) => {
+                                            return buildRequestsPanels(rowCounts, ingress, namespace)
                                         }
                                     }),
                                 }),

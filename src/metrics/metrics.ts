@@ -371,6 +371,13 @@ export const Metrics = {
             controller: 'controller',
         }
     },
+    // Nginx Ingress Controller
+    nginxIngressControllerBuildInfo: {
+        name: 'nginx_ingress_controller_build_info',
+        labels:{
+            controllerClass: 'controller_class',
+        }
+    },
     // Services
     kubeServiceInfo: {
         name: 'kube_service_info',

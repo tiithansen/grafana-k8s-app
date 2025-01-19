@@ -381,7 +381,9 @@ export function createRootQuery(
                 .groupRight(
                     carryOverLabels,
                     sortQuery
-                ).or(
+                )
+                .or()
+                .withExpression(
                     baseQuery.multiply().withScalar(0)
                 )
         )

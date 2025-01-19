@@ -80,7 +80,9 @@ export class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
                                         }
                                     })
                                 ).by(['namespace', 'statefulset'])
-                            ).or(
+                            )
+                            .or()
+                            .withExpression(
                                 baseQuery.multiply().withScalar(0)
                             )
                         )
@@ -94,7 +96,9 @@ export class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
                             .groupRight(
                                 [],
                                 createReplicasQuery('$cluster', {})
-                            ).or(
+                            )
+                            .or()
+                            .withExpression(
                                 baseQuery.multiply().withScalar(0)
                             )
                         )

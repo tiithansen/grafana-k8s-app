@@ -22,25 +22,6 @@ enum MatchingModifiers {
     ON = 'on',
 }
 
-class PromQLMatchingModifier extends PromQLExpression {
-    
-    constructor(private modifier: MatchingModifiers, private labels: string[], private left: PromQLExpression) {
-        super();
-    }
-
-    stringify() {
-        return `${this.left.stringify()} ${this.modifier}(${this.labels.join(', ')}) `;
-    }
-
-    groupLeft(labels: string[], vectorExpr: PromQLVectorExpression) {
-        return new PromQLGroupModifier(GroupModifiers.GROUP_LEFT, labels, this, vectorExpr);
-    }
-
-    groupRight(labels: string[], vectorExpr: PromQLVectorExpression) {
-        return new PromQLGroupModifier(GroupModifiers.GROUP_RIGHT, labels, this, vectorExpr);
-    }
-}
-
 enum BinaryOperators {
     ADD = '+',
     SUBTRACT = '-',
@@ -49,9 +30,6 @@ enum BinaryOperators {
     MODULO = '%',
     POW = '^',
 }
-
-
-
 
 export abstract class PromQLVectorExpression extends PromQLExpression {
     
@@ -79,16 +57,46 @@ export abstract class PromQLVectorExpression extends PromQLExpression {
         return new PromQLBinaryExpression(BinaryOperators.POW, this);
     }
 
-    or(vectorExpr: PromQLVectorExpression) {
-        return new PromQLLogicalExpression(LogicalOperators.OR, this, vectorExpr);
+    or() {
+        return new PromQLLogicalExpression(LogicalOperators.OR, this);
     }
 
-    and(vectorExpr: PromQLVectorExpression) {
-        return new PromQLLogicalExpression(LogicalOperators.AND, this, vectorExpr);
+    and() {
+        return new PromQLLogicalExpression(LogicalOperators.AND, this);
     }
 
     equals(value: number) {
         return new PromQLComparisonExpression(ComparisonOperators.EQUALS, this, new PromQLScalarExpression(value));
+    }
+}
+
+class PromQLMatchingModifier extends PromQLVectorExpression {
+    
+    private right?: PromQLExpression;
+
+    constructor(private modifier: MatchingModifiers, private labels: string[], private left: PromQLExpression) {
+        super();
+    }
+
+    stringify() {
+        if (this.right) {
+            return `${this.left.stringify()} ${this.modifier}(${this.labels.join(', ')}) ${this.right.stringify()}`;
+        } else {
+            return `${this.left.stringify()} ${this.modifier}(${this.labels.join(', ')})`;
+        }
+    }
+
+    groupLeft(labels: string[], vectorExpr: PromQLVectorExpression) {
+        return new PromQLGroupModifier(GroupModifiers.GROUP_LEFT, labels, this, vectorExpr);
+    }
+
+    groupRight(labels: string[], vectorExpr: PromQLVectorExpression) {
+        return new PromQLGroupModifier(GroupModifiers.GROUP_RIGHT, labels, this, vectorExpr);
+    }
+
+    withExpression(expr: PromQLExpression) {
+        this.right = expr;
+        return PromQL.parenthesis(this);
     }
 }
 
@@ -142,12 +150,36 @@ enum LogicalOperators {
 }
 
 class PromQLLogicalExpression extends PromQLVectorExpression {
-    constructor(private operator: LogicalOperators, private left: PromQLExpression, private right: PromQLExpression) {
+
+    private right?: PromQLExpression;
+
+    constructor(private operator: LogicalOperators, private left: PromQLExpression) {
         super();
     }
 
     stringify() {
-        return `${this.left.stringify()} ${this.operator} (${this.right.stringify()}) `;
+        if (this.right) {
+            return `${this.left.stringify()} ${this.operator} ${this.right.stringify()}`;
+        } else {
+            return `${this.left.stringify()} ${this.operator}`;
+        }
+    }
+
+    ignoring(labels: string[]) {
+        return new PromQLMatchingModifier(MatchingModifiers.IGNORING, labels, this);
+    }
+
+    on(labels: string[]) {
+        return new PromQLMatchingModifier(MatchingModifiers.ON, labels, this);
+    }
+
+    withScalar(scalar: number) {
+        return new PromQLScalarExpression(scalar, this);
+    }
+
+    withExpression(expr: PromQLExpression) {
+        this.right = expr;
+        return PromQL.parenthesis(this);
     }
 }
 
@@ -482,7 +514,7 @@ export class PromQL {
     }
 
     static labelReplace(exp: PromQLVectorExpression, dest: string, sourceLabel: string, replacement: string, regex: string) {
-        return new PromQLLabelReplaceFunction(exp, dest, sourceLabel, replacement, regex);
+        return new PromQLLabelReplaceFunction(exp, dest, replacement, sourceLabel, regex);
     }
 
     static parenthesis(expr: PromQLVectorExpression) {

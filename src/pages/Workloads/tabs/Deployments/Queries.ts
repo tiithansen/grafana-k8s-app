@@ -114,7 +114,9 @@ export class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
                                         }
                                     })
                                 ).by(['namespace', 'deployment'])
-                            ).or(
+                            )
+                            .or()
+                            .withExpression(
                                 baseQuery.multiply().withScalar(0)
                             )
                         )
@@ -128,7 +130,9 @@ export class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
                             .groupRight(
                                 [],
                                 createReplicasQuery('$cluster', {})
-                            ).or(
+                            )
+                            .or()
+                            .withExpression(
                                 baseQuery.multiply().withScalar(0)
                             )
                         )

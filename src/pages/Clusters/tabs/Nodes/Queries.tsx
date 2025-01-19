@@ -53,7 +53,9 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
                                         value: ''
                                     }
                                 })
-                            ).or(
+                            )
+                            .or()
+                            .withExpression(
                                 baseQuery.multiply().withScalar(0)
                             )
                         )
@@ -70,7 +72,9 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
                                     ...commonCarryOverLabels,
                                 ],
                                 this.createCpuRequestsQuery('$cluster', {})
-                            ).or(
+                            )
+                            .or()
+                            .withExpression(
                                 baseQuery.multiply().withScalar(0)
                             )
                         )
@@ -87,7 +91,9 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
                                     ...commonCarryOverLabels,
                                 ],
                                 this.createCoresQuery('$cluster', {})
-                            ).or(
+                            )
+                            .or()
+                            .withExpression(
                                 baseQuery.multiply().withScalar(0)
                             )
                         )
@@ -104,7 +110,9 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
                                     ...commonCarryOverLabels,
                                 ],
                                 this.createPodCountQuery('$cluster', {})
-                            ).or(
+                            )
+                            .or()
+                            .withExpression(
                                 baseQuery.multiply().withScalar(0)
                             )
                         )
@@ -121,7 +129,9 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
                                     ...commonCarryOverLabels,
                                 ],
                                 this.createNodeAgeQuery('$cluster', {})
-                            ).or(
+                            )
+                            .or()
+                            .withExpression(
                                 baseQuery.multiply().withScalar(0)
                             )
                         )
