@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.2](https://github.com/tiithansen/grafana-k8s-app/compare/v0.11.1...v0.11.2) (2025-01-19)
+
+
+### Bug Fixes
+
+* Release zip was missing nested grafana-k8s-app directory which caused failure when installing from zip ([5813070](https://github.com/tiithansen/grafana-k8s-app/commit/5813070c4a94d07f75773b7eded754f6489a4ae0))
+
 ## [0.11.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.11.0...v0.11.1) (2025-01-19)
 
 
