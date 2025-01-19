@@ -141,11 +141,18 @@ jobs:
           echo "plugin-version=${GRAFANA_PLUGIN_VERSION}" >> $GITHUB_OUTPUT
           echo "archive=${GRAFANA_PLUGIN_ARTIFACT}" >> $GITHUB_OUTPUT
 
+      - name: Bundle release archive
+        if: steps.release.outputs.release_created
+        working-directory: ./dist
+        run: |
+          zip -r grafana-k8s-app-v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}.zip ./*
+
       - name: Upload release assets
+        if: steps.release.outputs.release_created
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create ${{ env.PKG_TAG }} ./dist/*
+          gh release upload v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} ./dist/grafana-k8s-app-v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}.zip
 
       - name: Log in to the Container registry
         if: steps.release.outputs.release_created
