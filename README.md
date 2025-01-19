@@ -9,10 +9,10 @@ Grafana Scenes Kubernetes Application is a Grafana plugin that provides a way to
 
 This plugin relies on presence of default kube-state-metrics and node-exporter metrics.
 
-### Current limitations
+### Requirements
 
 * It expects the presence of `cluster` label on all the metrics.
-
+  
 ### Metrics used
 
 Metrics and required labels used by application can be found in [metrics.ts](src/metrics/metrics.ts).
@@ -30,40 +30,6 @@ Metrics and required labels used by application can be found in [metrics.ts](src
 
 #### Daemonset
 <img src="screenshots/daemonset-view.png" style="width:25%;margin: 4px;"><img src="screenshots/daemonset-view-bottom.png" style="width:25%;margin: 4px;">
-
-## Planned Features & Improvements
-
-Following list is not in any particular order.
-
-* Create page to view Node details.
-  * Basic node details page is implemented.
-* Create page to view Deployment, StatefulSet, DaemonSet, CronJob and Job details.
-  * Basic detailed pages for different resources is implemented.
-* Create page for Cluster overview.
-  * Basic cluster overview page is implemented.
-* Implement sorting by columns.
-  * Initial sorting for Pods is implemented. 
-* Display alerts on the resources.
-  * Alerts are displayed for Pods, DaemonSets and StatefulSets
-    For alerts to be displayed alert needs to have `cluster` and kind label `pod|daemonset|statefulset` with name as the value.
-* Integrate OpenCost metrics to visualize cost of the resources.
-* Feature to show stopped resources.
-  Because a lot of the queries are `instant` then the stopped resources are not shown even if time range is set to show them.
-  * Partially implemented for pods, its possible to toggle to view which are not running anymore. It lookup pods using `present_over_time` with timerange
-    specified in the UI time picker.
-* Add support for Karpenter metrics.
-  Optional displaying of Karpenter metrics.
-  Which could be toggled from the plugin settings.
-* Add support for resource relations.
-  Depends on Kube-State-Metrics to expose relations between resources [Related feature request](https://github.com/kubernetes/kube-state-metrics/issues/2424).
-* Add support to see Kubernetes event logs
-  Display events which have been exported by [kubernetes-event-exporter](https://github.com/resmoio/kubernetes-event-exporter) into Loki.
-* Display networking resources and metrics
-  * Display Ingress metrics
-    * Display Nginx Ingress Controller metrics (need to figure out how to make the connection between `kube_ingress_info` and if its nginx controlled)
-
-
-If you have any feature requests, improvements or suggestions, please create an issue.
 
 ## Installation
 
@@ -94,6 +60,138 @@ grafana.ini:
     # Move the plugin from More Apps to Infrastructure in the menu
     k8s-app: infrastructure
 ```
+
+### Configuration
+
+Application can be configured from the plugin settings page in Grafana.
+Settings page can be found at: `/plugins/k8s-app?page=configuration`.
+
+#### Metrics settings
+
+* Metrics datasource - Allows configuring regex to filter metrics from the prometheus datasources. (default=prometheus)
+* Default datasource - Allows configuring default datasource for the metrics.
+* Default cluster - Allows configuring default cluster to be used in the queries.
+* Cluster filter - Allows customizing the query which is used to get label values for the cluster variable.
+
+#### Logs & Events settings (EXPERIMENTAL)
+
+Allows displaying logs and events from Loki.
+
+* Feature exepects events to be exported by [opentelemetry-collector-contrib k8seventsreceiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/receiver/k8seventsreceiver/README.md).
+* Logs must be exported to Loki by `opentelemetry-collector` because it relies on stream labels in format of `k8s_...`.
+* Datasource used must support multi-tenant queries where stream label `k8s_cluster_name` is used to select logs from specific tenant.
+* It is possible to override the default queries per view (Cluster, Node, Pod, Deployment, Statefulset, Daemonset).
+
+##### Sample configuration for k8seventsreceiver
+
+[Opentelemetry-collector helm chart](https://github.com/open-telemetry/opentelemetry-helm-charts/tree/main/charts/opentelemetry-collector) is used as a parent chart for the following configuration.
+
+```yaml
+global:
+  clusterName: "dummy-cluster"
+  lokiEndpoint: "https://loki.example/otlp"
+
+opentelemetry-collector:
+
+  mode: deployment
+
+  image:
+    repository: "otel/opentelemetry-collector-contrib"
+
+  serviceAccount:
+    create: true
+
+  clusterRole:
+    create: true
+    rules:
+    # Allow the collector to read all resources in the cluster
+    - apiGroups:
+      - "*"
+      resources:
+      - "*"
+      verbs: ["get", "watch", "list"]
+
+  ports:
+    metrics:
+      enabled: true
+    otlp:
+      enabled: false
+    otlp-http:
+      enabled: false
+    jaeger-compact:
+      enabled: false
+    jaeger-thrift:
+      enabled: false
+    jaeger-grpc:
+      enabled: false
+    zipkin:
+      enabled: false
+
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 300m
+    limits:
+      memory: 512Mi
+      cpu: 1000m
+
+  config:
+    receivers:
+      k8s_events:
+        auth_type: "serviceAccount"
+    exporters:
+      otlphttp/loki:
+        endpoint: "{{ .Values.global.lokiEndpoint }}"
+        headers:
+          "X-Scope-OrgID": "{{ .Values.global.clusterName }}"
+    processors:
+      resource:
+        attributes:
+          - key: k8s.cluster.name
+            value: "{{ .Values.global.clusterName }}"
+            action: insert
+          - key: service.name
+            value: "k8sevents"
+            action: insert
+      transform:
+        error_mode: ignore
+        log_statements:
+          - context: log
+            statements:
+              # Move the namespace name to the resource attributes and remove it from the log attributes
+              # This way Loki can use the namespace name as a stream label
+              - set(resource.attributes["k8s.namespace.name"], attributes["k8s.namespace.name"]) where attributes["k8s.namespace.name"] != nil
+              - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"] != nil
+
+    service:
+      extensions:
+      - health_check
+      pipelines:
+        logs:
+          exporters:
+          - otlphttp/loki
+          processors:
+          - memory_limiter
+          - resource
+          - transform
+          - batch
+          receivers:
+          - k8s_events
+        metrics: null
+        traces: null
+```
+
+#### Ruler settings (EXPERIMENTAL)
+
+Allows displaying additional information about the alerts which is not available in `ALERTS` and `ALERTS_FOR_STATE` metrics via labels.
+
+* Currently rulers which support Prometheus HTTP REST API (Thanos, Mimir, Prometheus).
+* This feature displays `annotations` and `query` for each alert.
+
+#### Analytics settings (EXPERIMENTAL)
+
+Allows exporting of user views/visits of the application to Grafana analytics service.
+
 ## Contributing
 
 ### Local Development

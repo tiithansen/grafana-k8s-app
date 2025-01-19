@@ -1,4 +1,4 @@
-import { DataSourceVariable, QueryVariable, SceneTimeRange, SceneVariableSet, SceneVariables, sceneGraph } from "@grafana/scenes";
+import { DataSourceVariable, QueryVariable, SceneTimeRange, SceneVariable, SceneVariableSet, SceneVariableState, SceneVariables, sceneGraph } from "@grafana/scenes";
 import { JsonData } from "components/AppConfig";
 import { Metrics } from "metrics/metrics";
 
@@ -26,7 +26,7 @@ export interface TopLevelVariableSettings {
     clusterFilter?: string;
 }
 
-export function createTopLevelVariables(props: JsonData) {
+export function createTopLevelVariables(props: JsonData, additionalVariables?: Array<SceneVariable<SceneVariableState>>) {
 
     const settings: TopLevelVariableSettings = {
         datasource: props.datasource || 'prometheus',
@@ -45,6 +45,7 @@ export function createTopLevelVariables(props: JsonData) {
                 value: settings.defaultDatasource,
             }),
             createClusterVariable(settings.defaultCluster, settings.clusterFilter),
+            ...additionalVariables || [],
         ],
     })
 }

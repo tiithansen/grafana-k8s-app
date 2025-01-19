@@ -1,4 +1,5 @@
 import {
+    ConstantVariable,
     EmbeddedScene,
     PanelBuilders,
     SceneAppPage,
@@ -19,12 +20,14 @@ import { createTopLevelVariables, createTimeRange } from "../../../../common/var
 import { LabelFilters } from "common/queryHelpers";
 import { getPodsScene } from "pages/Workloads/tabs/Pods/Pods";
 import { Metrics } from "metrics/metrics";
-import { LegendDisplayMode } from "@grafana/schema";
+import { LegendDisplayMode, VariableHide } from "@grafana/schema";
 import { CPUThrottlingPanel } from "pages/Workloads/components/CPUThrottlingPanel";
 import { MatchOperators } from "common/promql";
 import { NetworkUsagePanel } from "pages/Workloads/components/NetworkUsagePanel";
 import Heading from "components/Heading";
 import Analytics from "components/Analytics";
+import { LogsView } from "components/Logs";
+import { PageType } from "components/AppConfig";
 
 function getScene(node: string) {
     return new EmbeddedScene({
@@ -42,7 +45,8 @@ function getScene(node: string) {
             children: [
                 new SceneFlexLayout({
                     direction: 'column',
-                    children: [  
+                    children: [
+                        ...LogsView(PageType.NODE),
                         new SceneFlexLayout({
                             direction: 'row',
                             height: 300,
@@ -275,10 +279,19 @@ export function NodePage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageL
 
     const jsonData = usePluginJsonData();
 
+    const node = new ConstantVariable({
+        name: 'node',
+        label: 'Node',
+        value: routeMatch.params.name,
+        hide: VariableHide.hideVariable,
+    });
+
+    const variables = createTopLevelVariables(jsonData, [node]);
+
     return new SceneAppPage({
         title: `Node - ${routeMatch.params.name}`,
         titleIcon: 'dashboard',
-        $variables: createTopLevelVariables(jsonData),
+        $variables: variables,
         $timeRange: createTimeRange(),
         url: prefixRoute(`${ROUTES.Clusters}/nodes/${routeMatch.params.cluster}/${routeMatch.params.name}`),
         getScene: () => getScene(routeMatch.params.name),

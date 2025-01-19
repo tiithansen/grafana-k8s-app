@@ -1,4 +1,4 @@
-import { EmbeddedScene, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
+import { ConstantVariable, EmbeddedScene, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { createResourceLabels } from "../components/ResourceLabels";
@@ -12,6 +12,9 @@ import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { NetworkUsagePanel } from "../components/NetworkUsagePanel";
 import Analytics from "components/Analytics";
+import { VariableHide } from "@grafana/schema";
+import { PageType } from "components/AppConfig";
+import { LogsView } from "components/Logs";
 
 export function getPodMemoryPanel(pod: string) {
     return MemoryUsagePanel({
@@ -88,6 +91,7 @@ function getScene(pod: string) {
                                 }),
                             ],
                         }),
+                        ...LogsView(PageType.POD),
                         new SceneFlexLayout({
                             direction: 'row',
                             children: [
@@ -139,7 +143,22 @@ function getScene(pod: string) {
 export function PodPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
 
     const jsonData = usePluginJsonData();
-    const variables = createTopLevelVariables(jsonData);
+
+    const namespaceVariable = new ConstantVariable({
+        name: 'namespace',
+        label: 'Namespace',
+        value: routeMatch.params.namespace,
+        hide: VariableHide.hideVariable,
+    });
+
+    const podVariable = new ConstantVariable({
+        name: 'pod',
+        label: 'pod',
+        value: routeMatch.params.name,
+        hide: VariableHide.hideVariable,
+    });
+
+    const variables = createTopLevelVariables(jsonData, [namespaceVariable, podVariable]);
 
     const timeRange = createTimeRange()
 
@@ -148,7 +167,7 @@ export function PodPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLi
         titleIcon: 'dashboard',
         $variables: variables,
         $timeRange: timeRange,
-        url: prefixRoute(`${ROUTES.Workloads}/pods/${routeMatch.params.name}`),
+        url: prefixRoute(`${ROUTES.Workloads}/pods/${routeMatch.params.namespace}/${routeMatch.params.name}`),
         getScene: () => getScene(routeMatch.params.name),
         getParentPage: () => parent,
     })

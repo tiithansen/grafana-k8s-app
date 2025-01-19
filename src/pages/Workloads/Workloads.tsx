@@ -89,7 +89,7 @@ function getScene(props: JsonData) {
             getScene: getOverviewScene,
             drilldowns: [
                 {
-                    routePath: prefixRoute(`${ROUTES.Workloads}/pods/:name`),
+                    routePath: prefixRoute(`${ROUTES.Workloads}/pods/:namespace/:name`),
                     getPage: PodPage
                 },
                 {

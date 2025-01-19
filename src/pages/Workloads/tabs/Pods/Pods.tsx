@@ -138,7 +138,7 @@ const columns: Array<Column<TableRow>> = [
         header: 'POD',
         cellType: 'link',
         cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Workloads}/pods/${row.pod}`)
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Workloads}/pods/${row.namespace}/${row.pod}`)
         },
         sortingConfig: {
             enabled: true,

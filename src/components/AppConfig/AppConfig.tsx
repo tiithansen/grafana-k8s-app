@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent, useEffect } from 'react';
-import { Button, Field, Input, useStyles2, FieldSet, TagList, Switch, Alert, Link, Select, IconButton } from '@grafana/ui';
+import { Button, Field, Input, useStyles2, FieldSet, TagList, Switch, Alert, Link, Select, IconButton, TabbedContainer } from '@grafana/ui';
 import { PluginConfigPageProps, AppPluginMeta, PluginMeta, GrafanaTheme2, DataSourceInstanceSettings, DataSourceJsonData, SelectableValue } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { css } from '@emotion/css';
@@ -12,6 +12,115 @@ export type RulerClusterMapping = {
   datasource: string
 }
 
+export enum PageType {
+  CLUSTER = 'cluster',
+  NODE = 'node',
+  POD = 'pod',
+  DEPLOYMENT = 'deployment',
+  STATEFULSET = 'statefulset',
+  DAEMONSET = 'daemonset',
+}
+
+const COMMON_VARIABLES = [
+  '$cluster',
+]
+
+const COMMON_WORKLOAD_VARIABLES = [
+  '$namespace'
+]
+
+export const PageTypeDetails = [
+  {
+    pageType: PageType.CLUSTER,
+    variables: [
+      ...COMMON_VARIABLES,
+    ],
+    logsExample: '{k8s_cluster_name="$cluster"}',
+    eventsExample: '{k8s_cluster_name="$cluster", service_name="k8sevents"}',
+  },
+  {
+    pageType: PageType.NODE,
+    variables: [
+      '$node',
+      ...COMMON_VARIABLES,
+    ],
+    logsExample: '{k8s_cluster_name="$cluster", k8s_node_name="$node"}',
+    eventsExample: '{k8s_cluster_name="$cluster", service_name="k8sevents"} | k8s_node_name="$node"',
+  },
+  {
+    pageType: PageType.POD,
+    variables: [
+      '$pod',
+      ...COMMON_VARIABLES,
+      ...COMMON_WORKLOAD_VARIABLES,
+    ],
+    logsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", k8s_pod_name="$pod"}',
+    eventsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$pod"',
+  },
+  {
+    pageType: PageType.DEPLOYMENT,
+    variables: [
+      '$deployment',
+      ...COMMON_VARIABLES,
+      ...COMMON_WORKLOAD_VARIABLES,
+    ],
+    logsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", k8s_deployment_name="$deployment"}',
+    eventsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$deployment"',
+  },
+  {
+    pageType: PageType.STATEFULSET,
+    variables: [
+      '$statefulset',
+      ...COMMON_VARIABLES,
+      ...COMMON_WORKLOAD_VARIABLES,
+    ],
+    logsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", k8s_statefulset_name="$statefulset"}',
+    eventsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$statefulset"',
+  },
+  {
+    pageType: PageType.DAEMONSET,
+    variables: [
+      '$daemonset',
+      ...COMMON_VARIABLES,
+      ...COMMON_WORKLOAD_VARIABLES,
+    ],
+    logsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", k8s_daemonset_name="$daemonset"}',
+    eventsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$daemonset"',
+  },
+]
+
+function createDefaultLogQueries() {
+  return PageTypeDetails.map((details) => {
+    return {
+      pageType: details.pageType,
+      query: details.logsExample,
+      datasource: '',
+    }
+  })
+}
+
+function createDefaultEventQueries() {
+  return PageTypeDetails.map((details) => {
+    return {
+      pageType: details.pageType,
+      query: details.eventsExample,
+      datasource: '',
+    }
+  })
+}
+
+export type LogQuery = {
+  pageType: PageType;
+  query: string;
+  datasource: string;
+}
+
+export type EventQuery = {
+  pageType: PageType;
+  query: string;
+  datasource: string;
+}
+
 export type JsonData = {
   datasource?: string;
   defaultDatasource?: string;
@@ -20,6 +129,9 @@ export type JsonData = {
   analyticsEnabled?: boolean;
   analytics?: AnalyticsOptions;
   rulerMappings?: RulerClusterMapping[];
+  logQueries?: LogQuery[];
+  eventQueries?: EventQuery[];
+  logsEnabled?: boolean;
 };
 
 type State = {
@@ -29,10 +141,14 @@ type State = {
   defaultCluster?: string;
   clusterFilter?: string;
   prometheusDatasources?: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
+  lokiDatasources?: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   matchingDatasources?: string[];
   analyticsEnabled: boolean;
   analytics: AnalyticsOptions;
   rulerMappings?: RulerClusterMapping[];
+  logQueries?: LogQuery[];
+  eventQueries?: EventQuery[];
+  logsEnabled: boolean;
 };
 
 const DEFAULT_ANALYTIC_OPTIONS: AnalyticsOptions = {
@@ -62,6 +178,9 @@ export const AppConfig = ({ plugin }: Props) => {
       ...jsonData?.analytics,
     },
     rulerMappings: jsonData?.rulerMappings || [],
+    logQueries: jsonData?.logQueries || createDefaultLogQueries(),
+    eventQueries: jsonData?.eventQueries || createDefaultEventQueries(),
+    logsEnabled: jsonData?.logsEnabled || false,
   });
 
   const onChangeDatasource = (event: ChangeEvent<HTMLInputElement>) => {
@@ -152,12 +271,62 @@ export const AppConfig = ({ plugin }: Props) => {
     });
   }
 
+  const onChangeLogsQuery = (event: ChangeEvent<HTMLInputElement>, index: number) => {
+    const queries = state.logQueries || [];
+    queries[index].query = event.target.value;
+
+    setState({
+      ...state,
+      logQueries: queries,
+    });
+  }
+
+  const onChangeLogsQueryDatasource = (event: SelectableValue<string>, index: number) => {
+    const queries = state.logQueries || [];
+    queries[index].datasource = event.value || '';
+
+    setState({
+      ...state,
+      logQueries: queries,
+    });
+  }
+
+  const onChangeEventsQuery = (event: ChangeEvent<HTMLInputElement>, index: number) => {
+    const queries = state.eventQueries || [];
+    queries[index].query = event.target.value;
+
+    setState({
+      ...state,
+      eventQueries: queries,
+    });
+  }
+
+  const onChangeEventsQueryDatasource = (event: SelectableValue<string>, index: number) => {
+    const queries = state.eventQueries || [];
+    queries[index].datasource = event.value || '';
+
+    setState({
+      ...state,
+      eventQueries: queries,
+    });
+  }
+
+  const onToggleLogsAndEvents = (event: ChangeEvent<HTMLInputElement>) => {
+    setState({
+      ...state,
+      logsEnabled: event.target.checked,
+    });
+  }
+
   const onDiscoverDatasources = () => {
-    const datasources = getDataSourceSrv()
+    const prometheusDatasources = getDataSourceSrv()
       .getList({ type: 'prometheus' });
+
+    const lokiDatasources = getDataSourceSrv()
+      .getList({ type: 'loki' });
     
     const matchingNames: string[] = []
-    datasources.forEach((ds) => {
+    prometheusDatasources.forEach((ds) => {
       if (ds.name.match(state.datasource)) {
         matchingNames.push(ds.name)
       }
@@ -166,7 +335,8 @@ export const AppConfig = ({ plugin }: Props) => {
     setState({
       ...state,
       matchingDatasources: matchingNames,
-      prometheusDatasources: datasources,
+      prometheusDatasources: prometheusDatasources,
+      lokiDatasources: lokiDatasources,
     });
   }
 
@@ -182,6 +352,9 @@ export const AppConfig = ({ plugin }: Props) => {
         analyticsEnabled: state.analyticsEnabled,
         analytics: state.analytics,
         rulerMappings: state.rulerMappings,
+        logQueries: state.logQueries,
+        eventQueries: state.eventQueries,
+        logsEnabled: state.logsEnabled
       },
     })
   }
@@ -281,49 +454,143 @@ export const AppConfig = ({ plugin }: Props) => {
           />
         </Field>
       </FieldSet>
+      <FieldSet label="Logs & Events settings" className={s.marginTopXl}>
+        <Alert  severity="warning" title="Ruler settings">
+          <p>EXPERIMENTAL: Allows configuring Loki queries for pages.</p>
+        </Alert>
+        <Field label="Enable Logs & Events" description="Enable displaying of logs and events.">
+          <Switch
+            id="enableLogsAndEvents"
+            value={state?.logsEnabled}
+            onChange={onToggleLogsAndEvents}
+          />
+        </Field>
+        <TabbedContainer
+          onClose={() => {}}
+          tabs={[
+            {
+              label: 'Logs',
+              value: 'logs',
+              icon: 'table',
+              content: (
+                <>
+                  {
+                    state.logQueries?.map((details, index) => {
+                      return (
+                        <>
+                          <FieldSet key={`logs_query:${index}`} className={s.logQueryFieldset}>
+                            <Field label={`Query - ${details.pageType}`} description="">
+                              <Input
+                                width={60}
+                                id="query"
+                                value={details?.query}
+                                placeholder={`E.g.: Production`}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) => onChangeLogsQuery(e, index)}
+                              />
+                            </Field>
+                            <Field label="Datasource" description="">
+                              <Select
+                                width={60}
+                                id="datasource"
+                                value={details?.datasource}
+                                options={state.lokiDatasources?.map((ds) => ({ label: ds.name, value: ds.uid })) || []}
+                                onChange={(e: SelectableValue<string>) => onChangeLogsQueryDatasource(e, index)}
+                              />
+                            </Field>
+                          </FieldSet>
+                          <TagList className={s.availableVariables} tags={PageTypeDetails.find(it => it.pageType === details.pageType)?.variables || []} />
+                        </>
+                      )
+                    })
+                  }
+                </>
+              )
+            },
+            {
+              label: 'Events',
+              value: 'events',
+              icon: 'signal',
+              content: (
+                <>
+                  {
+                    state.eventQueries?.map((details, index) => {
+                      return (
+                        <>
+                          <FieldSet key={`event_query:${index}`} className={s.logQueryFieldset}>
+                            <Field label={`Query - ${details.pageType}`} description="">
+                              <Input
+                                width={60}
+                                id="query"
+                                value={details?.query}
+                                placeholder={`E.g.: Production`}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) => onChangeEventsQuery(e, index)}
+                              />
+                            </Field>
+                            <Field label="Datasource" description="">
+                              <Select
+                                width={60}
+                                id="datasource"
+                                value={details?.datasource}
+                                options={state.lokiDatasources?.map((ds) => ({ label: ds.name, value: ds.uid })) || []}
+                                onChange={(e: SelectableValue<string>) => onChangeEventsQueryDatasource(e, index)}
+                              />
+                            </Field>
+                          </FieldSet>
+                          <TagList className={s.availableVariables} tags={PageTypeDetails.find(it => it.pageType === details.pageType)?.variables || []} />
+                        </>
+                      )
+                    })
+                  }
+                </>
+              )
+            }
+          ]}
+        >
+        </TabbedContainer>
+      </FieldSet>
       <FieldSet label="Ruler settings" className={s.marginTopXl}>
         <Alert  severity="warning" title="Ruler settings">
           <p>EXPERIMENTAL: Allows mapping clusters to rulers to fetch additional data for alerts from the rulers.</p>
         </Alert>
         <Button
-            type="button"
-            onClick={onAddRulerMapping}
-          >
-            Add ruler mapping
-          </Button>
-          {
-            state.rulerMappings?.map((mapping, index) => {
-              return (
-                <FieldSet key={index} className={s.rulerMappingFieldset}>
-                  <Field label="Cluster" description="">
-                    <Input
-                      width={60}
-                      id="cluster"
-                      label={`Cluster`}
-                      value={mapping?.cluster}
-                      placeholder={`E.g.: Production`}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => onChangeRulerCluster(e, index)}
-                    />
-                  </Field>
-                  <Field label="Ruler Datasource" description="">
-                    <Select
-                      width={60}
-                      id="datasource"
-                      label={`Ruler Datasource`}
-                      value={mapping?.datasource}
-                      options={state.prometheusDatasources?.map((ds) => ({ label: ds.name, value: ds.uid })) || []}
-                      onChange={(e: SelectableValue<string>) => onChangeRulerDatasource(e, index)}
-                    />
-                  </Field>
-                  <IconButton
-                    name="trash-alt"
-                    aria-label="Delete ruler mapping"
-                    onClick={() => onDeleteRulerMapping(index)}
+          type="button"
+          onClick={onAddRulerMapping}
+        >
+          Add ruler mapping
+        </Button>
+        {
+          state.rulerMappings?.map((mapping, index) => {
+            return (
+              <FieldSet key={index} className={s.rulerMappingFieldset}>
+                <Field label="Cluster" description="">
+                  <Input
+                    width={60}
+                    id="cluster"
+                    label={`Cluster`}
+                    value={mapping?.cluster}
+                    placeholder={`E.g.: Production`}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => onChangeRulerCluster(e, index)}
                   />
-                </FieldSet>
-              )
-            })
-          }
+                </Field>
+                <Field label="Ruler Datasource" description="">
+                  <Select
+                    width={60}
+                    id="datasource"
+                    label={`Ruler Datasource`}
+                    value={mapping?.datasource}
+                    options={state.prometheusDatasources?.map((ds) => ({ label: ds.name, value: ds.uid })) || []}
+                    onChange={(e: SelectableValue<string>) => onChangeRulerDatasource(e, index)}
+                  />
+                </Field>
+                <IconButton
+                  name="trash-alt"
+                  aria-label="Delete ruler mapping"
+                  onClick={() => onDeleteRulerMapping(index)}
+                />
+              </FieldSet>
+            )
+          })
+        }
       </FieldSet>
       <FieldSet label="Analytics settings" className={s.marginTopXl}>
         <Alert  severity="warning" title="Analytics settings">
@@ -383,6 +650,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-top: ${theme.spacing(2)};
     margin-bottom: ${theme.spacing(2)};
   `,
+  logQueryFieldset: css`
+    display: flex;
+    flex-direction: row;
+    gap: ${theme.spacing(2)};
+    margin-top: ${theme.spacing(2)};
+    margin-bottom: 0;
+  `,
+  availableVariables: css`
+    justify-content: flex-start;
+    margin-top: 0;
+    margin-bottom: ${theme.spacing(3)};
+
+  `
 });
 
 const updatePluginAndReload = async (pluginId: string, data: Partial<PluginMeta<JsonData>>) => {

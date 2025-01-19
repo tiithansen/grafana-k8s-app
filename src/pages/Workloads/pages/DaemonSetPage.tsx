@@ -1,4 +1,4 @@
-import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
+import { ConstantVariable, EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { usePluginJsonData } from "utils/utils.plugin";
@@ -7,15 +7,17 @@ import { createResourceLabels } from "../components/ResourceLabels";
 import { getPodsScene } from "../tabs/Pods/Pods";
 import { LabelFilters } from "../../../common/queryHelpers";
 import { Metrics } from "metrics/metrics";
-import Heading from "components/Heading";
 import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { AlertsTable } from "components/AlertsTable";
-import { LegendDisplayMode } from "@grafana/schema";
+import { LegendDisplayMode, VariableHide } from "@grafana/schema";
 import { Labels, MatchOperators } from "common/promql";
 import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
 import { NetworkUsagePanel } from "../components/NetworkUsagePanel";
 import Analytics from "components/Analytics";
+import CollapsibleSceneSection from "components/CollapsibleSceneSection";
+import { LogsView } from "components/Logs";
+import { PageType } from "components/AppConfig";
 
 function getPods(daemonset: string, namespace: string) {
     const staticLabelFilters: LabelFilters = [
@@ -158,88 +160,130 @@ function getScene(daemonset: string, namespace = '$namespace') {
                                 })
                             ]
                         }),
+                        ...LogsView(PageType.DAEMONSET),
                         new SceneFlexLayout({
-                            direction: 'row',
+                            direction: 'column',
                             children: [
-                                new Heading({ title: 'CPU'})
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            minHeight: 400,
-                            children: [
-                                CPUUsagePanel(commonLabels, {
-                                    mode: 'combined'
+                                new CollapsibleSceneSection({
+                                    title: 'CPU',
+                                    isOpen: true,
+                                    children: [
+                                        new SceneFlexLayout({
+                                            direction: 'column',
+                                            children: [
+                                                new SceneFlexLayout({
+                                                    direction: 'row',
+                                                    height: 400,
+                                                    children: [
+                                                        CPUUsagePanel(commonLabels, {
+                                                            mode: 'combined'
+                                                        }),
+                                                        CPUUsagePanel(commonLabels, {
+                                                            mode: 'pod'
+                                                        }),
+                                                    ]
+                                                }),
+                                                new SceneFlexLayout({
+                                                    direction: 'row',
+                                                    height: 400,
+                                                    children: [
+                                                        CPUThrottlingPanel(commonLabels, {
+                                                            mode: 'combined'   
+                                                        }),
+                                                        CPUThrottlingPanel(commonLabels, {
+                                                            mode: 'pod'   
+                                                        }),
+                                                    ]
+                                                }),
+                                            ]
+                                        }),
+                                    ],
                                 }),
-                                CPUUsagePanel(commonLabels, {
-                                    mode: 'pod'
+                            ],
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'column',
+                            children: [
+                                new CollapsibleSceneSection({
+                                    title: 'Memory',
+                                    isOpen: true,
+                                    children: [
+                                        new SceneFlexLayout({
+                                            direction: 'column',
+                                            children: [
+                                                new SceneFlexLayout({
+                                                    direction: 'row',
+                                                    height: 400,
+                                                    children: [
+                                                        MemoryUsagePanel(commonLabels, {
+                                                            mode: 'combined'
+                                                        }),
+                                                        MemoryUsagePanel(commonLabels, {
+                                                            mode: 'pod'
+                                                        }),
+                                                    ]
+                                                }),
+                                            ],
+                                        }),
+                                    ],
+                                }),
+                            ],
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'column',
+                            children: [
+                                new CollapsibleSceneSection({
+                                    title: 'Network',
+                                    isOpen: true,
+                                    children: [
+                                        new SceneFlexLayout({
+                                            direction: 'column',
+                                            children: [
+                                                new SceneFlexLayout({
+                                                    direction: 'row',
+                                                    minHeight: 400,
+                                                    height: 400,
+                                                    children: [
+                                                        NetworkUsagePanel(commonLabels),
+                                                    ]
+                                                }),
+                                            ]
+                                        }),
+                                    ]
                                 }),
                             ]
                         }),
                         new SceneFlexLayout({
-                            direction: 'row',
-                            minHeight: 400,
+                            direction: 'column',
                             children: [
-                                CPUThrottlingPanel(commonLabels, {
-                                    mode: 'combined'   
+                                new CollapsibleSceneSection({
+                                    title: 'Pods',
+                                    isOpen: true,
+                                    children: [
+                                        new SceneFlexLayout({
+                                            direction: 'column',
+                                            children: [
+                                                new SceneFlexLayout({
+                                                    direction: 'row',
+                                                    height: 300,
+                                                    children: [
+                                                        getNumberPanel(daemonset, namespace),
+                                                    ]
+                                                }),
+                                                new SceneFlexLayout({
+                                                    direction: 'row',
+                                                    children: [
+                                                        new SceneFlexItem({
+                                                            width: '100%',
+                                                            body: getPods(daemonset, namespace),
+                                                        }),
+                                                    ]
+                                                }),
+                                            ]
+                                        }),
+                                    ],
                                 }),
-                                CPUThrottlingPanel(commonLabels, {
-                                    mode: 'pod'   
-                                }),
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            children: [
-                                new Heading({ title: 'Memory'})
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            minHeight: 400,
-                            children: [
-                                MemoryUsagePanel(commonLabels, {
-                                    mode: 'combined'
-                                }),
-                                MemoryUsagePanel(commonLabels, {
-                                    mode: 'pod'
-                                }),
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            children: [
-                                new Heading({ title: 'Network'})
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            minHeight: 400,
-                            children: [
-                                NetworkUsagePanel(commonLabels),
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            children: [
-                                new Heading({ title: 'Pods'})
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            height: 300,
-                            children: [
-                                getNumberPanel(daemonset, namespace),
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            children: [
-                                new SceneFlexItem({
-                                    width: '100%',
-                                    body: getPods(daemonset, namespace),
-                                }),
-                            ]
+                            ],
                         }),
                     ]
                 })
@@ -251,7 +295,22 @@ function getScene(daemonset: string, namespace = '$namespace') {
 export function DaemonSetPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
 
     const jsonData = usePluginJsonData();
-    const variables = createTopLevelVariables(jsonData);
+
+    const namespaceVariable = new ConstantVariable({
+        name: 'namespace',
+        label: 'Namespace',
+        value: routeMatch.params.namespace,
+        hide: VariableHide.hideVariable,
+    });
+
+    const daemonsetVariable = new ConstantVariable({
+        name: 'daemonset',
+        label: 'DaemonSet',
+        value: routeMatch.params.name,
+        hide: VariableHide.hideVariable,
+    });
+
+    const variables = createTopLevelVariables(jsonData, [namespaceVariable, daemonsetVariable]);
 
     const timeRange = createTimeRange()
 

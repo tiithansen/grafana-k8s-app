@@ -1,4 +1,4 @@
-import { EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
+import { ConstantVariable, EmbeddedScene, PanelBuilders, SceneAppPage, SceneAppPageLike, SceneControlsSpacer, SceneFlexItem, SceneFlexLayout, SceneQueryRunner, SceneRefreshPicker, SceneRouteMatch, SceneTimePicker, VariableValueSelectors } from "@grafana/scenes";
 import { ROUTES } from "../../../constants";
 import { prefixRoute } from "utils/utils.routing";
 import { usePluginJsonData } from "utils/utils.plugin";
@@ -7,7 +7,6 @@ import { createResourceLabels } from "../components/ResourceLabels";
 import { getPodsScene } from "../tabs/Pods/Pods";
 import { LabelFilters } from "../../../common/queryHelpers";
 import { Metrics } from "metrics/metrics";
-import Heading from "components/Heading";
 import { CPUUsagePanel } from "../components/CPUUsagePanel";
 import { MemoryUsagePanel } from "../components/MemoryUsagePanel";
 import { AlertsTable } from "components/AlertsTable";
@@ -15,6 +14,10 @@ import { Labels, MatchOperators } from "common/promql";
 import { CPUThrottlingPanel } from "../components/CPUThrottlingPanel";
 import { NetworkUsagePanel } from "../components/NetworkUsagePanel";
 import Analytics from "components/Analytics";
+import { VariableHide } from "@grafana/schema";
+import { PageType } from "components/AppConfig";
+import { LogsView } from "components/Logs";
+import CollapsibleSceneSection from "components/CollapsibleSceneSection";
 
 const REPLICASET_HASH_PATTERN='[a-z0-9]{8,10}'
 const DEPLOYMENT_HASH_PATTERN=`${REPLICASET_HASH_PATTERN}-[a-z0-9]{5}`
@@ -160,6 +163,7 @@ function getScene(deployment: string, namespace = '$namespace') {
                                 }),
                             ]
                         }),
+                        ...LogsView(PageType.DEPLOYMENT),
                         new SceneFlexLayout({
                             direction: 'row',
                             children: [
@@ -170,80 +174,115 @@ function getScene(deployment: string, namespace = '$namespace') {
                             ]
                         }),
                         new SceneFlexLayout({
-                            direction: 'row',
+                            direction: 'column',
                             children: [
-                                new Heading({ title: 'CPU'})
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            minHeight: 400,
-                            children: [
-                                CPUUsagePanel(commonFilters, {
-                                    mode: 'combined'   
-                                }),
-                                CPUUsagePanel(commonFilters, {
-                                    mode: 'pod'   
-                                }),
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            minHeight: 400,
-                            children: [
-                                CPUThrottlingPanel(commonFilters, {
-                                    mode: 'combined'   
-                                }),
-                                CPUThrottlingPanel(commonFilters, {
-                                    mode: 'pod'   
-                                }),
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            children: [
-                                new Heading({ title: 'Memory'})
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            minHeight: 400,
-                            children: [
-                                MemoryUsagePanel(commonFilters, {
-                                    mode: 'combined'
-                                }),
-                                MemoryUsagePanel(commonFilters, {
-                                    mode: 'pod'
+                                new CollapsibleSceneSection({
+                                    title: 'CPU',
+                                    isOpen: true,
+                                    children: [
+                                        new SceneFlexLayout({
+                                            direction: 'column',
+                                            children: [
+                                                new SceneFlexLayout({
+                                                    direction: 'row',
+                                                    height: 400,
+                                                    children: [
+                                                        CPUUsagePanel(commonFilters, {
+                                                            mode: 'combined'   
+                                                        }),
+                                                        CPUUsagePanel(commonFilters, {
+                                                            mode: 'pod'   
+                                                        }),
+                                                    ]
+                                                }),
+                                                new SceneFlexLayout({
+                                                    direction: 'row',
+                                                    height: 400,
+                                                    children: [
+                                                        CPUThrottlingPanel(commonFilters, {
+                                                            mode: 'combined'   
+                                                        }),
+                                                        CPUThrottlingPanel(commonFilters, {
+                                                            mode: 'pod'   
+                                                        }),
+                                                    ]
+                                                }),
+                                            ],
+                                        }),
+                                    ]
                                 }),
                             ]
                         }),
                         new SceneFlexLayout({
-                            direction: 'row',
+                            direction: 'column',
                             children: [
-                                new Heading({ title: 'Network'})
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            minHeight: 400,
-                            children: [
-                                NetworkUsagePanel(commonFilters),
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            children: [
-                                new Heading({ title: 'Pods'})
-                            ]
-                        }),
-                        new SceneFlexLayout({
-                            direction: 'row',
-                            children: [
-                                new SceneFlexItem({
-                                    width: '100%',
-                                    body: getPods(deployment, namespace),
+                                new CollapsibleSceneSection({
+                                    title: 'Memory',
+                                    isOpen: true,
+                                    children: [
+                                        new SceneFlexLayout({
+                                            direction: 'column',
+                                            children: [
+                                                new SceneFlexLayout({
+                                                    direction: 'row',
+                                                    height: 400,
+                                                    children: [
+                                                        MemoryUsagePanel(commonFilters, {
+                                                            mode: 'combined'
+                                                        }),
+                                                        MemoryUsagePanel(commonFilters, {
+                                                            mode: 'pod'
+                                                        }),
+                                                    ]
+                                                }),
+                                            ],
+                                        }),
+                                    ]
                                 }),
                             ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'column',
+                            children: [
+                                new CollapsibleSceneSection({
+                                    title: 'Network',
+                                    isOpen: true,
+                                    children: [
+                                        new SceneFlexLayout({
+                                            direction: 'column',
+                                            children: [
+                                                new SceneFlexLayout({
+                                                    direction: 'row',
+                                                    height: 400,
+                                                    children: [
+                                                        NetworkUsagePanel(commonFilters),
+                                                    ]
+                                                }),
+                                            ],
+                                        }),
+                                    ]
+                                }),
+                            ]
+                        }),
+                        new SceneFlexLayout({
+                            direction: 'column',
+                            children: [
+                                new CollapsibleSceneSection({
+                                    title: 'Pods',
+                                    isOpen: true,
+                                    children: [
+                                        new SceneFlexLayout({
+                                            direction: 'row',
+                                            children: [
+                                                new SceneFlexItem({
+                                                    width: '100%',
+                                                    body: getPods(deployment, namespace),
+                                                }),
+                                            ]
+                                        }),
+                                    ],
+                                }),
+                            ],
                         }),
                     ]
                 }),
@@ -255,7 +294,22 @@ function getScene(deployment: string, namespace = '$namespace') {
 export function DeploymentPage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageLike) {
 
     const jsonData = usePluginJsonData();
-    const variables = createTopLevelVariables(jsonData);
+
+    const namespaceVariable = new ConstantVariable({
+        name: 'namespace',
+        label: 'Namespace',
+        value: routeMatch.params.namespace,
+        hide: VariableHide.hideVariable,
+    });
+
+    const deploymentVariable = new ConstantVariable({
+        name: 'deployment',
+        label: 'deployment',
+        value: routeMatch.params.name,
+        hide: VariableHide.hideVariable,
+    });
+
+    const variables = createTopLevelVariables(jsonData, [namespaceVariable, deploymentVariable]);
 
     const timeRange = createTimeRange()
 
