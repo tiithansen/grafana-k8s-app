@@ -143,16 +143,16 @@ jobs:
 
       - name: Bundle release archive
         if: steps.release.outputs.release_created
-        working-directory: ./dist
         run: |
-          zip -r grafana-k8s-app-v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}.zip ./*
+          cp -r dist ./grafana-k8s-app
+          zip -r grafana-k8s-app-v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}.zip ./grafana-k8s-app
 
       - name: Upload release assets
         if: steps.release.outputs.release_created
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} ./dist/grafana-k8s-app-v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}.zip
+          gh release upload v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} ./grafana-k8s-app-v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}.zip
 
       - name: Log in to the Container registry
         if: steps.release.outputs.release_created
