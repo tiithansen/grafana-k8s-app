@@ -37,6 +37,23 @@ Metrics and required labels used by application can be found in [metrics.ts](src
 
 Add packaged docker image as init container to Grafana deployment.
 
+#### With zip file
+
+```yaml
+grafana:
+  plugins:
+    - https://github.com/tiithansen/grafana-k8s-app/releases/download/v<version>grafana-k8s-app-v<version>.zip;grafana-k8s-app
+  grafana.ini:
+    plugins:
+      # Allow this plugin to be loaded even if it's unsigned
+      allow_loading_unsigned_plugins: k8s-app
+    navigation.app_sections:
+      # Move the plugin from More Apps to Infrastructure in the menu
+      k8s-app: infrastructure
+```
+
+#### With init container
+
 ```yaml
 # Init container
 extraInitContainers:
@@ -82,7 +99,7 @@ Allows displaying logs and events from Loki.
 * Datasource used must support multi-tenant queries where stream label `k8s_cluster_name` is used to select logs from specific tenant.
 * It is possible to override the default queries per view (Cluster, Node, Pod, Deployment, Statefulset, Daemonset).
 
-##### Sample configuration for k8seventsreceiver
+##### Sample configuration for events collection with k8seventsreceiver
 
 [Opentelemetry-collector helm chart](https://github.com/open-telemetry/opentelemetry-helm-charts/tree/main/charts/opentelemetry-collector) is used as a parent chart for the following configuration.
 
