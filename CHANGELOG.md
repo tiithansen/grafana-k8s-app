@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.11.0...v0.11.1) (2025-01-19)
+
+
+### Bug Fixes
+
+* Fix archive release ([fe4cd75](https://github.com/tiithansen/grafana-k8s-app/commit/fe4cd757263e99d0b26943bb025a4ebdb94c8338))
+
 ## [0.11.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.10.1...v0.11.0) (2025-01-19)
 
 
