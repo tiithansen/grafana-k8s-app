@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.11.0](https://github.com/tiithansen/grafana-k8s-app/compare/v0.10.1...v0.11.0) (2025-01-19)
+
+
+### Features
+
+* Add experimental feature to display Logs and Kubernetes events from Loki ([0a10f2f](https://github.com/tiithansen/grafana-k8s-app/commit/0a10f2fa17abd8e53e7fc9c970724f233200baa1))
+
+
+### Bug Fixes
+
+* Fix ingress panels when multiple controllers present in the cluster ([fe3659e](https://github.com/tiithansen/grafana-k8s-app/commit/fe3659eb676e94f39370dd8441d7123481ce76fe))
+* Make it possible to remove ruler mapping ([2c107de](https://github.com/tiithansen/grafana-k8s-app/commit/2c107dec38577b9c293f833afc82cdb46eaf5ccd))
+* Replace 5m rate with 1m rate ([bbb4122](https://github.com/tiithansen/grafana-k8s-app/commit/bbb4122a2b34eaebb9b6e1869909140345f48f3b))
+
 ## [0.10.1](https://github.com/tiithansen/grafana-k8s-app/compare/v0.10.0...v0.10.1) (2024-12-04)
 
 
