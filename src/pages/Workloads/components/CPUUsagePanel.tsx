@@ -16,7 +16,7 @@ function createUsageQuery(filters: Labels, options: CPUUsagePanelOptions) {
                 )
                 .withLabels(filters)
                 .withLabelNotEquals(Metrics.containerCpuUsageSecondsTotal.labels.container, '')
-                .withLabelEquals('cluster', '$cluster'),
+                .withLabelEquals('spoke', '$spoke'),
                 '$__rate_interval',
             )
         )
@@ -45,7 +45,7 @@ function createRequestsQuery(filters: Labels, options: CPUUsagePanelOptions) {
         .withLabels(filters)
         .withLabelEquals(Metrics.kubePodContainerResourceRequests.labels.resource, 'cpu')
         .withLabelNotEquals(Metrics.kubePodContainerResourceRequests.labels.container, '')
-        .withLabelEquals('cluster', '$cluster')
+        .withLabelEquals('spoke', '$spoke')
 
     if (options.mode === 'pod') {
         return PromQL.max(
@@ -77,7 +77,7 @@ function createLimitsQuery(filters: Labels, options: CPUUsagePanelOptions) {
         .withLabels(filters)
         .withLabelEquals(Metrics.kubePodContainerResourceLimits.labels.resource, 'cpu')
         .withLabelNotEquals(Metrics.kubePodContainerResourceLimits.labels.container, '')
-        .withLabelEquals('cluster', '$cluster')
+        .withLabelEquals('spoke', '$spoke')
 
     if (options.mode === 'pod') {
         return PromQL.max(

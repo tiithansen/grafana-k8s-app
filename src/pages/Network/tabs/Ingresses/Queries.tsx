@@ -11,7 +11,7 @@ export class IngressesQueryBuilder implements QueryBuilder<TableRow> {
         const baseQuery = PromQL.group(
             PromQL.parenthesis(
                 PromQL.metric(Metrics.kubeIngressPath.name)
-                    .withLabelEquals('cluster', '$cluster')
+                    .withLabelEquals('spoke', '$spoke')
                     .withLabelMatches('namespace', '$namespace')
                     .withLabelMatches('ingress', '$search.*')
                     // Get ingress class from kube_ingress_info based on ingress and namespace
@@ -25,7 +25,7 @@ export class IngressesQueryBuilder implements QueryBuilder<TableRow> {
                             Metrics.kubeIngressInfo.labels.ingressClass,
                         ],
                         PromQL.metric(Metrics.kubeIngressInfo.name)
-                            .withLabelEquals('cluster', '$cluster')
+                            .withLabelEquals('spoke', '$spoke')
                     )
             )
             // Get controller from kube_ingressclass_info based on ingress class
@@ -38,7 +38,7 @@ export class IngressesQueryBuilder implements QueryBuilder<TableRow> {
                     'controller',
                 ],
                 PromQL.metric(Metrics.kubeIngressClassInfo.name)
-                    .withLabelEquals('cluster', '$cluster')
+                    .withLabelEquals('spoke', '$spoke')
             )
         ).by([
             'namespace',

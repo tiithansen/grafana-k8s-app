@@ -140,7 +140,7 @@ class ResourceLabels extends SceneObjectBase<ResourceLabelsState> {
 function createQuery(resourceKind: string, labelFilters: LabelFilters) {
     return `
         kube_${resourceKind}_labels{
-            cluster="$cluster",
+            spoke="$spoke",
             ${serializeLabelFilters(labelFilters)}
         }`;
 }

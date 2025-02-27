@@ -7,7 +7,7 @@ export interface DaemonSetAlert {
 }
 
 export interface TableRow extends RowBase {
-    cluster: string;
+    spoke: string;
     daemonset: string;
     namespace: string;
     alerts: DaemonSetAlert[];

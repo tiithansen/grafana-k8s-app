@@ -11,7 +11,7 @@ export class ServicesQueryBuilder implements QueryBuilder<TableRow> {
         const baseQuery = PromQL.group(
             PromQL.parenthesis(
                 PromQL.metric(Metrics.kubeServiceInfo.name)
-                    .withLabelEquals('cluster', '$cluster')
+                    .withLabelEquals('spoke', '$spoke')
                     .withLabelMatches('namespace', '$namespace')
                     // Get ingress class from kube_ingress_info based on ingress and namespace
                     .multiply()
@@ -24,7 +24,7 @@ export class ServicesQueryBuilder implements QueryBuilder<TableRow> {
                             Metrics.kubeServiceSpecType.labels.type,
                         ],
                         PromQL.metric(Metrics.kubeServiceSpecType.name)
-                            .withLabelEquals('cluster', '$cluster')
+                            .withLabelEquals('spoke', '$spoke')
                     )
             )
         ).by([

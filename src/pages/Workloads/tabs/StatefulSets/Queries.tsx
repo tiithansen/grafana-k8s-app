@@ -6,43 +6,43 @@ import { Labels, MatchOperators, PromQL, PromQLExpression } from "common/promql"
 import { ColumnSortingConfig, QueryBuilder } from "components/AsyncTable";
 import { SortingState } from "common/sortingHelpers";
 
-export function createReplicasQuery(cluster: string, additionalLabels: Labels) {
+export function createReplicasQuery(spoke: string, additionalLabels: Labels) {
 
     return PromQL.max(
         PromQL.metric(Metrics.kubeStatefulsetStatusReplicas.name)
             .withLabels(additionalLabels)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
     ).by([
         Metrics.kubeStatefulsetStatusReplicas.labels.statefulset,
         Metrics.kubeStatefulsetStatusReplicas.labels.namespace,
     ])
 }
 
-export function createReplicasReadyQuery(cluster: string, additionalLabels: Labels) {
+export function createReplicasReadyQuery(spoke: string, additionalLabels: Labels) {
     
     return PromQL.max(
         PromQL.metric(Metrics.kubeStatefulsetStatusReplicasReady.name)
             .withLabels(additionalLabels)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
     ).by([
         Metrics.kubeStatefulsetStatusReplicasReady.labels.statefulset,
         Metrics.kubeStatefulsetStatusReplicas.labels.namespace,
     ])
 }
 
-function createAlertsQuery(cluster: string, additionalLabels: Labels) {
+function createAlertsQuery(spoke: string, additionalLabels: Labels) {
 
     return PromQL.metric('ALERTS')
         .withLabelEquals('alertstate', 'firing')
         .withLabels(additionalLabels)
-        .withLabelEquals('cluster', cluster)
+        .withLabelEquals('spoke', spoke)
         .multiply()
         .ignoring(['alertstate'])
         .groupRight(
             ['alertstate'],
             PromQL.metric('ALERTS_FOR_STATE')
                 .withLabels(additionalLabels)
-                .withLabelEquals('cluster', cluster)
+                .withLabelEquals('spoke', spoke)
         )
 }
 
@@ -51,7 +51,7 @@ export class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
 
         const baseQuery = PromQL.group(
             PromQL.metric(Metrics.kubeStatefulSetCreated.name)
-                .withLabelEquals('cluster', '$cluster')
+                .withLabelEquals('spoke', '$spoke')
                 .withLabelMatches(Metrics.kubeStatefulSetCreated.labels.namespace, '$namespace')
                 .withLabelMatches(Metrics.kubeStatefulSetCreated.labels.statefulset, '.*$search.*')
         ).by([
@@ -73,7 +73,7 @@ export class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
                             .groupRight(
                                 [],
                                 PromQL.count(
-                                    createAlertsQuery('$cluster', {
+                                    createAlertsQuery('$spoke', {
                                         'statefulset': {
                                             operator: MatchOperators.NOT_EQUALS,
                                             value: ''
@@ -95,7 +95,7 @@ export class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
                             .on(['namespace', 'statefulset'])
                             .groupRight(
                                 [],
-                                createReplicasQuery('$cluster', {})
+                                createReplicasQuery('$spoke', {})
                             )
                             .or()
                             .withExpression(
@@ -124,7 +124,7 @@ export class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
 
     rowQueryBuilder(rows: TableRow[], variables: SceneVariableSet | SceneVariables) {
         const statefulSets = rows.map(row => row.statefulset).join('|');
-        const cluster = resolveVariable(variables, 'cluster');
+        const spoke = resolveVariable(variables, 'spoke');
 
         const additionalLabels = {
             statefulset: {
@@ -136,19 +136,19 @@ export class StatefulSetQueryBuilder implements QueryBuilder<TableRow> {
         return [
             {
                 refId: 'replicas',
-                expr: createReplicasQuery(cluster?.toString()!, additionalLabels).stringify(),
+                expr: createReplicasQuery(spoke?.toString()!, additionalLabels).stringify(),
                 instant: true,
                 format: 'table'
             },
             {
                 refId: 'replicas_ready',
-                expr: createReplicasReadyQuery(cluster?.toString()!, additionalLabels).stringify(),
+                expr: createReplicasReadyQuery(spoke?.toString()!, additionalLabels).stringify(),
                 instant: true,
                 format: 'table'
             },
             {
                 refId: 'alerts',
-                expr: createAlertsQuery(cluster?.toString()!, additionalLabels).stringify(),
+                expr: createAlertsQuery(spoke?.toString()!, additionalLabels).stringify(),
                 instant: true,
                 format: 'table'
             }

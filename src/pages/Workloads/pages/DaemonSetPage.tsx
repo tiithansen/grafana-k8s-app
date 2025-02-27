@@ -57,7 +57,7 @@ function getNumberPanel(daemonset: string, namespace: string) {
                             ${Metrics.kubeDaemonsetStatusNumberUnavailable.name}{
                                 ${Metrics.kubeDaemonsetStatusNumberUnavailable.labels.daemonset}=~"${daemonset}",
                                 ${Metrics.kubeDaemonsetStatusNumberUnavailable.labels.namespace}="${namespace}",
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         ) by (${Metrics.kubeDaemonsetStatusNumberUnavailable.labels.daemonset})`,
                     legendFormat: 'Unavailable'
@@ -69,7 +69,7 @@ function getNumberPanel(daemonset: string, namespace: string) {
                             ${Metrics.kubeDaemonsetStatusNumberAvailable.name}{
                                 ${Metrics.kubeDaemonsetStatusNumberAvailable.labels.daemonset}=~"${daemonset}",
                                 ${Metrics.kubeDaemonsetStatusNumberAvailable.labels.namespace}="${namespace}",
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         ) by (${Metrics.kubeDaemonsetStatusNumberAvailable.labels.daemonset})`,
                     legendFormat: 'Available'
@@ -81,7 +81,7 @@ function getNumberPanel(daemonset: string, namespace: string) {
                             ${Metrics.kubeDaemonsetStatusNumberReady.name}{
                                 ${Metrics.kubeDaemonsetStatusNumberReady.labels.daemonset}=~"${daemonset}",
                                 ${Metrics.kubeDaemonsetStatusNumberReady.labels.namespace}="${namespace}",
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         ) by (${Metrics.kubeDaemonsetStatusNumberReady.labels.daemonset})`,
                     legendFormat: 'Ready'

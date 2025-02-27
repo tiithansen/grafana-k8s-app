@@ -17,7 +17,7 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
     const uids = rows.map(row => row.uid).join('|');
     const containerIds = rows.map(row => removeContainerIdPrefix(row.container_id)).join('|');
 
-    const cluster = resolveVariable(sceneVariables, 'cluster');
+    const spoke = resolveVariable(sceneVariables, 'spoke');
     const serializedFilters = serializeLabelFilters(staticLabelFilters);
 
     return [
@@ -28,7 +28,7 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
                     ${Metrics.containerMemoryWorkingSetBytes.name}{
                         ${serializedFilters}
                         ${Metrics.containerMemoryWorkingSetBytes.labels.name}=~"${containerIds}",
-                        cluster="${cluster}"
+                        spoke="${spoke}"
                     }
                 ) by (${Metrics.containerMemoryWorkingSetBytes.labels.pod}, ${Metrics.containerMemoryWorkingSetBytes.labels.container})`,
             instant: true,
@@ -42,7 +42,7 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
                         ${serializedFilters}
                         ${Metrics.kubePodContainerResourceRequests.labels.resource}="memory",
                         ${Metrics.kubePodContainerResourceRequests.labels.uid}=~"${uids}",
-                        cluster="${cluster}"
+                        spoke="${spoke}"
                     }
                 ) by (${Metrics.kubePodContainerResourceRequests.labels.pod}, ${Metrics.kubePodContainerResourceRequests.labels.container})`,
             instant: true,
@@ -56,7 +56,7 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
                         ${serializedFilters}
                         ${Metrics.kubePodContainerResourceLimits.labels.resource}="memory",
                         ${Metrics.kubePodContainerResourceLimits.labels.uid}=~"${uids}",
-                        cluster="${cluster}"
+                        spoke="${spoke}"
                     }
                 ) by (${Metrics.kubePodContainerResourceLimits.labels.pod}, ${Metrics.kubePodContainerResourceLimits.labels.container})`,
             instant: true,
@@ -70,7 +70,7 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
                         ${Metrics.containerCpuUsageSecondsTotal.name}{
                             ${serializedFilters}
                             ${Metrics.containerMemoryWorkingSetBytes.labels.name}=~"${containerIds}",
-                            cluster="${cluster}",
+                            spoke="${spoke}",
                         }[$__rate_interval]
                     )
                 ) by (${Metrics.containerCpuUsageSecondsTotal.labels.pod}, ${Metrics.containerCpuUsageSecondsTotal.labels.container})`,
@@ -85,7 +85,7 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
                         ${serializedFilters}
                         ${Metrics.kubePodContainerResourceRequests.labels.resource}="cpu",
                         ${Metrics.kubePodContainerResourceRequests.labels.uid}=~"${uids}",
-                        cluster="${cluster}"
+                        spoke="${spoke}"
                     }
                 ) by (${Metrics.kubePodContainerResourceRequests.labels.pod}, ${Metrics.kubePodContainerResourceRequests.labels.container})`,
             instant: true,
@@ -99,7 +99,7 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
                         ${serializedFilters}
                         ${Metrics.kubePodContainerResourceLimits.labels.resource}="cpu",
                         ${Metrics.kubePodContainerResourceLimits.labels.uid}=~"${uids}",
-                        cluster="${cluster}"
+                        spoke="${spoke}"
                     }
                 ) by (${Metrics.kubePodContainerResourceLimits.labels.pod}, ${Metrics.kubePodContainerResourceLimits.labels.container})`,
             instant: true,
@@ -112,7 +112,7 @@ export function createRowQueries(rows: TableRow[], staticLabelFilters: LabelFilt
                     ${Metrics.kubePodContainerStatusRestartsTotal.name}{
                         ${serializedFilters}
                         ${Metrics.kubePodContainerStatusRestartsTotal.labels.uid}=~"${uids}",
-                        cluster="${cluster}",
+                        spoke="${spoke}",
                     }
                 ) by (${Metrics.kubePodContainerStatusRestartsTotal.labels.pod}, ${Metrics.kubePodContainerStatusRestartsTotal.labels.container})`,
             instant: true,

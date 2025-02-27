@@ -7,7 +7,7 @@ export interface DeploymentAlert {
 }
 
 export interface TableRow extends RowBase{
-    cluster: string;
+    spoke: string;
     deployment: string;
     owner_name: string;
     replicasets: string[];

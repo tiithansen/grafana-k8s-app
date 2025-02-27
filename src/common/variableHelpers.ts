@@ -52,15 +52,15 @@ export function createTopLevelVariables(props: JsonData, additionalVariables?: A
 
 export function createClusterVariable(defaultCluster?: string, clusterFilter?: string) {
     return new QueryVariable({
-        name: 'cluster',
+        name: 'spoke',
         label: 'Cluster',
         datasource: {
             uid: '$datasource',
             type: 'prometheus',
         },
         query: {
-          refId: 'cluster',
-          query: clusterFilter ? `label_values(${clusterFilter}, cluster)` : 'label_values(kube_namespace_status_phase, cluster)',
+          refId: 'spoke',
+          query: clusterFilter ? `label_values(${clusterFilter}, spoke)` : 'label_values(kube_namespace_status_phase, spoke)',
         },
         value: defaultCluster,
     })
@@ -76,7 +76,7 @@ export function createNamespaceVariable() {
         },
         query: {
             refId: 'namespace',
-            query: `label_values(${Metrics.kubeNamespaceStatusPhase.name}{cluster="$cluster"},${Metrics.kubeNamespaceStatusPhase.labels.namespace})`,
+            query: `label_values(${Metrics.kubeNamespaceStatusPhase.name}{spoke="$spoke"},${Metrics.kubeNamespaceStatusPhase.labels.namespace})`,
         },
         defaultToAll: true,
         allValue: '.*',
@@ -95,7 +95,7 @@ export function createAlertStateVariable() {
         },
         query: {
             refId: 'alertState',
-            query: `label_values(ALERTS{cluster="$cluster"},alertstate)`,
+            query: `label_values(ALERTS{spoke="$spoke"},alertstate)`,
         },
         defaultToAll: true,
         allValue: '.*',
@@ -114,7 +114,7 @@ export function createAlertNameVariable() {
         },
         query: {
             refId: 'alertName',
-            query: `label_values(ALERTS{cluster="$cluster"},alertname)`,
+            query: `label_values(ALERTS{spoke="$spoke"},alertname)`,
         },
         defaultToAll: true,
         allValue: '.*',
@@ -133,7 +133,7 @@ export function createAlertSeverityVariable() {
         },
         query: {
             refId: 'alertSeverity',
-            query: `label_values(ALERTS{cluster="$cluster"},severity)`,
+            query: `label_values(ALERTS{spoke="$spoke"},severity)`,
         },
         defaultToAll: true,
         allValue: '.*',

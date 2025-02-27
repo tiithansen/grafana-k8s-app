@@ -11,7 +11,7 @@ This plugin relies on presence of default kube-state-metrics and node-exporter m
 
 ### Requirements
 
-* It expects the presence of `cluster` label on all the metrics.
+* It expects the presence of `spoke` label on all the metrics.
   
 ### Metrics used
 
@@ -20,7 +20,7 @@ Metrics and required labels used by application can be found in [metrics.ts](src
 ### Screenshots
 
 #### Cluster
-<img src="screenshots/cluster-overview.png" style="width:25%;margin: 4px;"><img src="screenshots/nodes-table.png" style="width:25%;margin: 4px;"><img src="screenshots/node-view.png" style="width:25%;margin: 4px;">
+<img src="screenshots/spoke-overview.png" style="width:25%;margin: 4px;"><img src="screenshots/nodes-table.png" style="width:25%;margin: 4px;"><img src="screenshots/node-view.png" style="width:25%;margin: 4px;">
 
 #### Workloads
 <img src="screenshots/workloads-overview.png" style="width:25%;margin: 4px;"><img src="screenshots/pod-table.png" style="width:25%;margin: 4px;"><img src="screenshots/pod-which-does-not-start-table.png" style="width:25%;margin: 4px;">
@@ -87,8 +87,8 @@ Settings page can be found at: `/plugins/k8s-app?page=configuration`.
 
 * Metrics datasource - Allows configuring regex to filter metrics from the prometheus datasources. (default=prometheus)
 * Default datasource - Allows configuring default datasource for the metrics.
-* Default cluster - Allows configuring default cluster to be used in the queries.
-* Cluster filter - Allows customizing the query which is used to get label values for the cluster variable.
+* Default spoke - Allows configuring default spoke to be used in the queries.
+* Cluster filter - Allows customizing the query which is used to get label values for the spoke variable.
 
 #### Logs & Events settings (EXPERIMENTAL)
 
@@ -105,7 +105,7 @@ Allows displaying logs and events from Loki.
 
 ```yaml
 global:
-  clusterName: "dummy-cluster"
+  clusterName: "dummy-spoke"
   lokiEndpoint: "https://loki.example/otlp"
 
 opentelemetry-collector:
@@ -121,7 +121,7 @@ opentelemetry-collector:
   clusterRole:
     create: true
     rules:
-    # Allow the collector to read all resources in the cluster
+    # Allow the collector to read all resources in the spoke
     - apiGroups:
       - "*"
       resources:
@@ -164,7 +164,7 @@ opentelemetry-collector:
     processors:
       resource:
         attributes:
-          - key: k8s.cluster.name
+          - key: k8s.spoke.name
             value: "{{ .Values.global.clusterName }}"
             action: insert
           - key: service.name

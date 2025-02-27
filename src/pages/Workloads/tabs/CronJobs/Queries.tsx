@@ -6,7 +6,7 @@ import { TableRow } from "./types";
 export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
 
     const cronJobs = rows.map(row => row.cronjob).join('|');
-    const cluster = resolveVariable(sceneVariables, 'cluster');
+    const spoke = resolveVariable(sceneVariables, 'spoke');
 
     return [
         {
@@ -15,7 +15,7 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
                 max(
                     ${Metrics.kubeCronJobSpecSuspend.name}{
                         ${Metrics.kubeCronJobSpecSuspend.labels.cronJob}=~"${cronJobs}",
-                        cluster="${cluster}"
+                        spoke="${spoke}"
                     }
                 ) by (${Metrics.kubeCronJobSpecSuspend.labels.cronJob})`,
             instant: true,
@@ -27,7 +27,7 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
                 max(
                     ${Metrics.kubeCronJobStatusLastScheduleTime.name}{
                         ${Metrics.kubeCronJobStatusLastScheduleTime.labels.cronJob}=~"${cronJobs}",
-                        cluster="${cluster}"
+                        spoke="${spoke}"
                     }
                 ) by (${Metrics.kubeCronJobStatusLastScheduleTime.labels.cronJob})`,
             instant: true,

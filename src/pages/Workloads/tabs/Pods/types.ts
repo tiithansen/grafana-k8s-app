@@ -7,7 +7,7 @@ export interface PodAlert {
 }
 
 export interface TableRow extends RowBase {
-    cluster: string;
+    spoke: string;
     pod: string;
     namespace: string;
     node: string;

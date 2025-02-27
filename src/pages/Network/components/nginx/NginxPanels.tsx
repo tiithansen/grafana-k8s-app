@@ -28,7 +28,7 @@ export function getNginxRequestLatencyPanel(ingress: string, namespace: string) 
                                 sum(
                                     rate(
                                         nginx_ingress_controller_request_duration_seconds_bucket{
-                                            cluster="$cluster",
+                                            spoke="$spoke",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
                                         }[1m]
@@ -65,7 +65,7 @@ export function getNginxResponseLatencyPanel(ingress: string, namespace: string)
                                 sum(
                                     rate(
                                         nginx_ingress_controller_response_duration_seconds_bucket{
-                                            cluster="$cluster",
+                                            spoke="$spoke",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
                                         }[1m]
@@ -102,7 +102,7 @@ export function getNginxHeaderLatencyPanel(ingress: string, namespace: string) {
                                 sum(
                                     rate(
                                         nginx_ingress_controller_header_duration_seconds_bucket{
-                                            cluster="$cluster",
+                                            spoke="$spoke",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
                                         }[1m]
@@ -139,7 +139,7 @@ export function getNginxUpstreamConnectLatencyPanel(ingress: string, namespace: 
                                 sum(
                                     rate(
                                         nginx_ingress_controller_connect_duration_seconds_bucket{
-                                            cluster="$cluster",
+                                            spoke="$spoke",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
                                         }[1m]
@@ -173,7 +173,7 @@ export function getNginxRequestRatePanel(ingress: string, namespace: string) {
                             sum(
                                 rate(
                                     nginx_ingress_controller_requests{
-                                        cluster="$cluster",
+                                        spoke="$spoke",
                                         ingress="${ingress}",
                                         exported_namespace="${namespace}",
                                     }[1m]
@@ -210,7 +210,7 @@ export function getNginxResponseSizePanel(ingress: string, namespace: string) {
                                 sum(
                                     rate(
                                         nginx_ingress_controller_response_size_bucket{
-                                            cluster="$cluster",
+                                            spoke="$spoke",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
                                         }[1m]
@@ -248,7 +248,7 @@ export function getNginxRequestSizePanel(ingress: string, namespace: string) {
                                 sum(
                                     rate(
                                         nginx_ingress_controller_request_size_bucket{
-                                            cluster="$cluster",
+                                            spoke="$spoke",
                                             ingress="${ingress}",
                                             exported_namespace="${namespace}",
                                         }[1m]
@@ -282,7 +282,7 @@ export function getNginxRequestRateByStatusCodePanel(ingress: string, namespace:
                             sum(
                                 rate(
                                     nginx_ingress_controller_requests{
-                                        cluster="$cluster",
+                                        spoke="$spoke",
                                         ingress="${ingress}",
                                         exported_namespace="${namespace}",
                                     }[1m]
@@ -316,7 +316,7 @@ export function getNginxFailureRatioPanel(ingress: string, namespace: string) {
                             sum(
                                 rate(
                                     nginx_ingress_controller_requests{
-                                        cluster="$cluster",
+                                        spoke="$spoke",
                                         ingress="${ingress}",
                                         exported_namespace="${namespace}",
                                         status=~"5.*"
@@ -327,7 +327,7 @@ export function getNginxFailureRatioPanel(ingress: string, namespace: string) {
                             sum(
                                 rate(
                                     nginx_ingress_controller_requests{
-                                        cluster="$cluster",
+                                        spoke="$spoke",
                                         ingress="${ingress}",
                                         exported_namespace="${namespace}",
                                     }[1m]

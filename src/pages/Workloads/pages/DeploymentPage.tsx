@@ -60,7 +60,7 @@ function getReplicasPanel(deployment: string, namespace: string) {
                             ${Metrics.kubeDeploymentStatusReplicasUnavailable.name}{
                                 ${Metrics.kubeDeploymentStatusReplicasUnavailable.labels.deployment}="${deployment}",
                                 ${Metrics.kubeDeploymentStatusReplicasUnavailable.labels.namespace}="${namespace}",
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         ) by (${Metrics.kubeDeploymentStatusReplicasUnavailable.labels.deployment})`,
                     legendFormat: 'Unavailable'
@@ -72,7 +72,7 @@ function getReplicasPanel(deployment: string, namespace: string) {
                             ${Metrics.kubeDeploymentStatusReplicasAvailable.name}{
                                 ${Metrics.kubeDeploymentStatusReplicasAvailable.labels.deployment}="${deployment}",
                                 ${Metrics.kubeDeploymentStatusReplicasAvailable.labels.namespace}="${namespace}",
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         ) by (${Metrics.kubeDeploymentStatusReplicasAvailable.labels.deployment})`,
                     legendFormat: 'Available'
@@ -84,7 +84,7 @@ function getReplicasPanel(deployment: string, namespace: string) {
                             ${Metrics.kubeDeploymentStatusReplicas.name}{
                                 ${Metrics.kubeDeploymentStatusReplicas.labels.deployment}="${deployment}",
                                 ${Metrics.kubeDeploymentStatusReplicas.labels.namespace}="${namespace}",
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         ) by (${Metrics.kubeDeploymentStatusReplicas.labels.deployment})`,
                     legendFormat: 'Replicas'

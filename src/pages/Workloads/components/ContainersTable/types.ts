@@ -1,7 +1,7 @@
 import { RowBase } from "components/AsyncTable";
 
 export interface TableRow extends RowBase {
-    cluster: string;
+    spoke: string;
     pod: string;
     name: string;
     container: string;

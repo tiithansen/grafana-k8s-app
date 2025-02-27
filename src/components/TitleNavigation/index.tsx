@@ -6,12 +6,12 @@ const menu = (
         <Menu.Item
             label="Clusters"
             url="/a/k8s-app/clusters"
-            description="View cluster details"
+            description="View spoke details"
         />
         <Menu.Item
             label="Workloads"
             url="/a/k8s-app/workloads"
-            description="Explore workloads in your cluster"
+            description="Explore workloads in your spoke"
         />
         <Menu.Item
             label="Network"

@@ -8,12 +8,12 @@ import { lastValueFrom } from 'rxjs';
 import { AnalyticsOptions } from 'components/Analytics/options';
 
 export type RulerClusterMapping = {
-  cluster: string;
+  spoke: string;
   datasource: string
 }
 
 export enum PageType {
-  CLUSTER = 'cluster',
+  CLUSTER = 'spoke',
   NODE = 'node',
   POD = 'pod',
   DEPLOYMENT = 'deployment',
@@ -22,7 +22,7 @@ export enum PageType {
 }
 
 const COMMON_VARIABLES = [
-  '$cluster',
+  '$spoke',
 ]
 
 const COMMON_WORKLOAD_VARIABLES = [
@@ -35,8 +35,8 @@ export const PageTypeDetails = [
     variables: [
       ...COMMON_VARIABLES,
     ],
-    logsExample: '{k8s_cluster_name="$cluster"}',
-    eventsExample: '{k8s_cluster_name="$cluster", service_name="k8sevents"}',
+    logsExample: '{k8s_cluster_name="$spoke"}',
+    eventsExample: '{k8s_cluster_name="$spoke", service_name="k8sevents"}',
   },
   {
     pageType: PageType.NODE,
@@ -44,8 +44,8 @@ export const PageTypeDetails = [
       '$node',
       ...COMMON_VARIABLES,
     ],
-    logsExample: '{k8s_cluster_name="$cluster", k8s_node_name="$node"}',
-    eventsExample: '{k8s_cluster_name="$cluster", service_name="k8sevents"} | k8s_node_name="$node"',
+    logsExample: '{k8s_cluster_name="$spoke", k8s_node_name="$node"}',
+    eventsExample: '{k8s_cluster_name="$spoke", service_name="k8sevents"} | k8s_node_name="$node"',
   },
   {
     pageType: PageType.POD,
@@ -54,8 +54,8 @@ export const PageTypeDetails = [
       ...COMMON_VARIABLES,
       ...COMMON_WORKLOAD_VARIABLES,
     ],
-    logsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", k8s_pod_name="$pod"}',
-    eventsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$pod"',
+    logsExample: '{k8s_cluster_name="$spoke", k8s_namespace_name="$namespace", k8s_pod_name="$pod"}',
+    eventsExample: '{k8s_cluster_name="$spoke", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$pod"',
   },
   {
     pageType: PageType.DEPLOYMENT,
@@ -64,8 +64,8 @@ export const PageTypeDetails = [
       ...COMMON_VARIABLES,
       ...COMMON_WORKLOAD_VARIABLES,
     ],
-    logsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", k8s_deployment_name="$deployment"}',
-    eventsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$deployment"',
+    logsExample: '{k8s_cluster_name="$spoke", k8s_namespace_name="$namespace", k8s_deployment_name="$deployment"}',
+    eventsExample: '{k8s_cluster_name="$spoke", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$deployment"',
   },
   {
     pageType: PageType.STATEFULSET,
@@ -74,8 +74,8 @@ export const PageTypeDetails = [
       ...COMMON_VARIABLES,
       ...COMMON_WORKLOAD_VARIABLES,
     ],
-    logsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", k8s_statefulset_name="$statefulset"}',
-    eventsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$statefulset"',
+    logsExample: '{k8s_cluster_name="$spoke", k8s_namespace_name="$namespace", k8s_statefulset_name="$statefulset"}',
+    eventsExample: '{k8s_cluster_name="$spoke", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$statefulset"',
   },
   {
     pageType: PageType.DAEMONSET,
@@ -84,8 +84,8 @@ export const PageTypeDetails = [
       ...COMMON_VARIABLES,
       ...COMMON_WORKLOAD_VARIABLES,
     ],
-    logsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", k8s_daemonset_name="$daemonset"}',
-    eventsExample: '{k8s_cluster_name="$cluster", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$daemonset"',
+    logsExample: '{k8s_cluster_name="$spoke", k8s_namespace_name="$namespace", k8s_daemonset_name="$daemonset"}',
+    eventsExample: '{k8s_cluster_name="$spoke", k8s_namespace_name="$namespace", service_name="k8sevents"} | k8s_object_name="$daemonset"',
   },
 ]
 
@@ -231,7 +231,7 @@ export const AppConfig = ({ plugin }: Props) => {
   const onAddRulerMapping = () => {
     const mappings = state.rulerMappings || [];
     mappings.push({
-      cluster: '',
+      spoke: '',
       datasource: '',
     });
 
@@ -253,7 +253,7 @@ export const AppConfig = ({ plugin }: Props) => {
 
   const onChangeRulerCluster = (event: ChangeEvent<HTMLInputElement>, index: number) => {
     const mappings = state.rulerMappings || [];
-    mappings[index].cluster = event.target.value;
+    mappings[index].spoke = event.target.value;
 
     setState({
       ...state,
@@ -433,11 +433,11 @@ export const AppConfig = ({ plugin }: Props) => {
             onChange={onChangeDefaultDatasource}
           />
         </Field>
-        <Field label="Default cluster" description="" className={s.marginTop}>
+        <Field label="Default spoke" description="" className={s.marginTop}>
           <Input
             width={60}
             id="defaultCluster"
-            label={`Name of the default cluster`}
+            label={`Name of the default spoke`}
             value={state?.defaultCluster}
             placeholder={`E.g.: Production`}
             onChange={onChangeDefaultCluster}
@@ -449,7 +449,7 @@ export const AppConfig = ({ plugin }: Props) => {
             id="defaultCluster"
             label={`Cluster filter`}
             value={state?.clusterFilter}
-            placeholder={`E.g.: kube_namespace_labels{cluster!="private", cluster=~"prod.*"}`}
+            placeholder={`E.g.: kube_namespace_labels{spoke!="private", spoke=~"prod.*"}`}
             onChange={onChangeClusterFilter}
           />
         </Field>
@@ -565,9 +565,9 @@ export const AppConfig = ({ plugin }: Props) => {
                 <Field label="Cluster" description="">
                   <Input
                     width={60}
-                    id="cluster"
+                    id="spoke"
                     label={`Cluster`}
-                    value={mapping?.cluster}
+                    value={mapping?.spoke}
                     placeholder={`E.g.: Production`}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => onChangeRulerCluster(e, index)}
                   />

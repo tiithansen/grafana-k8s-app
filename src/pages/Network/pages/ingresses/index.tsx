@@ -94,24 +94,24 @@ function ConditionalRenderer({ model }: SceneComponentProps<ConditionalSceneObje
 function nginxBuildInfoQuery(namespace: string, ingress: string) {
 
     return PromQL.metric(Metrics.nginxIngressControllerBuildInfo.name)
-        .withLabel('cluster', MatchOperators.EQUALS, '$cluster')
+        .withLabel('spoke', MatchOperators.EQUALS, '$spoke')
         .and()
-        .on(['controller_class', 'cluster'])
+        .on(['controller_class', 'spoke'])
         .withExpression(
             PromQL.labelReplace(
                 PromQL.metric(
                     Metrics.kubeIngressInfo.name
                 )
-                .withLabel('cluster', MatchOperators.EQUALS, '$cluster')
+                .withLabel('spoke', MatchOperators.EQUALS, '$spoke')
                 .withLabel('ingress', MatchOperators.EQUALS, ingress)
                 .multiply()
-                .on(['ingressclass', 'cluster'])
+                .on(['ingressclass', 'spoke'])
                 .groupLeft(
                     [
                         'controller'
                     ],
                     PromQL.metric(Metrics.kubeIngressClassInfo.name)
-                    .withLabel('cluster', MatchOperators.EQUALS, '$cluster')
+                    .withLabel('spoke', MatchOperators.EQUALS, '$spoke')
                 ),
                 'controller_class',
                 'controller',

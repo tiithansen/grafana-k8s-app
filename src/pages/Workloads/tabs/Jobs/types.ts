@@ -1,7 +1,7 @@
 import { RowBase } from "components/AsyncTable";
 
 export interface TableRow extends RowBase {
-    cluster: string;
+    spoke: string;
     job_name: string;
     namespace: string;
     complete: boolean;

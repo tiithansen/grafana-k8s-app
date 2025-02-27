@@ -7,7 +7,7 @@ export interface StatefulSetAlert {
 }
 
 export interface TableRow extends RowBase {
-    cluster: string;
+    spoke: string;
     statefulset: string;
     namespace: string;
     alerts: StatefulSetAlert[];

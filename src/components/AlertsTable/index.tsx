@@ -75,15 +75,15 @@ const columns: Array<Column<TableRow>> = [
         },
     },
     {
-        id: 'cluster',
+        id: 'spoke',
         header: 'CLUSTER',
-        accessor: (row: TableRow) => row.cluster,
+        accessor: (row: TableRow) => row.spoke,
         sortingConfig: {
             enabled: true,
             type: 'label',
             local: true,
             compare: (a, b, direction) => {
-                return direction === 'asc' ? a.cluster.localeCompare(b.cluster) : b.cluster.localeCompare(a.cluster);
+                return direction === 'asc' ? a.spoke.localeCompare(b.spoke) : b.spoke.localeCompare(a.spoke);
             }
         },
     },
@@ -145,7 +145,7 @@ class AlertsQueryBuilder implements QueryBuilder<TableRow> {
 
         const finalQuery = `
             ALERTS{
-                cluster="$cluster",
+                spoke="$spoke",
                 ${ hasSearchVariable ? `alertname=~"$alertSearch.*",`: '' }
                 ${ hasAlertNameVariable ? `alertname=~"$alertName",` : '' }
                 ${ hasNamespaceVariable ? `namespace=~"$namespace",` : '' }
@@ -154,7 +154,7 @@ class AlertsQueryBuilder implements QueryBuilder<TableRow> {
                 ${serializedFilters}
             }
             * ignoring(alertstate) group_right(alertstate) ALERTS_FOR_STATE{
-                cluster="$cluster",
+                spoke="$spoke",
                 ${ hasNamespaceVariable ? `namespace=~"$namespace",` : '' }
                 ${serializedFilters}
             }
@@ -195,7 +195,7 @@ function alertsTimeseries() {
                     expr: `
                         count(
                             ALERTS{
-                                cluster="$cluster",
+                                spoke="$spoke",
                                 alertstate=~"$alertState",
                                 alertname=~"$alertName",
                                 severity=~"$alertSeverity",

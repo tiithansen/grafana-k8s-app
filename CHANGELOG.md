@@ -24,7 +24,7 @@
 
 ### Bug Fixes
 
-* Fix ingress panels when multiple controllers present in the cluster ([fe3659e](https://github.com/tiithansen/grafana-k8s-app/commit/fe3659eb676e94f39370dd8441d7123481ce76fe))
+* Fix ingress panels when multiple controllers present in the spoke ([fe3659e](https://github.com/tiithansen/grafana-k8s-app/commit/fe3659eb676e94f39370dd8441d7123481ce76fe))
 * Make it possible to remove ruler mapping ([2c107de](https://github.com/tiithansen/grafana-k8s-app/commit/2c107dec38577b9c293f833afc82cdb46eaf5ccd))
 * Replace 5m rate with 1m rate ([bbb4122](https://github.com/tiithansen/grafana-k8s-app/commit/bbb4122a2b34eaebb9b6e1869909140345f48f3b))
 
@@ -182,7 +182,7 @@
 * Deployment expanded row should show only pods for that specific deployment ([8e945f2](https://github.com/tiithansen/grafana-k8s-app/commit/8e945f2cd6540e4a9253f4600bb713b21535fcf6))
 * Fix navigation errors ([7c12556](https://github.com/tiithansen/grafana-k8s-app/commit/7c1255612ca1372d4b139fa1e91a894d5401f3ba))
 * Fix search alerts by name ([f906513](https://github.com/tiithansen/grafana-k8s-app/commit/f906513e7e15683519f153c4a57edcf22ac41553))
-* Move cluster variable to top level ([412c1fe](https://github.com/tiithansen/grafana-k8s-app/commit/412c1feea14656d11b666d4b6ba3b5c1d69952ee))
+* Move spoke variable to top level ([412c1fe](https://github.com/tiithansen/grafana-k8s-app/commit/412c1feea14656d11b666d4b6ba3b5c1d69952ee))
 * Remove links which lead to pages which do not exist yet ([4cfe494](https://github.com/tiithansen/grafana-k8s-app/commit/4cfe494d60e562efb2390c84201c548124641532))
 * Remove useless search field ([6fdaa09](https://github.com/tiithansen/grafana-k8s-app/commit/6fdaa09456e2754db6865a4e1958110b21869209))
 
@@ -248,7 +248,7 @@
 * Add panels to statefulset page ([0084fd4](https://github.com/tiithansen/grafana-k8s-app/commit/0084fd46aae6391c356e9223d8afc48cca170c6d))
 * Add status and age columns for pods ([59816d9](https://github.com/tiithansen/grafana-k8s-app/commit/59816d9b7a45c9365ce3c503cfb4c6d24570b7bd))
 * Allow datasource name pattern to be configured from app settings page ([aeb7453](https://github.com/tiithansen/grafana-k8s-app/commit/aeb745309d0dcea202dd8beb5726e73ecb6343f8))
-* Basic cluster overview page with nodes, memory and cpu (total, requested and usage) ([9db38c0](https://github.com/tiithansen/grafana-k8s-app/commit/9db38c09b9a0c8c568c182730f54e3591b623769))
+* Basic spoke overview page with nodes, memory and cpu (total, requested and usage) ([9db38c0](https://github.com/tiithansen/grafana-k8s-app/commit/9db38c09b9a0c8c568c182730f54e3591b623769))
 * Basic node view ([9c806e9](https://github.com/tiithansen/grafana-k8s-app/commit/9c806e968dd1612caeb967636b8055238c3507ef))
 * Basic promql query builder ([6092e25](https://github.com/tiithansen/grafana-k8s-app/commit/6092e25c82f493e996ed277f0ad61404c0c3d510))
 * Basic queries and some additional info for cronjobs table ([2243c46](https://github.com/tiithansen/grafana-k8s-app/commit/2243c46aed2f7cdd6b75a9d68d36b8455e4d45e7))
@@ -257,13 +257,13 @@
 * Cleanup and empty pages for jobs, cronjobs and daemonsets ([5d6e5a1](https://github.com/tiithansen/grafana-k8s-app/commit/5d6e5a1c95b701dbc437ced18c6c1cdd8151935b))
 * CPU and Memory requests and limits sorting for pods table ([0b3105b](https://github.com/tiithansen/grafana-k8s-app/commit/0b3105b814da2e2df10c6e2523178b554474312b))
 * Display alert count on deployments table ([29fb707](https://github.com/tiithansen/grafana-k8s-app/commit/29fb7070488924cac8951cc237a0efbb6a5bbf52))
-* Display alerts on cluster overview, pods table and pod page ([167b72d](https://github.com/tiithansen/grafana-k8s-app/commit/167b72dc0b6226db234475b10b103881916f6941))
+* Display alerts on spoke overview, pods table and pod page ([167b72d](https://github.com/tiithansen/grafana-k8s-app/commit/167b72dc0b6226db234475b10b103881916f6941))
 * Display deamonset desired and ready pods in daemonsets table ([48808c5](https://github.com/tiithansen/grafana-k8s-app/commit/48808c5b594f878a98c85638c6c4d16d7f3af943))
 * Display which datasources match regex in plugin settings page ([54f18ae](https://github.com/tiithansen/grafana-k8s-app/commit/54f18aec34b7ccb8f1b1fa34e2e52ebf1ea93b3c))
 * Improve Daemonset page ([dd3e878](https://github.com/tiithansen/grafana-k8s-app/commit/dd3e87888b19ff8ba69b7c298986d310248fffa4))
 * Initial attemp to display stopped/terminated pods in pods table when Show stopped pods is enabled ([407d624](https://github.com/tiithansen/grafana-k8s-app/commit/407d624fdf1ad38ba05864776df1d77c7234ab60))
 * Make stateful sets table to display replicas total and replicas ready ([7c563b9](https://github.com/tiithansen/grafana-k8s-app/commit/7c563b999a44360ceb6ea49dadf03121fd53793b))
-* Resource usage breakdown table for cluster overview based on namespaces ([24ecb2a](https://github.com/tiithansen/grafana-k8s-app/commit/24ecb2a47f002041f381ca7c53df0b434089833f))
+* Resource usage breakdown table for spoke overview based on namespaces ([24ecb2a](https://github.com/tiithansen/grafana-k8s-app/commit/24ecb2a47f002041f381ca7c53df0b434089833f))
 
 
 ### Bug Fixes

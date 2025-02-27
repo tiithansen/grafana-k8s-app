@@ -6,10 +6,10 @@ import { QueryBuilder, ColumnSortingConfig } from "components/AsyncTable";
 import { SortingState } from "common/sortingHelpers";
 import { MatchOperators, OperatorAndValue, PromQL, PromQLExpression } from "common/promql";
 
-function createAlertsQuery(cluster: string, additionalLabels: Record<string, OperatorAndValue>) {
+function createAlertsQuery(spoke: string, additionalLabels: Record<string, OperatorAndValue>) {
 
     return PromQL.metric('ALERTS')
-        .withLabelEquals('cluster', cluster)
+        .withLabelEquals('spoke', spoke)
         .withLabels(additionalLabels)
         .withLabelEquals('alertstate', 'firing')
         .multiply()
@@ -17,29 +17,29 @@ function createAlertsQuery(cluster: string, additionalLabels: Record<string, Ope
         .groupRight(
             ['alertstate'],
             PromQL.metric('ALERTS_FOR_STATE')
-                .withLabelEquals('cluster', cluster)
+                .withLabelEquals('spoke', spoke)
                 .withLabels(additionalLabels)
         )
 }
 
-function createReplicasQuery(cluster: string, additionalLabels: Record<string, OperatorAndValue>) {
+function createReplicasQuery(spoke: string, additionalLabels: Record<string, OperatorAndValue>) {
 
     return PromQL.max(
         PromQL.metric(Metrics.kubeDeploymentStatusReplicas.name)
             .withLabels(additionalLabels)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
     ).by([
         Metrics.kubeDeploymentStatusReplicas.labels.deployment,
         Metrics.kubeDeploymentStatusReplicas.labels.namespace
     ])
 }
 
-function createReplicasReadyQuery(cluster: string, deployments: string) {
+function createReplicasReadyQuery(spoke: string, deployments: string) {
 
     return PromQL.max(
         PromQL.metric(Metrics.kubeDeploymentStatusReplicasReady.name)
             .withLabelMatches(Metrics.kubeDeploymentStatusReplicasReady.labels.deployment, deployments)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
     ).by([
         Metrics.kubeDeploymentStatusReplicasReady.labels.deployment,
         Metrics.kubeDeploymentStatusReplicasReady.labels.namespace
@@ -49,7 +49,7 @@ function createReplicasReadyQuery(cluster: string, deployments: string) {
 function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
 
     const deployments = rows.map(row => row.deployment).join('|');
-    const cluster = resolveVariable(sceneVariables, 'cluster');
+    const spoke = resolveVariable(sceneVariables, 'spoke');
 
     const additionalLabels = {
         'deployment': {
@@ -61,19 +61,19 @@ function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
     return [
         {
             refId: 'alerts',
-            expr: createAlertsQuery(cluster?.toString()!, additionalLabels).stringify(),
+            expr: createAlertsQuery(spoke?.toString()!, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'replicas',
-            expr: createReplicasQuery(cluster?.toString()!, additionalLabels).stringify(),
+            expr: createReplicasQuery(spoke?.toString()!, additionalLabels).stringify(),
             instant: true,
             format: 'table'
         },
         {
             refId: 'replicas_ready',
-            expr: createReplicasReadyQuery(cluster?.toString()!, deployments).stringify(),
+            expr: createReplicasReadyQuery(spoke?.toString()!, deployments).stringify(),
             instant: true,
             format: 'table'
         },
@@ -85,7 +85,7 @@ export class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
 
         const baseQuery = PromQL.group(
             PromQL.metric(Metrics.kubeDeploymentCreated.name)
-                .withLabelEquals('cluster', '$cluster')
+                .withLabelEquals('spoke', '$spoke')
                 .withLabelMatches(Metrics.kubeDeploymentCreated.labels.namespace, '$namespace')
                 .withLabelMatches(Metrics.kubeDeploymentCreated.labels.deployment, '.*$search.*')
         ).by([
@@ -107,7 +107,7 @@ export class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
                             .groupRight(
                                 [],
                                 PromQL.count(
-                                    createAlertsQuery('$cluster', {
+                                    createAlertsQuery('$spoke', {
                                         'deployment': {
                                             operator: MatchOperators.NOT_EQUALS,
                                             value: ''
@@ -129,7 +129,7 @@ export class DeploymentQueryBuilder implements QueryBuilder<TableRow> {
                             .on(['namespace', 'deployment'])
                             .groupRight(
                                 [],
-                                createReplicasQuery('$cluster', {})
+                                createReplicasQuery('$spoke', {})
                             )
                             .or()
                             .withExpression(

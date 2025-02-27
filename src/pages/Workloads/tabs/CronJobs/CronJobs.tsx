@@ -95,7 +95,7 @@ class CronJobsQueryBuilder implements QueryBuilder<TableRow> {
                     expr: `
                         group(
                             ${Metrics.kubeCronJobInfo.name}{
-                                cluster="$cluster",
+                                spoke="$spoke",
                                 ${Metrics.kubeCronJobInfo.labels.namespace}=~"$namespace",
                                 ${Metrics.kubeCronJobInfo.labels.cronJob}=~"$search.*"
                             }

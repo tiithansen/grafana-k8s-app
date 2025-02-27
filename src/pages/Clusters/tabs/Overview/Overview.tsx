@@ -19,9 +19,9 @@ function getNodesPerClusterPanel() {
                     refId: 'nodes',
                     expr: `
                         count(
-                            ${Metrics.kubeNodeInfo.name}{cluster=~"$cluster"}
-                        ) by (cluster)`,
-                    legendFormat: 'Nodes [{{cluster}}]'
+                            ${Metrics.kubeNodeInfo.name}{spoke=~"$spoke"}
+                        ) by (spoke)`,
+                    legendFormat: 'Nodes [{{spoke}}]'
                 },
             ],
         }))
@@ -41,33 +41,33 @@ function getNodesMemoryPanel() {
                     refId: 'memory_total',
                     expr: `
                         sum(
-                            ${Metrics.nodeMemoryMemTotalBytes.name}{cluster=~"$cluster"}
-                        ) by (cluster)`,
-                    legendFormat: 'Total [{{cluster}}]'
+                            ${Metrics.nodeMemoryMemTotalBytes.name}{spoke=~"$spoke"}
+                        ) by (spoke)`,
+                    legendFormat: 'Total [{{spoke}}]'
                 },
                 {
                     refId: 'memory_usage',
                     expr: `
                         sum(
-                            ${Metrics.nodeMemoryMemTotalBytes.name}{cluster=~"$cluster"} - ${Metrics.nodeMemoryMemAvailableBytes.name}{cluster=~"$cluster"}
-                        ) by (cluster)`,
-                    legendFormat: 'Used [{{cluster}}]'
+                            ${Metrics.nodeMemoryMemTotalBytes.name}{spoke=~"$spoke"} - ${Metrics.nodeMemoryMemAvailableBytes.name}{spoke=~"$spoke"}
+                        ) by (spoke)`,
+                    legendFormat: 'Used [{{spoke}}]'
                 },
                 {
                     refId: 'memory_requested',
                     expr: `
                         sum(
-                            ${Metrics.kubePodContainerResourceRequests.name}{resource="memory",cluster=~"$cluster"}
-                        ) by (cluster)`,
-                    legendFormat: 'Requested [{{cluster}}]'
+                            ${Metrics.kubePodContainerResourceRequests.name}{resource="memory",spoke=~"$spoke"}
+                        ) by (spoke)`,
+                    legendFormat: 'Requested [{{spoke}}]'
                 },
                 {
                     refId: 'memory_limits',
                     expr: `
                         sum(
-                            ${Metrics.kubePodContainerResourceLimits.name}{resource="memory",cluster=~"$cluster"}
-                        ) by (cluster)`,
-                    legendFormat: 'Limits [{{cluster}}]'
+                            ${Metrics.kubePodContainerResourceLimits.name}{resource="memory",spoke=~"$spoke"}
+                        ) by (spoke)`,
+                    legendFormat: 'Limits [{{spoke}}]'
                 }
             ],
         }))
@@ -100,9 +100,9 @@ function getNodesCpuPanel() {
                     refId: 'cpu_total',
                     expr: `
                         sum(
-                            ${Metrics.machineCpuCores.name}{cluster=~"$cluster"}
-                        ) by (cluster)`,
-                    legendFormat: 'Total [{{cluster}}]'
+                            ${Metrics.machineCpuCores.name}{spoke=~"$spoke"}
+                        ) by (spoke)`,
+                    legendFormat: 'Total [{{spoke}}]'
                 },
                 {
                     refId: 'cpu_usage',
@@ -114,46 +114,46 @@ function getNodesCpuPanel() {
                                     rate(
                                         ${Metrics.nodeCpuSecondsTotal.name}{
                                             ${Metrics.nodeCpuSecondsTotal.labels.mode}!="idle",
-                                            cluster="$cluster"
+                                            spoke="$spoke"
                                         }[$__rate_interval]
                                     )
-                                ) by(${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster)
+                                ) by(${Metrics.nodeCpuSecondsTotal.labels.instance}, spoke)
                                 /
-                                on (${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster) group_left sum (
+                                on (${Metrics.nodeCpuSecondsTotal.labels.instance}, spoke) group_left sum (
                                     (
                                         rate(
                                             ${Metrics.nodeCpuSecondsTotal.name}{
-                                                cluster="$cluster",
+                                                spoke="$spoke",
                                             }[$__rate_interval]
                                         )
                                     )
-                                ) by (${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster)
+                                ) by (${Metrics.nodeCpuSecondsTotal.labels.instance}, spoke)
                             )
                             * count(
                                 count(
                                     node_cpu_seconds_total{
-                                        cluster="$cluster"
+                                        spoke="$spoke"
                                     }
-                                ) by (cpu, cluster, instance)
-                            )  by (cluster, instance)
-                        ) by (cluster)`,
-                    legendFormat: 'Usage [{{cluster}}] {{instance}}'
+                                ) by (cpu, spoke, instance)
+                            )  by (spoke, instance)
+                        ) by (spoke)`,
+                    legendFormat: 'Usage [{{spoke}}] {{instance}}'
                 },
                 {
                     refId: 'cpu_requested',
                     expr: `
                         sum(
-                            ${Metrics.kubePodContainerResourceRequests.name}{resource="cpu", cluster=~"$cluster"}
-                        ) by (cluster)`,
-                    legendFormat: 'Requested [{{cluster}}]'
+                            ${Metrics.kubePodContainerResourceRequests.name}{resource="cpu", spoke=~"$spoke"}
+                        ) by (spoke)`,
+                    legendFormat: 'Requested [{{spoke}}]'
                 },
                 {
                     refId: 'cpu_limits',
                     expr: `
                         sum(
-                            ${Metrics.kubePodContainerResourceLimits.name}{resource="cpu",cluster=~"$cluster"}
-                        ) by (cluster)`,
-                    legendFormat: 'Limits [{{cluster}}]'
+                            ${Metrics.kubePodContainerResourceLimits.name}{resource="cpu",spoke=~"$spoke"}
+                        ) by (spoke)`,
+                    legendFormat: 'Limits [{{spoke}}]'
                 }
             ],
         }))

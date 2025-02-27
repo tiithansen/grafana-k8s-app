@@ -53,7 +53,7 @@ function getScene(props: JsonData) {
                 ],
                 drilldowns: [
                     {
-                        routePath: prefixRoute(`${ROUTES.Clusters}/nodes/:cluster/:name`),
+                        routePath: prefixRoute(`${ROUTES.Clusters}/nodes/:spoke/:name`),
                         getPage: NodePage
                     },
                 ]

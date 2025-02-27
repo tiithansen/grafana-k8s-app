@@ -132,47 +132,47 @@ function getCPUPanel(node: string) {
                         max(
                             kube_node_status_capacity{
                                 resource="cpu",
-                                cluster=~"$cluster",
+                                spoke=~"$spoke",
                                 node="${node}"
                             }
-                        ) by (cluster)`,
+                        ) by (spoke)`,
                     legendFormat: 'Total'
                 },
                 {
                     refId: 'cpu_usage',
                     expr: `
                             node_uname_info{
-                                cluster=~"$cluster",
+                                spoke=~"$spoke",
                                 nodename="${node}"
-                            } * on (cluster, instance)
+                            } * on (spoke, instance)
                             (
                                 (
                                     sum (
                                         rate(
                                             ${Metrics.nodeCpuSecondsTotal.name}{
                                                 ${Metrics.nodeCpuSecondsTotal.labels.mode}!="idle",
-                                                cluster="$cluster"
+                                                spoke="$spoke"
                                             }[$__rate_interval]
                                         )
-                                    ) by(${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster)
+                                    ) by(${Metrics.nodeCpuSecondsTotal.labels.instance}, spoke)
                                     /
-                                    on (${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster) group_left sum (
+                                    on (${Metrics.nodeCpuSecondsTotal.labels.instance}, spoke) group_left sum (
                                         (
                                             rate(
                                                 ${Metrics.nodeCpuSecondsTotal.name}{
-                                                    cluster="$cluster",
+                                                    spoke="$spoke",
                                                 }[$__rate_interval]
                                             )
                                         )
-                                    ) by (${Metrics.nodeCpuSecondsTotal.labels.instance}, cluster)
+                                    ) by (${Metrics.nodeCpuSecondsTotal.labels.instance}, spoke)
                                 )
                                 * count(
                                     count(
                                         node_cpu_seconds_total{
-                                            cluster="$cluster",
+                                            spoke="$spoke",
                                         }
-                                    ) by (cpu, cluster, instance)
-                                )  by (cluster, instance)
+                                    ) by (cpu, spoke, instance)
+                                )  by (spoke, instance)
                             )
                         `,
                     legendFormat: 'Usage'
@@ -183,10 +183,10 @@ function getCPUPanel(node: string) {
                         sum(
                             ${Metrics.kubePodContainerResourceRequests.name}{
                                 resource="cpu",
-                                cluster=~"$cluster",
+                                spoke=~"$spoke",
                                 node="${node}"
                             }
-                        ) by (cluster)`,
+                        ) by (spoke)`,
                     legendFormat: 'Requested'
                 }
             ],
@@ -219,22 +219,22 @@ function getMemoryPanel(node: string) {
                         max(
                             kube_node_status_capacity{
                                 resource="memory",
-                                cluster=~"$cluster",
+                                spoke=~"$spoke",
                                 node="${node}"
                             }
-                        ) by (cluster)`,
-                    legendFormat: 'Total [{{cluster}}]'
+                        ) by (spoke)`,
+                    legendFormat: 'Total [{{spoke}}]'
                 },
                 {
                     refId: 'memory_usage',
                     expr: `
-                        node_uname_info{cluster=~"$cluster", nodename="${node}"} * on (cluster, instance)
+                        node_uname_info{spoke=~"$spoke", nodename="${node}"} * on (spoke, instance)
                         sum(
-                            ${Metrics.nodeMemoryMemTotalBytes.name}{cluster=~"$cluster"}
+                            ${Metrics.nodeMemoryMemTotalBytes.name}{spoke=~"$spoke"}
                             -
-                            ${Metrics.nodeMemoryMemAvailableBytes.name}{cluster=~"$cluster"}
-                        ) by (cluster, instance)`,
-                    legendFormat: 'Used [{{cluster}}]'
+                            ${Metrics.nodeMemoryMemAvailableBytes.name}{spoke=~"$spoke"}
+                        ) by (spoke, instance)`,
+                    legendFormat: 'Used [{{spoke}}]'
                 },
                 {
                     refId: 'memory_requested',
@@ -242,11 +242,11 @@ function getMemoryPanel(node: string) {
                         sum(
                             ${Metrics.kubePodContainerResourceRequests.name}{
                                 resource="memory",
-                                cluster=~"$cluster",
+                                spoke=~"$spoke",
                                 node="${node}"
                             }
-                        ) by (cluster)`,
-                    legendFormat: 'Requested [{{cluster}}]'
+                        ) by (spoke)`,
+                    legendFormat: 'Requested [{{spoke}}]'
                 }
             ],
         }))
@@ -293,7 +293,7 @@ export function NodePage(routeMatch: SceneRouteMatch<any>, parent: SceneAppPageL
         titleIcon: 'dashboard',
         $variables: variables,
         $timeRange: createTimeRange(),
-        url: prefixRoute(`${ROUTES.Clusters}/nodes/${routeMatch.params.cluster}/${routeMatch.params.name}`),
+        url: prefixRoute(`${ROUTES.Clusters}/nodes/${routeMatch.params.spoke}/${routeMatch.params.name}`),
         getScene: () => getScene(routeMatch.params.name),
         getParentPage: () => parent,
     })

@@ -353,20 +353,20 @@ export const Metrics = {
     kubeIngressPath: {
         name: 'kube_ingress_path',
         labels:{
-            cluster: 'cluster',
+            spoke: 'spoke',
         }
     },
     kubeIngressInfo: {
         name: 'kube_ingress_info',
         labels:{
-            cluster: 'cluster',
+            spoke: 'spoke',
             ingressClass: 'ingressclass',
         }
     },
     kubeIngressClassInfo: {
         name: 'kube_ingressclass_info',
         labels:{
-            cluster: 'cluster',
+            spoke: 'spoke',
             ingressClass: 'ingressclass',
             controller: 'controller',
         }
@@ -382,13 +382,13 @@ export const Metrics = {
     kubeServiceInfo: {
         name: 'kube_service_info',
         labels:{
-            cluster: 'cluster',
+            spoke: 'spoke',
         }
     },
     kubeServiceSpecType: {
         name: 'kube_service_spec_type',
         labels:{
-            cluster: 'cluster',
+            spoke: 'spoke',
             type: 'type',
         }
     },

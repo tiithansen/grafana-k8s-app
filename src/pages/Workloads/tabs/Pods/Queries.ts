@@ -7,81 +7,81 @@ import { ColumnSortingConfig } from "components/AsyncTable";
 import { SortingState } from "common/sortingHelpers";
 import { Labels, MatchOperators, PromQL, PromQLExpression, PromQLVectorExpression } from "common/promql";
 
-function createRestartsQuery(cluster: string, additionalLabels: Labels) {
+function createRestartsQuery(spoke: string, additionalLabels: Labels) {
 
     return PromQL.sum(
         PromQL.metric(Metrics.kubePodContainerStatusRestartsTotal.name)
             .withLabels(additionalLabels)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
     ).by([
         Metrics.kubePodContainerStatusRestartsTotal.labels.pod,
         Metrics.kubePodContainerStatusRestartsTotal.labels.namespace,
         Metrics.kubePodContainerStatusRestartsTotal.labels.uid,
-        'cluster'
+        'spoke'
     ])
 }
 
-function createContainersQuery(cluster: string, additionalLabels: Labels) {
+function createContainersQuery(spoke: string, additionalLabels: Labels) {
 
     return PromQL.sum(
         PromQL.metric(Metrics.kubePodContainerInfo.name)
             .withLabels(additionalLabels)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
     ).by([
         Metrics.kubePodContainerInfo.labels.pod,
         Metrics.kubePodContainerInfo.labels.namespace,
         Metrics.kubePodContainerStatusRestartsTotal.labels.uid,
-        'cluster'
+        'spoke'
     ])
 }
 
-function createContainersReadyQuery(cluster: string, additionalLabels: Labels) {
+function createContainersReadyQuery(spoke: string, additionalLabels: Labels) {
     
         return PromQL.sum(
             PromQL.metric(Metrics.kubePodContainerStatusReady.name)
                 .withLabels(additionalLabels)
-                .withLabelEquals('cluster', cluster)
+                .withLabelEquals('spoke', spoke)
         ).by([
             Metrics.kubePodContainerStatusReady.labels.pod,
             Metrics.kubePodContainerStatusReady.labels.namespace,
             Metrics.kubePodContainerStatusRestartsTotal.labels.uid,
-            'cluster'
+            'spoke'
         ])
     }
 
-function createResourceRequestsQuery(resource: string, cluster: string, additionalLabels: Labels) {
+function createResourceRequestsQuery(resource: string, spoke: string, additionalLabels: Labels) {
 
     return PromQL.sum(
         PromQL.metric(Metrics.kubePodContainerResourceRequests.name)
             .withLabelEquals(Metrics.kubePodContainerResourceRequests.labels.resource, resource)
             .withLabelNotEquals(Metrics.kubePodContainerResourceRequests.labels.container, '')
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
             .withLabels(additionalLabels)
     ).by([
         Metrics.kubePodContainerResourceRequests.labels.pod,
         Metrics.kubePodContainerResourceRequests.labels.namespace,
         Metrics.kubePodContainerStatusRestartsTotal.labels.uid,
-        'cluster'
+        'spoke'
     ])
 }
 
-function createResourceLimitsQuery(resource: string, cluster: string, additionalLabels: Labels) {
+function createResourceLimitsQuery(resource: string, spoke: string, additionalLabels: Labels) {
 
     return PromQL.sum(
         PromQL.metric(Metrics.kubePodContainerResourceLimits.name)
             .withLabelEquals(Metrics.kubePodContainerResourceLimits.labels.resource, resource)
             .withLabelNotEquals(Metrics.kubePodContainerResourceLimits.labels.container, '')
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
             .withLabels(additionalLabels)
     ).by([
         Metrics.kubePodContainerResourceLimits.labels.pod,
         Metrics.kubePodContainerResourceLimits.labels.namespace,
         Metrics.kubePodContainerStatusRestartsTotal.labels.uid,
-        'cluster'
+        'spoke'
     ])
 }
 
-function createMemoryUsageQuery(cluster: string, additionalLabels: Labels) {
+function createMemoryUsageQuery(spoke: string, additionalLabels: Labels) {
 
     return PromQL.sum(
         // First take max of memory usage per container this is required if container is restarted
@@ -93,7 +93,7 @@ function createMemoryUsageQuery(cluster: string, additionalLabels: Labels) {
                 PromQL.metric(Metrics.containerMemoryWorkingSetBytes.name)
                     .withLabelNotEquals(Metrics.containerMemoryWorkingSetBytes.labels.container, '')
                     .withLabels(additionalLabels)
-                    .withLabelEquals('cluster', cluster),
+                    .withLabelEquals('spoke', spoke),
                 "uid",
                 "$1-$2-$3-$4-$5",
                 "id",
@@ -104,17 +104,17 @@ function createMemoryUsageQuery(cluster: string, additionalLabels: Labels) {
             Metrics.containerMemoryWorkingSetBytes.labels.namespace,
             Metrics.containerMemoryWorkingSetBytes.labels.container,
             'uid',
-            'cluster'
+            'spoke'
         ])
     ).by([
         Metrics.containerMemoryWorkingSetBytes.labels.pod,
         Metrics.containerMemoryWorkingSetBytes.labels.namespace,
         'uid',
-        'cluster'
+        'spoke'
     ])
 }
 
-function createCpuUsageQuery(cluster: string, additionalLabels: Labels) {
+function createCpuUsageQuery(spoke: string, additionalLabels: Labels) {
 
     return PromQL.sum(
         // Label replace is used to extract pod uid from container id path
@@ -126,7 +126,7 @@ function createCpuUsageQuery(cluster: string, additionalLabels: Labels) {
                     PromQL.metric(Metrics.containerCpuUsageSecondsTotal.name)
                         .withLabelNotEquals(Metrics.containerCpuUsageSecondsTotal.labels.container, '')
                         .withLabels(additionalLabels)
-                        .withLabelEquals('cluster', cluster),
+                        .withLabelEquals('spoke', spoke),
                     '$__rate_interval'),
             ),
             "uid",
@@ -138,61 +138,61 @@ function createCpuUsageQuery(cluster: string, additionalLabels: Labels) {
         Metrics.containerCpuUsageSecondsTotal.labels.pod,
         Metrics.containerCpuUsageSecondsTotal.labels.namespace,
         'uid',
-        'cluster'
+        'spoke'
     ])
 }
 
-function createAlertsQuery(cluster: string, additionalLabels: Labels) {
+function createAlertsQuery(spoke: string, additionalLabels: Labels) {
 
     return PromQL.metric('ALERTS')
         .withLabelEquals('alertstate', 'firing')
         .withLabels(additionalLabels)
-        .withLabelEquals('cluster', cluster)
+        .withLabelEquals('spoke', spoke)
         .multiply()
         .ignoring(['alertstate'])
         .groupRight(
             ['alertstate'],
             PromQL.metric('ALERTS_FOR_STATE')
                 .withLabels(additionalLabels)
-                .withLabelEquals('cluster', cluster)
+                .withLabelEquals('spoke', spoke)
         )
 }
 
-function createCreatedQuery(cluster: string, additionalLabels: Labels) {
+function createCreatedQuery(spoke: string, additionalLabels: Labels) {
 
     return PromQL.max(
         PromQL.metric(Metrics.kubePodCreated.name)
             .withLabels(additionalLabels)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
     ).by([
         Metrics.kubePodCreated.labels.pod,
         Metrics.kubePodCreated.labels.namespace,
         Metrics.kubePodCreated.labels.uid,
-        'cluster'
+        'spoke'
     ])
 }
 
-function createStatusQuery(cluster: string, additionalLabels: Labels) {
+function createStatusQuery(spoke: string, additionalLabels: Labels) {
 
     return PromQL.max(
         PromQL.metric(Metrics.kubePodStatusPhase.name)
             .withLabels(additionalLabels)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
         .equals(1)
     ).by([
         Metrics.kubePodStatusPhase.labels.pod,
         Metrics.kubePodStatusPhase.labels.namespace,
         Metrics.kubePodStatusPhase.labels.phase,
         Metrics.kubePodContainerStatusRestartsTotal.labels.uid,
-        'cluster'
+        'spoke'
     ])
 }
 
-function createNodeQuery(cluster: string, additionalLabels: Labels) {
+function createNodeQuery(spoke: string, additionalLabels: Labels) {
     return PromQL.max(
         PromQL.metric(Metrics.kubePodInfo.name)
             .withLabels(additionalLabels)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
     ).by([
         Metrics.kubePodInfo.labels.pod,
         Metrics.kubePodInfo.labels.namespace,
@@ -202,7 +202,7 @@ function createNodeQuery(cluster: string, additionalLabels: Labels) {
     ])
 }
 
-function createCpuThrottlingQuery(cluster: string, additionalLabels: Labels) {
+function createCpuThrottlingQuery(spoke: string, additionalLabels: Labels) {
     return PromQL.sum(
         PromQL.rate(
             PromQL.withRange(
@@ -210,14 +210,14 @@ function createCpuThrottlingQuery(cluster: string, additionalLabels: Labels) {
                     Metrics.containerCpuCfsThrottledPeriodsTotal.name,
                 )
                 .withLabels(additionalLabels)
-                .withLabelEquals('cluster', cluster),
+                .withLabelEquals('spoke', spoke),
                 '$__rate_interval',
             )
         )
     ).by([
         Metrics.containerCpuCfsThrottledPeriodsTotal.labels.pod,
         Metrics.kubePodInfo.labels.namespace,
-        'cluster'
+        'spoke'
     ])
     .divide()
     .withExpression(
@@ -228,14 +228,14 @@ function createCpuThrottlingQuery(cluster: string, additionalLabels: Labels) {
                         Metrics.containerCpuCfsPeriodsTotal.name,
                     )
                     .withLabels(additionalLabels)
-                    .withLabelEquals('cluster', cluster),
+                    .withLabelEquals('spoke', spoke),
                     '$__rate_interval',
                 )
             )
         ).by([
             Metrics.containerCpuCfsPeriodsTotal.labels.pod,
             Metrics.kubePodInfo.labels.namespace,
-            'cluster'
+            'spoke'
         ])
     )
     .multiply()
@@ -275,59 +275,59 @@ export function createRootQuery(
         switch (sorting.columnId) {
             case 'created': {
                 onLabels.push(Metrics.kubePodInfo.labels.uid)
-                sortQuery = createCreatedQuery('$cluster', {})
+                sortQuery = createCreatedQuery('$spoke', {})
                 break;
             }
             case 'alerts': {
                 onLabels.push(Metrics.kubePodInfo.labels.uid)
                 sortQuery = PromQL.count(
-                    createAlertsQuery('$cluster', {})
+                    createAlertsQuery('$spoke', {})
                 ).by(onLabels)
                 break;
             }
             case 'restarts': {
                 onLabels.push(Metrics.kubePodInfo.labels.uid)
-                sortQuery = createRestartsQuery('$cluster', {})
+                sortQuery = createRestartsQuery('$spoke', {})
                 break;
             }
             case 'containers': {
                 onLabels.push(Metrics.kubePodInfo.labels.uid)
-                sortQuery = createContainersQuery('$cluster', {})
+                sortQuery = createContainersQuery('$spoke', {})
                 break;
             }
             case 'memory_usage': {
                 onLabels.push(Metrics.kubePodInfo.labels.uid)
-                sortQuery = createMemoryUsageQuery('$cluster', {})
+                sortQuery = createMemoryUsageQuery('$spoke', {})
                 break
             }
             case 'memory_requests': {
                 onLabels.push(Metrics.kubePodInfo.labels.uid)
-                sortQuery = createResourceRequestsQuery('memory', '$cluster', {})
+                sortQuery = createResourceRequestsQuery('memory', '$spoke', {})
                 break;
             }
             case 'memory_limits': {
                 onLabels.push(Metrics.kubePodInfo.labels.uid)
-                sortQuery = createResourceLimitsQuery('memory', '$cluster', {})
+                sortQuery = createResourceLimitsQuery('memory', '$spoke', {})
                 break;
             }
             case 'cpu_usage': {
                 onLabels.push(Metrics.kubePodInfo.labels.uid)
-                sortQuery = createCpuUsageQuery('$cluster', {})
+                sortQuery = createCpuUsageQuery('$spoke', {})
                 break;
             }
             case 'cpu_requests': {
                 onLabels.push(Metrics.kubePodInfo.labels.uid)
-                sortQuery = createResourceRequestsQuery('cpu', '$cluster', {})
+                sortQuery = createResourceRequestsQuery('cpu', '$spoke', {})
                 break;
             }
             case 'cpu_limits': {
                 onLabels.push(Metrics.kubePodInfo.labels.uid)
-                sortQuery = createResourceLimitsQuery('cpu', '$cluster', {})
+                sortQuery = createResourceLimitsQuery('cpu', '$spoke', {})
                 break;
             }
             case 'cpu_throttling': {
                 carryOverLabels.push(Metrics.kubePodInfo.labels.uid)
-                sortQuery = createCpuThrottlingQuery('$cluster', {})
+                sortQuery = createCpuThrottlingQuery('$spoke', {})
                 break;
             }
         }
@@ -345,7 +345,7 @@ export function createRootQuery(
     }
 
     const podInfoQuery = PromQL.metric(Metrics.kubePodInfo.name)
-        .withLabelEquals('cluster', '$cluster')
+        .withLabelEquals('spoke', '$spoke')
         .withLabelMatchesIf(Metrics.kubePodInfo.labels.namespace, '$namespace', hasNamespaceVariable)
         .withLabelMatchesIf(Metrics.kubePodInfo.labels.node, '$node', hasNodeVariable)
         .withLabelMatchesIf(Metrics.kubePodInfo.labels.createdByKind, '$ownerKind', hasOwnerKindVariable)
@@ -363,7 +363,7 @@ export function createRootQuery(
             )
             : podInfoQuery
     ).by([
-        'cluster',
+        'spoke',
         Metrics.kubePodInfo.labels.namespace,
         Metrics.kubePodInfo.labels.pod,
         Metrics.kubePodInfo.labels.createdByKind,
@@ -418,7 +418,7 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
         return [];
     }
 
-    const cluster = resolveVariable(sceneVariables, 'cluster');
+    const spoke = resolveVariable(sceneVariables, 'spoke');
 
     const additionalLabels = {
         pod: {
@@ -427,7 +427,7 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
         }
     }
 
-    const clusterValue = cluster?.toString()!
+    const clusterValue = spoke?.toString()!
 
     return [
         {

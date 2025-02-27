@@ -37,7 +37,7 @@ function createVariables() {
             },
             query: {
                 refId: 'node',
-                query: `label_values(${Metrics.kubePodInfo.name}{cluster="$cluster", ${Metrics.kubePodInfo.labels.namespace}=~"$namespace"}, ${Metrics.kubePodInfo.labels.node})`,
+                query: `label_values(${Metrics.kubePodInfo.name}{spoke="$spoke", ${Metrics.kubePodInfo.labels.namespace}=~"$namespace"}, ${Metrics.kubePodInfo.labels.node})`,
             },
             defaultToAll: true,
             allValue: '.*',
@@ -53,7 +53,7 @@ function createVariables() {
             },
             query: {
                 refId: 'kind',
-                query: `label_values(${Metrics.kubePodInfo.name}{cluster="$cluster", ${Metrics.kubePodInfo.labels.namespace}=~"$namespace"}, ${Metrics.kubePodInfo.labels.createdByKind})`,
+                query: `label_values(${Metrics.kubePodInfo.name}{spoke="$spoke", ${Metrics.kubePodInfo.labels.namespace}=~"$namespace"}, ${Metrics.kubePodInfo.labels.createdByKind})`,
             },
             defaultToAll: true,
             allValue: '.*',
@@ -69,7 +69,7 @@ function createVariables() {
             },
             query: {
                 refId: 'name',
-                query: `label_values(${Metrics.kubePodInfo.name}{cluster="$cluster", ${Metrics.kubePodInfo.labels.namespace}=~"$namespace", ${Metrics.kubePodInfo.labels.createdByKind}=~"$ownerKind"}, ${Metrics.kubePodInfo.labels.createdByName})`,
+                query: `label_values(${Metrics.kubePodInfo.name}{spoke="$spoke", ${Metrics.kubePodInfo.labels.namespace}=~"$namespace", ${Metrics.kubePodInfo.labels.createdByKind}=~"$ownerKind"}, ${Metrics.kubePodInfo.labels.createdByName})`,
             },
             defaultToAll: true,
             allValue: '.*',
@@ -158,7 +158,7 @@ const columns: Array<Column<TableRow>> = [
         header: 'NODE',
         cellType: 'link',
         cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.cluster}/${row.node}`)
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.spoke}/${row.node}`)
         },
         sortingConfig: {
             enabled: true,

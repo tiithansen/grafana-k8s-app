@@ -1,7 +1,7 @@
 import { RowBase } from "components/AsyncTable";
 
 export interface TableRow extends RowBase{
-    cluster: string;
+    spoke: string;
     node: string;
     internal_ip: string;
     kubelet_version: string;

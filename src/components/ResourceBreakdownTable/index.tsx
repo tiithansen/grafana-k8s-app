@@ -14,7 +14,7 @@ import { SortingState } from 'common/sortingHelpers';
 import { AsyncTable, Column, ColumnSortingConfig, RowBase } from 'components/AsyncTable';
 
 interface TableRow extends RowBase {
-    cluster: string;
+    spoke: string;
     namespace: string;
     cpu: {
         requests: number;
@@ -180,11 +180,11 @@ function createRootQuery(sceneVariables: SceneVariableSet | SceneVariables, sort
         group(
             ${Metrics.kubeNamespaceStatusPhase.name}{
                 ${Metrics.kubeNamespaceStatusPhase.labels.namespace}=~"$namespace",
-                cluster="$cluster",
+                spoke="$spoke",
             }
         ) by (
             ${Metrics.kubeNamespaceStatusPhase.labels.namespace},
-            cluster
+            spoke
         )`
 
     let sortQuery = undefined
@@ -193,7 +193,7 @@ function createRootQuery(sceneVariables: SceneVariableSet | SceneVariables, sort
 
     if (sorting && sortingConfig && sortingConfig.local === false) {
         sortFunction = sorting.direction === 'desc' ? 'sort_desc' : 'sort';
-        sortQuery = getQuery(sorting.columnId, '$cluster', '.*')
+        sortQuery = getQuery(sorting.columnId, '$spoke', '.*')
     }
 
     let finalQuery = baseQuery;
@@ -223,17 +223,17 @@ function createRootQuery(sceneVariables: SceneVariableSet | SceneVariables, sort
     });
 }
 
-function getQuery(name: string, cluster: string, ids: string) {
+function getQuery(name: string, spoke: string, ids: string) {
     switch (name) {
         case 'cpu_requested':
             return `
                 sum(
                     ${Metrics.kubePodContainerResourceRequests.name}{
                         resource="cpu",
-                        ${cluster ? `cluster=~"${cluster}"` : ''},
+                        ${spoke ? `spoke=~"${spoke}"` : ''},
                         namespace=~"${ids}"
                     }
-                ) by (cluster, namespace)
+                ) by (spoke, namespace)
             `;
         case 'cpu_usage':
             return `sum(
@@ -242,7 +242,7 @@ function getQuery(name: string, cluster: string, ids: string) {
                         ${Metrics.containerCpuUsageSecondsTotal.name}{
                             ${Metrics.containerCpuUsageSecondsTotal.labels.container}!="",
                             namespace=~"${ids}",
-                            ${cluster ? `cluster=~"${cluster}"` : ''},
+                            ${spoke ? `spoke=~"${spoke}"` : ''},
                         }[$__rate_interval]
                     )
                 ) by (
@@ -250,25 +250,25 @@ function getQuery(name: string, cluster: string, ids: string) {
                     ${Metrics.containerCpuUsageSecondsTotal.labels.pod},
                     ${Metrics.containerCpuUsageSecondsTotal.labels.container}
                 )
-            ) by (namespace, cluster)`
+            ) by (namespace, spoke)`
         case 'cpu_limits':
             return `
                 sum(
                     ${Metrics.kubePodContainerResourceLimits.name}{
                         resource="cpu",
-                        cluster=~"${cluster}",
+                        spoke=~"${spoke}",
                         namespace=~"${ids}"
                     }
-                ) by (cluster, namespace)`
+                ) by (spoke, namespace)`
         case 'memory_requested':
             return  `
                 sum(
                     ${Metrics.kubePodContainerResourceRequests.name}{
                         resource="memory",
-                        cluster=~"${cluster}",
+                        spoke=~"${spoke}",
                         namespace=~"${ids}"
                     }
-                ) by (cluster, namespace)`
+                ) by (spoke, namespace)`
         case 'memory_usage':
             return `
             sum(
@@ -276,23 +276,23 @@ function getQuery(name: string, cluster: string, ids: string) {
                     ${Metrics.containerMemoryWorkingSetBytes.name}{
                         ${Metrics.containerMemoryWorkingSetBytes.labels.container}!="",
                         ${Metrics.containerMemoryWorkingSetBytes.labels.namespace}=~"${ids}",
-                        cluster="${cluster}"
+                        spoke="${spoke}"
                     }
                 ) by (
                     ${Metrics.containerMemoryWorkingSetBytes.labels.pod},
                     ${Metrics.containerMemoryWorkingSetBytes.labels.container},
                     ${Metrics.containerMemoryWorkingSetBytes.labels.namespace}
                 )
-            ) by (namespace, cluster)`
+            ) by (namespace, spoke)`
         case 'memory_limits':
             return `
                 sum(
                     ${Metrics.kubePodContainerResourceLimits.name}{
                         resource="memory",
-                        cluster=~"${cluster}",
+                        spoke=~"${spoke}",
                         namespace=~"${ids}"
                     }
-                ) by (cluster, namespace)`
+                ) by (spoke, namespace)`
     }
 
     return undefined;
@@ -302,8 +302,8 @@ function createRowQueries(rows: TableRow[], sceneVariables: SceneVariableSet | S
 
     const ids = rows.map((row: TableRow) => row.namespace).join('|');
 
-    const cluster = resolveVariable(sceneVariables, 'cluster');
-    const clusterValue = cluster?.toString() || '.*'
+    const spoke = resolveVariable(sceneVariables, 'spoke');
+    const clusterValue = spoke?.toString() || '.*'
 
     return [
         {
@@ -370,7 +370,7 @@ export const ResourceBreakdownTable = () => {
                     height: '100%',
                     body: new AsyncTable<TableRow>({
                         columns: columns,
-                        createRowId: (row) => `${row.namespace}:${row.cluster}`,
+                        createRowId: (row) => `${row.namespace}:${row.spoke}`,
                         asyncDataRowMapper: rowMapper,
                         $data: createRootQuery(variables, defaultSorting),
                         queryBuilder: {

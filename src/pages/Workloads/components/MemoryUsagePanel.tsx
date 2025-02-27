@@ -14,7 +14,7 @@ function createMemoryUsageQuery(filters: Labels, options: MemoryUsagePanelOption
         )
         .withLabels(filters)
         .withLabelNotEquals(Metrics.containerMemoryWorkingSetBytes.labels.container, '')
-        .withLabelEquals('cluster', '$cluster')
+        .withLabelEquals('spoke', '$spoke')
     ).by([
         Metrics.containerMemoryWorkingSetBytes.labels.pod,
         Metrics.containerMemoryWorkingSetBytes.labels.container,
@@ -39,7 +39,7 @@ function createMemoryRequestsQuery(filters: Labels, options: MemoryUsagePanelOpt
         .withLabels(filters)
         .withLabelEquals(Metrics.kubePodContainerResourceRequests.labels.resource, 'memory')
         .withLabelNotEquals(Metrics.kubePodContainerResourceRequests.labels.container, '')
-        .withLabelEquals('cluster', '$cluster')
+        .withLabelEquals('spoke', '$spoke')
 
     if (options.mode === 'pod') {
         return PromQL.max(
@@ -69,7 +69,7 @@ function createMemoryLimitsQuery(filters: Labels, options: MemoryUsagePanelOptio
         .withLabels(filters)
         .withLabelEquals(Metrics.kubePodContainerResourceLimits.labels.resource, 'memory')
         .withLabelNotEquals(Metrics.kubePodContainerResourceLimits.labels.container, '')
-        .withLabelEquals('cluster', '$cluster')
+        .withLabelEquals('spoke', '$spoke')
 
     if (options.mode === 'pod') {
         return PromQL.max(

@@ -13,7 +13,7 @@ function createReceivedBytesQuery(filters: Labels) {
                         Metrics.containerNetworkReceiveBytesTotal.name,
                     )
                     .withLabels(filters)
-                    .withLabelEquals('cluster', '$cluster'),
+                    .withLabelEquals('spoke', '$spoke'),
                 '$__rate_interval',
                 )
             )
@@ -32,7 +32,7 @@ function createTransmitBytesQuery(filters: Labels) {
                         Metrics.containerNetworkTransmitBytesTotal.name,
                     )
                     .withLabels(filters)
-                    .withLabelEquals('cluster', '$cluster'),
+                    .withLabelEquals('spoke', '$spoke'),
                 '$__rate_interval',
                 )
             )

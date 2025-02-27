@@ -36,7 +36,7 @@ const columns: Array<Column<TableRow>> = [
         header: 'NODE',
         cellType: 'link',
         cellProps: {
-            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.cluster}/${row.node}`)
+            urlBuilder: (row: TableRow) => prefixRoute(`${ROUTES.Clusters}/nodes/${row.spoke}/${row.node}`)
         },
         sortingConfig: {
             enabled: true,
@@ -78,7 +78,7 @@ const columns: Array<Column<TableRow>> = [
         accessor: (row: TableRow) => row.age > 0 ? (Date.now() / 1000) - row.age : 0
     },
     {
-        id: 'cluster',
+        id: 'spoke',
         header: 'CLUSTER',
         sortingConfig: {
             enabled: true,

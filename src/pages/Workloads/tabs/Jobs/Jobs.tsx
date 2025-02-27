@@ -84,7 +84,7 @@ class JobsQueryBuilder implements QueryBuilder<TableRow> {
                     refId: 'jobs',
                     expr: `
                         ${Metrics.kubeJobInfo.name}{
-                            cluster="$cluster",
+                            spoke="$spoke",
                             ${Metrics.kubeJobInfo.labels.namespace}=~"$namespace",
                             ${Metrics.kubeJobInfo.labels.jobName}=~".*$search.*"
                         }`,

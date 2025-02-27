@@ -48,7 +48,7 @@ function findAlertAndRule(tags: Record<string, string>, ruleGroups: RuleGroup[])
             }
 
             for (const alert of rule.alerts) {
-                const match = Object.entries(tags).filter(([key]) => key !== 'alertstate' && key !== 'cluster').every(([key, value]) => {
+                const match = Object.entries(tags).filter(([key]) => key !== 'alertstate' && key !== 'spoke').every(([key, value]) => {
                     return alert.labels[key] === value;
                 });
 
@@ -83,7 +83,7 @@ class AlertDetails extends SceneObjectBase<AlertDetailsState> {
         useEffect(() => {
 
             const matchingRulers = jsonData.rulerMappings?.filter((ruler) => {
-                return ruler.cluster === tags.cluster || ruler.cluster === '*';
+                return ruler.spoke === tags.spoke || ruler.spoke === '*';
             })
 
             if (!matchingRulers || matchingRulers.length === 0) {

@@ -15,7 +15,7 @@ function createPodsPanel() {
                     refId: 'pods',
                     expr: `sum(
                             kube_pod_status_phase{
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         ) by (phase)
                     `,
@@ -42,7 +42,7 @@ function createPodsByOwnerKindPanel() {
                     refId: 'pods',
                     expr: `count(
                             kube_pod_info{
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         ) by (created_by_kind)
                     `,
@@ -70,7 +70,7 @@ function createDeploymentsPanel() {
                     refId: 'deployments',
                     expr: `count(
                             kube_deployment_created{
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         )
                     `,
@@ -94,7 +94,7 @@ function createStatefulsetsPanel() {
                     refId: 'statefulsets',
                     expr: `count(
                             kube_statefulset_created{
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         )
                     `,
@@ -118,7 +118,7 @@ function createDaemonsetsPanel() {
                     refId: 'statefulsets',
                     expr: `count(
                             kube_daemonset_created{
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         )
                     `,
@@ -142,7 +142,7 @@ function createCronjobsPanel() {
                     refId: 'cronjobs',
                     expr: `count(
                             kube_cronjob_created{
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         )
                     `,

@@ -205,7 +205,7 @@ class ContainersQueryBuilder implements QueryBuilder<TableRow> {
                     expr: `
                         sort_desc(
                             ${Metrics.kubePodContainerInfo.name}{
-                                cluster="$cluster",
+                                spoke="$spoke",
                                 ${ serializedLabels }
                             }
                         )`,

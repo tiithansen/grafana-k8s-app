@@ -58,7 +58,7 @@ function getReplicasPanel(statefulset: string, namespace: string) {
                             ${Metrics.kubeStatefulsetStatusReplicasUnavailable.name}{
                                 ${Metrics.kubeStatefulsetStatusReplicasUnavailable.labels.statefulset}=~"${statefulset}",
                                 ${Metrics.kubeStatefulsetStatusReplicasUnavailable.labels.namespace}="${namespace}",
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         ) by (${Metrics.kubeStatefulsetStatusReplicasUnavailable.labels.statefulset})`,
                     legendFormat: 'Unavailable'
@@ -70,7 +70,7 @@ function getReplicasPanel(statefulset: string, namespace: string) {
                             ${Metrics.kubeStatefulsetStatusReplicasAvailable.name}{
                                 ${Metrics.kubeStatefulsetStatusReplicasAvailable.labels.statefulset}=~"${statefulset}",
                                 ${Metrics.kubeStatefulsetStatusReplicasAvailable.labels.namespace}="${namespace}",
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         ) by (${Metrics.kubeStatefulsetStatusReplicasAvailable.labels.statefulset})`,
                     legendFormat: 'Available'
@@ -82,7 +82,7 @@ function getReplicasPanel(statefulset: string, namespace: string) {
                             ${Metrics.kubeStatefulsetStatusReplicas.name}{
                                 ${Metrics.kubeStatefulsetStatusReplicas.labels.statefulset}=~"${statefulset}",
                                 ${Metrics.kubeStatefulsetStatusReplicas.labels.namespace}="${namespace}",
-                                cluster="$cluster"
+                                spoke="$spoke"
                             }
                         ) by (${Metrics.kubeStatefulsetStatusReplicas.labels.statefulset})`,
                     legendFormat: 'Replicas'

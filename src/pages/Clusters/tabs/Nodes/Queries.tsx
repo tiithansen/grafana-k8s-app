@@ -21,13 +21,13 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
             PromQL.metric(
                 Metrics.kubeNodeInfo.name,
             )
-            .withLabelEquals('cluster', '$cluster')
+            .withLabelEquals('spoke', '$spoke')
             .withLabelMatches(Metrics.kubeNodeInfo.labels.node, '.*$search.*')
         ).by([
             Metrics.kubeNodeInfo.labels.internalIP,
             Metrics.kubeNodeInfo.labels.node,
             ...commonCarryOverLabels,
-            'cluster'
+            'spoke'
         ]);
 
         const remoteSort = sortingConfig && sortingConfig.local === false
@@ -47,7 +47,7 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
                                     'internal_ip',
                                     ...commonCarryOverLabels,
                                 ],
-                                this.createMemoryRequestsQuery('$cluster', {
+                                this.createMemoryRequestsQuery('$spoke', {
                                     'node': {
                                         operator: MatchOperators.NOT_EQUALS,
                                         value: ''
@@ -71,7 +71,7 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
                                     'internal_ip',
                                     ...commonCarryOverLabels,
                                 ],
-                                this.createCpuRequestsQuery('$cluster', {})
+                                this.createCpuRequestsQuery('$spoke', {})
                             )
                             .or()
                             .withExpression(
@@ -90,7 +90,7 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
                                     'internal_ip',
                                     ...commonCarryOverLabels,
                                 ],
-                                this.createCoresQuery('$cluster', {})
+                                this.createCoresQuery('$spoke', {})
                             )
                             .or()
                             .withExpression(
@@ -109,7 +109,7 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
                                     'internal_ip',
                                     ...commonCarryOverLabels,
                                 ],
-                                this.createPodCountQuery('$cluster', {})
+                                this.createPodCountQuery('$spoke', {})
                             )
                             .or()
                             .withExpression(
@@ -128,7 +128,7 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
                                     'internal_ip',
                                     ...commonCarryOverLabels,
                                 ],
-                                this.createNodeAgeQuery('$cluster', {})
+                                this.createNodeAgeQuery('$spoke', {})
                             )
                             .or()
                             .withExpression(
@@ -157,33 +157,33 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
         })
     }
 
-    createMemoryTotalQuery(cluster: string, nodes: string) {
+    createMemoryTotalQuery(spoke: string, nodes: string) {
         return PromQL.max(
             PromQL.metric(
                 Metrics.nodeMemoryMemTotalBytes.name,
             )
             .withLabelMatches(Metrics.nodeMemoryMemTotalBytes.labels.instance, nodes)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
         ).by([
             Metrics.nodeMemoryMemTotalBytes.labels.instance,
-            'cluster'
+            'spoke'
         ]);
     }
 
-    createMemoryFreeQuery(cluster: string, nodes: string) {
+    createMemoryFreeQuery(spoke: string, nodes: string) {
         return PromQL.max(
             PromQL.metric(
                 Metrics.nodeMemoryMemAvailableBytes.name,
             )
             .withLabelMatches(Metrics.nodeMemoryMemAvailableBytes.labels.instance, nodes)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
         ).by([
             Metrics.nodeMemoryMemAvailableBytes.labels.instance,
-            'cluster'
+            'spoke'
         ]);
     }
 
-    createMemoryRequestsQuery(cluster: string, additionalLabels: Labels) {
+    createMemoryRequestsQuery(spoke: string, additionalLabels: Labels) {
         return PromQL.sum(
             PromQL.metric(
                 Metrics.kubePodContainerResourceRequests.name,
@@ -191,27 +191,27 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
             .withLabelEquals(Metrics.kubePodContainerResourceRequests.labels.resource, 'memory')
             .withLabels(additionalLabels)
             .withLabelNotEquals(Metrics.kubePodContainerResourceRequests.labels.container, '')
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
         ).by([
             Metrics.kubePodContainerResourceRequests.labels.node,
-            'cluster'
+            'spoke'
         ]);
     }
 
-    createCoresQuery(cluster: string, additionalLabels: Labels) {
+    createCoresQuery(spoke: string, additionalLabels: Labels) {
         return PromQL.max(
             PromQL.metric(
                 Metrics.machineCpuCores.name,
             )
             .withLabels(additionalLabels)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
         ).by([
             Metrics.machineCpuCores.labels.node,
-            'cluster'
+            'spoke'
         ]);
     }
 
-    createCpuRequestsQuery(cluster: string, additionalLabels: Labels) {
+    createCpuRequestsQuery(spoke: string, additionalLabels: Labels) {
         return PromQL.sum(
             PromQL.metric(
                 Metrics.kubePodContainerResourceRequests.name,
@@ -219,21 +219,21 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
             .withLabelEquals(Metrics.kubePodContainerResourceRequests.labels.resource, 'cpu')
             .withLabels(additionalLabels)
             .withLabelNotEquals(Metrics.kubePodContainerResourceRequests.labels.container, '')
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
         ).by([
             Metrics.kubePodContainerResourceRequests.labels.node,
-            'cluster'
+            'spoke'
         ]);
     }
 
-    createCpuUsageQuery(cluster: string, nodes: string) {
+    createCpuUsageQuery(spoke: string, nodes: string) {
         return `(
             sum by(${Metrics.nodeCpuSecondsTotal.labels.instance}) (
                 irate(
                     ${Metrics.nodeCpuSecondsTotal.name}{
                         ${Metrics.nodeCpuSecondsTotal.labels.instance}=~"${nodes}",
                         ${Metrics.nodeCpuSecondsTotal.labels.mode}!="idle",
-                        cluster="${cluster}"
+                        spoke="${spoke}"
                     }[$__rate_interval]
                 )
             )
@@ -243,7 +243,7 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
                     irate(
                         ${Metrics.nodeCpuSecondsTotal.name}{
                             ${Metrics.nodeCpuSecondsTotal.labels.instance}=~"${nodes}",
-                            cluster="${cluster}",
+                            spoke="${spoke}",
                         }[$__rate_interval]
                     )
                 )
@@ -251,38 +251,38 @@ export class NodesQueryBuilder implements QueryBuilder<TableRow> {
         ) * 100`;
     }
 
-    createPodCountQuery(cluster: string, additionalLabels: Labels) {
+    createPodCountQuery(spoke: string, additionalLabels: Labels) {
         return PromQL.count(
             PromQL.metric(
                 Metrics.kubePodInfo.name,
             )
             .withLabels(additionalLabels)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
         ).by([
             Metrics.kubePodInfo.labels.node,
-            'cluster'
+            'spoke'
         ]);
     }
 
-    createNodeAgeQuery(cluster: string, additionalLabels: Labels) {
+    createNodeAgeQuery(spoke: string, additionalLabels: Labels) {
         return PromQL.max(
             PromQL.metric(
                 Metrics.kubeNodeCreated.name,
             )
             .withLabels(additionalLabels)
-            .withLabelEquals('cluster', cluster)
+            .withLabelEquals('spoke', spoke)
         ).by([
             Metrics.kubeNodeInfo.labels.node,
-            'cluster'
+            'spoke'
         ]);
     }
 
     rowQueryBuilder(rows: TableRow[], variables: SceneVariableSet | SceneVariables) {
         const internalIPs = rows.map(row => row.internal_ip + ":.*").join('|');
         const nodeNames = rows.map(row => row.node).join('|');
-        const cluster = resolveVariable(variables, 'cluster');
+        const spoke = resolveVariable(variables, 'spoke');
 
-        const clusterValue = cluster?.toString() || '';
+        const clusterValue = spoke?.toString() || '';
 
         const nodeNamesLabels = {
             node: {

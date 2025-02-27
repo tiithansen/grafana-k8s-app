@@ -6,7 +6,7 @@ import { TableRow } from "./types";
 export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariables) {
     
     const jobs = rows.map(row => row.job_name).join('|');
-    const cluster = resolveVariable(sceneVariables, 'cluster');
+    const spoke = resolveVariable(sceneVariables, 'spoke');
 
     return [
         {
@@ -16,7 +16,7 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
                     ${Metrics.kubeJobComplete.name}{
                         ${Metrics.kubeJobComplete.labels.jobName}=~"${jobs}",
                         ${Metrics.kubeJobComplete.labels.condition}="true",
-                        cluster="${cluster}"
+                        spoke="${spoke}"
                     }
                 ) by (${Metrics.kubeJobComplete.labels.jobName})`,
             instant: true,
@@ -28,7 +28,7 @@ export function createRowQueries(rows: TableRow[], sceneVariables: SceneVariable
                 max(
                     ${Metrics.kubeJobOwner.name}{
                         ${Metrics.kubeJobOwner.labels.jobName}=~"${jobs}",
-                        cluster="${cluster}"
+                        spoke="${spoke}"
                     }
                 ) by (
                     ${Metrics.kubeJobOwner.labels.ownerKind},

@@ -16,7 +16,7 @@ function createQuery(filters: Labels, options: CPUThrottlingPanelOptions) {
                 )
                 .withLabels(filters)
                 .withLabelNotEquals(Metrics.containerCpuCfsThrottledPeriodsTotal.labels.container, '')
-                .withLabelEquals('cluster', '$cluster'),
+                .withLabelEquals('spoke', '$spoke'),
                 '$__rate_interval',
             )
         )
@@ -34,7 +34,7 @@ function createQuery(filters: Labels, options: CPUThrottlingPanelOptions) {
                     )
                     .withLabels(filters)
                     .withLabelNotEquals(Metrics.containerCpuCfsPeriodsTotal.labels.container, '')
-                    .withLabelEquals('cluster', '$cluster'),
+                    .withLabelEquals('spoke', '$spoke'),
                     '$__rate_interval',
                 )
             )
