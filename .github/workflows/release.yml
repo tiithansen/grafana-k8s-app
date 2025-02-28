@@ -2,6 +2,7 @@ on:
   push:
     branches:
       - main
+      - spoke
 
 permissions:
   contents: write
@@ -23,6 +24,7 @@ jobs:
         id: release
         with:
           release-type: node
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
       - uses: actions/checkout@v4
       - name: Tag major and minor versions
         if: ${{ steps.release.outputs.release_created }}
