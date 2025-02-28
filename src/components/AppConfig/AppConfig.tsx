@@ -443,11 +443,11 @@ export const AppConfig = ({ plugin }: Props) => {
             onChange={onChangeDefaultCluster}
           />
         </Field>
-        <Field label="Cluster filter" description="Expression to filter clusters" className={s.marginTop}>
+        <Field label="Spoke filter" description="Expression to filter clusters" className={s.marginTop}>
           <Input
             width={60}
             id="defaultCluster"
-            label={`Cluster filter`}
+            label={`Spoke filter`}
             value={state?.clusterFilter}
             placeholder={`E.g.: kube_namespace_labels{spoke!="private", spoke=~"prod.*"}`}
             onChange={onChangeClusterFilter}
@@ -562,11 +562,11 @@ export const AppConfig = ({ plugin }: Props) => {
           state.rulerMappings?.map((mapping, index) => {
             return (
               <FieldSet key={index} className={s.rulerMappingFieldset}>
-                <Field label="Cluster" description="">
+                <Field label="Spoke" description="">
                   <Input
                     width={60}
                     id="spoke"
-                    label={`Cluster`}
+                    label={`Spoke`}
                     value={mapping?.spoke}
                     placeholder={`E.g.: Production`}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => onChangeRulerCluster(e, index)}

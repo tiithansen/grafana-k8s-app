@@ -8,7 +8,7 @@ import Analytics from "components/Analytics"
 
 function getNodesPerClusterPanel() {
     return PanelBuilders.timeseries()
-        .setTitle('Nodes per Cluster')
+        .setTitle('Nodes per Spoke')
         .setData(new SceneQueryRunner({
             datasource: {
                 uid: '$datasource',

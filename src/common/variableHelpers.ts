@@ -53,7 +53,7 @@ export function createTopLevelVariables(props: JsonData, additionalVariables?: A
 export function createClusterVariable(defaultCluster?: string, clusterFilter?: string) {
     return new QueryVariable({
         name: 'spoke',
-        label: 'Cluster',
+        label: 'Spoke',
         datasource: {
             uid: '$datasource',
             type: 'prometheus',

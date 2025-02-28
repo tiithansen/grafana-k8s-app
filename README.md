@@ -19,7 +19,7 @@ Metrics and required labels used by application can be found in [metrics.ts](src
 
 ### Screenshots
 
-#### Cluster
+#### Spoke
 <img src="screenshots/spoke-overview.png" style="width:25%;margin: 4px;"><img src="screenshots/nodes-table.png" style="width:25%;margin: 4px;"><img src="screenshots/node-view.png" style="width:25%;margin: 4px;">
 
 #### Workloads
@@ -88,7 +88,7 @@ Settings page can be found at: `/plugins/k8s-app?page=configuration`.
 * Metrics datasource - Allows configuring regex to filter metrics from the prometheus datasources. (default=prometheus)
 * Default datasource - Allows configuring default datasource for the metrics.
 * Default spoke - Allows configuring default spoke to be used in the queries.
-* Cluster filter - Allows customizing the query which is used to get label values for the spoke variable.
+* Spoke filter - Allows customizing the query which is used to get label values for the spoke variable.
 
 #### Logs & Events settings (EXPERIMENTAL)
 
@@ -97,7 +97,7 @@ Allows displaying logs and events from Loki.
 * Feature exepects events to be exported by [opentelemetry-collector-contrib k8seventsreceiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/receiver/k8seventsreceiver/README.md).
 * Logs must be exported to Loki by `opentelemetry-collector` because it relies on stream labels in format of `k8s_...`.
 * Datasource used must support multi-tenant queries where stream label `k8s_cluster_name` is used to select logs from specific tenant.
-* It is possible to override the default queries per view (Cluster, Node, Pod, Deployment, Statefulset, Daemonset).
+* It is possible to override the default queries per view (Spoke, Node, Pod, Deployment, Statefulset, Daemonset).
 
 ##### Sample configuration for events collection with k8seventsreceiver
 
